@@ -1,0 +1,21 @@
+[
+    {
+        "name": "${deployment_name}-nmap",
+        "image": "public.ecr.aws/havoc_sh/nmap:${deployment_version}",
+        "essential": true,
+        "entryPoint": [
+            "/bin/bash", "-c"
+        ],
+        "command": [
+            "/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"
+        ],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "${deployment_name}/ecs",
+                "awslogs-region": "${aws_region}",
+                "awslogs-stream-prefix": "nmap"
+            }
+        }
+    }
+]

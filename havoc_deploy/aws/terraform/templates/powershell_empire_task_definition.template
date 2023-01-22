@@ -1,0 +1,21 @@
+[
+    {
+        "name": "${deployment_name}-powershell_empire",
+        "image": "public.ecr.aws/havoc_sh/powershell_empire:${deployment_version}",
+        "essential": true,
+        "entryPoint": [
+            "/bin/bash", "-c"
+        ],
+        "command": [
+            "/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"
+        ],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "${deployment_name}/ecs",
+                "awslogs-region": "${aws_region}",
+                "awslogs-stream-prefix": "powershell_empire"
+            }
+        }
+    }
+]

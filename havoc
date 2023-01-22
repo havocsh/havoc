@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# Exit if executed with sudo
+if [ ${SUDO_USER} ]; then
+    echo ""
+    echo "This program should not be executed with sudo. Please re-run again without sudo."
+    echo "Alternatively, if you desire to create your ./HAVOC deployment from the root account,"
+    echo "'su -' to root first, clone the repository as root and then run the program from there."
+    echo "Bye."
+    echo ""
+    exit 1
+fi
+
+if [ ! -d ./venv ]; then
+    echo "No virtualenv found. Run 'python3 -m venv venv' from your 'havoc' directory first."
+    exit
+fi
+python3_bin=./venv/bin/python3
+pip_bin=./venv/bin/pip3
+
+git_bin=$(which git)
+if [ ! "${git_bin}" ]; then
+    echo "Could not find git. Please install git before continuing."
+    exit
+fi
+
+# Check for install or update request and pull latest version info
+if [[ ${@} =~ "--deployment create" ]] || [[ ${@} =~ "--deployment update" ]]; then
+    requested_version=$(grep "requested_version = " .havoc/havoc.cfg | awk '{ print $NF }')
+    deployment_version=$(curl -s https://releases.havoc.sh/${requested_version}.html)
+    if [ -z "${deployment_version}" ]; then
+        echo "Reqested version not found."
+        exit
+    fi
+    perl -pi -e "s/deployment_version = .*/deployment_version = ${deployment_version}/g" .havoc/havoc.cfg
+fi
+
+# Check for install request and if so, install requirements and pull ./HAVOC module
+if [[ ${@} =~ "--deployment create" ]]; then
+    ${pip_bin} --disable-pip-version-check install -r requirements.txt
+    ${pip_bin} --disable-pip-version-check install "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}"  
+fi
+
+# Check for update request and pull latest commits plus attempt to upgrade ./HAVOC module
+if [[ ${@} =~ "--deployment update" ]]; then
+    havoc_orig_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
+    git stash push -- .havoc havoc-deploy/aws/terraform/terraform_backend.tf havoc-deploy/aws/terraform/terraform.tfvars havoc-deploy/aws/terraform/terraform.tfstate
+    git pull
+    current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
+    target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
+    if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
+        git checkout ${target_git_branch}
+    fi
+    git stash pop
+    havoc_new_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
+    if [[ ! ${havoc_orig_hash} == ${havoc_new_hash} ]]; then
+        echo ""
+        echo "This update included a change to the main havoc script."
+        echo "The havoc script will restart so that the changes can take affect."
+        echo "The update will continue automatically upon restart."
+        echo ""
+        exec havoc $@
+    fi
+    ${pip_bin} --disable-pip-version-check install "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}" --upgrade
+fi
+
+${python3_bin} ./havoc.py $@

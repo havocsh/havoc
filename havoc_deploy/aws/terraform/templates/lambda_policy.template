@@ -1,0 +1,99 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:PutItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:GetItem",
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:UpdateItem"
+            ],
+            "Resource": [
+                "${authorizer_table}",
+                "${authorizer_index}",
+                "${portgroups_table}",
+                "${task_types_table}",
+                "${domains_table}",
+                "${tasks_table}",
+                "${queue_table}"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${workspace_bucket}",
+                "arn:aws:s3:::${workspace_bucket}/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecs:RunTask",
+                "ecs:StopTask",
+                "ecs:DescribeTasks"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecs:DeregisterTaskDefinition",
+                "ecs:RegisterTaskDefinition"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:RevokeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CreateSecurityGroup",
+                "ec2:DeleteSecurityGroup"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribeSecurityGroups"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:GetHostedZone",
+                "route53:ListHostedZones",
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": [
+                "${task_role}",
+                "${task_exec_role}"
+            ]
+        }
+    ]
+}
