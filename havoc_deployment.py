@@ -3,7 +3,6 @@ import re
 import boto3
 import botocore
 import subprocess
-from python_terraform import *
 import havoc_profile
 import havoc
 from configparser import ConfigParser
@@ -21,13 +20,6 @@ class ManageDeployment:
         self.aws_profile = None
         self.__tf = None
         self.__havoc_client = None
-
-    @property
-    def tf(self):
-        # Initializes terraform
-        if self.__tf is None:
-            self.__tf = Terraform(terraform_bin_path=self.tf_bin, working_dir='havoc_deploy/aws/terraform')
-        return self.__tf
     
     @property
     def havoc_client(self):
@@ -134,10 +126,12 @@ class ManageDeployment:
             with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
                 terraform_backend.write(f)
             print('Initializing Terraform...\n')
-            return_code, stdout, stderr = self.tf.init()
-            if stderr:
+            tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
+            tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            tf_init_output = tf_init.communicate()[1].decode('ascii')
+            if tf_init_output:
                 print('\nInitializing Terraform backend configuration encountered errors:\n')
-                print(stderr)
+                print(tf_init_output)
                 print('\nRolling back changes...\n')
                 if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
                     os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
@@ -156,10 +150,12 @@ class ManageDeployment:
         if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
             os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
             print('Backend configuration deleted. Initializing Terraform.\n')
-            return_code, stdout, stderr = self.tf.init()
-            if stderr:
+            tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
+            tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            tf_init_output = tf_init.communicate()[1].decode('ascii')
+            if tf_init_output:
                 print('\nInitializing Terraform encountered errors:\n')
-                print(stderr)
+                print(tf_init_output)
         else:
             print('No Terraform backend configuration was found.\n')
         return 'completed'
@@ -215,21 +211,26 @@ class ManageDeployment:
 
         # Run Terraform and check for errors:
         print('Initializing Terraform...\n')
-        return_code, stdout, stderr = self.tf.init()
-        if stderr:
+        tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
+        tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tf_init_output = tf_init.communicate()[1].decode('ascii')
+        if tf_init_output:
             print('\nInitializing Terraform encountered errors:\n')
-            print(stderr)
+            print(tf_init_output)
             print('\nRolling back changes...\n')
             if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
                 os.remove('havoc_deploy/aws/terraform/terraform.tfvars')
             return 'failed'
         print('Starting Terraform tasks.\n')
-        return_code, stdout, stderr = self.tf.apply()
-        if stderr:
+        tf_apply_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'apply', '-no-color', '-auto-approve']
+        tf_apply = subprocess.Popen(tf_apply_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tf_apply_output = tf_apply.communicate()[1].decode('ascii')
+        if tf_apply_output:
             print('\nTerraform deployment encountered errors:\n')
-            print(stderr)
+            print(tf_apply_output)
             print('\nRolling back changes...\n')
-            return_code, stdout, stderr = self.tf.destroy()
+            tf_destroy_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'destroy', '-no-color', '-auto-approve']
+            subprocess.Popen(tf_destroy_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
                 os.remove('havoc_deploy/aws/terraform/terraform.tfvars') 
             if os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
@@ -310,16 +311,20 @@ class ManageDeployment:
 
         # Run Terraform and check for errors:
         print('Initializing Terraform...\n')
-        return_code, stdout, stderr = self.tf.init()
-        if stderr:
+        tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
+        tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tf_init_output = tf_init.communicate()[1].decode('ascii')
+        if tf_init_output:
             print('\nInitializing Terraform encountered errors:\n')
-            print(stderr)
+            print(tf_init_output)
             return 'failed'
         print('Starting Terraform tasks.\n')
-        return_code, stdout, stderr = self.tf.apply()
-        if stderr:
+        tf_apply_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'apply', '-no-color', '-auto-approve']
+        tf_apply = subprocess.Popen(tf_apply_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tf_apply_output = tf_apply.communicate()[1].decode('ascii')
+        if tf_apply_output:
             print('\nTerraform deployment encountered errors:\n')
-            print(stderr)
+            print(tf_apply_output)
             print('Review errors above, correct the reported issues and try again.')
             return 'failed'
         print('Terraform deployment tasks completed.')
@@ -340,10 +345,12 @@ class ManageDeployment:
         
         # Run Terraform and check for errors:
         print('\nStarting Terraform tasks.')
-        return_code, stdout, stderr = self.tf.apply()
-        if stderr:
+        tf_apply_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'apply', '-no-color', '-auto-approve']
+        tf_apply = subprocess.Popen(tf_apply_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tf_apply_output = tf_apply.communicate()[1].decode('ascii')
+        if tf_apply_output:
             print('\nTerraform update encountered errors:\n')
-            print(stderr)
+            print(tf_apply_output)
             print('Review errors above, correct the reported issues and try the update again.')
             return 'failed'
         print('\nTerraform tasks completed.\n')
@@ -364,10 +371,12 @@ class ManageDeployment:
         
         # Run Terraform and check for errors
         print('\nStarting Terraform tasks.')
-        return_code, stdout, stderr = self.tf.destroy()
-        if stderr:
+        tf_destroy_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'destroy', '-no-color', '-auto-approve']
+        tf_destroy = subprocess.Popen(tf_destroy_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tf_destroy_output = tf_destroy.communicate()[1].decode('ascii')
+        if tf_destroy_output:
             print('\nTerraform destroy encountered errors:\n')
-            print(stderr)
+            print(tf_destroy_output)
             print('Review errors above, correct the reported issues and try the uninstall again.')
             return 'failed'
         print('\nTerraform tasks completed.\n')

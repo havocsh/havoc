@@ -2,4 +2,3 @@ cmd2
 boto3
 botocore
 requests
-python-terraform
