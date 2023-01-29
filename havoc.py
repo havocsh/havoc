@@ -3,7 +3,6 @@ import subprocess
 import platform
 import requests
 import argparse
-import havoc_cli
 import havoc_profile
 from configparser import ConfigParser
 from havoc_deployment import ManageDeployment
@@ -65,9 +64,11 @@ def tf_bin():
 if __name__ == "__main__":
 
     if not init_args:
+        import havoc_cli
         havoc_cli()
     
     if init_args.profile and not init_args.deploy:
+        import havoc_cli
         havoc_cli.profile = init_args.profile
         havoc_cli()
     

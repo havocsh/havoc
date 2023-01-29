@@ -40,9 +40,9 @@ fi
 # Check for install request and if so, install requirements and pull ./HAVOC module
 if [[ ${@} =~ "--deployment create" ]]; then
     echo " - Installing requirements."
-    ${pip_bin} --disable-pip-version-check install -r requirements.txt
+    ${pip_bin} --disable-pip-version-check install -q -r requirements.txt
     echo " - Installing the ./HAVOC module."
-    ${pip_bin} --disable-pip-version-check install "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}"
+    ${pip_bin} --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}"
     current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
     target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
     if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
@@ -72,7 +72,7 @@ if [[ ${@} =~ "--deployment update" ]]; then
         exec havoc $@
     fi
     echo " - Updating the ./HAVOC module."
-    ${pip_bin} --disable-pip-version-check install "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}" --upgrade
+    ${pip_bin} --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}" --upgrade
 fi
 
 ${python3_bin} ./havoc.py $@
