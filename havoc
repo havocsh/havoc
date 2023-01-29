@@ -12,6 +12,7 @@ if [ ${SUDO_USER} ]; then
 fi
 
 if [ ! -d ./venv ]; then
+    echo "Creating Python virtual environment."
     python3 -m venv ./venv
 fi
 python3_bin=./venv/bin/python3
@@ -25,8 +26,10 @@ fi
 
 # Check for install or update request and pull latest version info
 if [[ ${@} =~ "--deployment create" ]] || [[ ${@} =~ "--deployment update" ]]; then
+    echo "Deployment operation:"
+    echo " - Getting ./HAVOC version info."
     requested_version=$(grep "requested_version = " .havoc/havoc.cfg | awk '{ print $NF }')
-    deployment_version=$(curl -s https://releases.havoc.sh/${requested_version}.html)
+    deployment_version=$(curl -s http://releases.havoc.sh/${requested_version}.html)
     if [ -z "${deployment_version}" ]; then
         echo "Reqested version not found."
         exit
@@ -36,7 +39,9 @@ fi
 
 # Check for install request and if so, install requirements and pull ./HAVOC module
 if [[ ${@} =~ "--deployment create" ]]; then
+    echo " - Installing requirements."
     ${pip_bin} --disable-pip-version-check install -r requirements.txt
+    echo " - Installing the ./HAVOC module."
     ${pip_bin} --disable-pip-version-check install "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}"
     current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
     target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
@@ -47,6 +52,7 @@ fi
 
 # Check for update request and pull latest commits plus attempt to upgrade ./HAVOC module
 if [[ ${@} =~ "--deployment update" ]]; then
+    echo " - Updating local files."
     havoc_orig_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
     git stash push -- .havoc havoc-deploy/aws/terraform/terraform_backend.tf havoc-deploy/aws/terraform/terraform.tfvars havoc-deploy/aws/terraform/terraform.tfstate
     git pull
@@ -65,6 +71,7 @@ if [[ ${@} =~ "--deployment update" ]]; then
         echo ""
         exec havoc $@
     fi
+    echo " - Updating the ./HAVOC module."
     ${pip_bin} --disable-pip-version-check install "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}" --upgrade
 fi
 
