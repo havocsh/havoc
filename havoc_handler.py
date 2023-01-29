@@ -26,9 +26,9 @@ init_args = init_parser.parse_args()
 
 def tf_bin():
     tf = None
+    cwd = os.getcwd()
     while not tf:
-        if os.path.isfile('./terraform'):
-            cwd = os.getcwd()
+        if os.path.isfile(f'{cwd}/terraform'):
             tf = f'{cwd}/terraform'
         else:
             if platform.system().lower() in ['darwin', 'linux', 'freebsd', 'openbsd']:
