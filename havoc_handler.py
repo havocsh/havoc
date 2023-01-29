@@ -93,10 +93,10 @@ if __name__ == "__main__":
         else:
             print('\nProfile task failed.\n')
     
-    if init_args.deploy:
-        if init_args.deploy not in ['create', 'update', 'remove', 'get_deployment', 'connect_tf_backend', 'disconnect_tf_backend']:
+    if init_args.deployment:
+        if init_args.deployment not in ['create', 'modify', 'update', 'remove', 'get_deployment', 'connect_tf_backend', 'disconnect_tf_backend']:
             print('Missing --deployment action. Specify action using "--deployment <action>" notation.')
-            print('<action> can be any of the following: create|update|remove|get_deployment|connect_tf_backend|disconnect_tf_backend')
+            print('<action> can be any of the following: create|modify|update|remove|get_deployment|connect_tf_backend|disconnect_tf_backend')
             exit
         if init_args.profile:
             profile = init_args.profile
