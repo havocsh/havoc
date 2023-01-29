@@ -177,7 +177,7 @@ class ManageDeployment:
         print('Deployment dependencies met. Proceeding with deployment.\n')
 
         # Build havoc-control-api packages for AWS Lambda
-        subprocess.run('havoc_build_packages.sh', shell=True)
+        subprocess.run('./havoc_build_packages.sh', shell=True)
 
         # Write out terraform.tfvars file
         print('\nSetting up Terraform variables. Please provide the requested details.')
