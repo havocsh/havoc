@@ -1,5 +1,6 @@
 import re
 import json
+import botocore
 import boto3
 
 
@@ -60,11 +61,16 @@ class Retrieve:
         if 'Item' not in task_entry:
             return format_response(404, 'failed', f'task {self.task_name} does not exist', self.log)
 
-        list_objects_response = self.aws_s3_client.list_objects_v2(
-            Bucket=f'{self.deployment_name}-workspace',
-            Prefix=self.task_name + '/'
-        )
-        assert list_objects_response, f"list_objects_v2 failed for task_name {self.task_name}"
+        try:
+            list_objects_response = self.aws_s3_client.list_objects_v2(
+                Bucket=f'{self.deployment_name}-workspace',
+                Prefix=self.task_name + '/'
+            )
+        except botocore.exceptions.ClientError as error:
+            return format_response(500, 'failed', f'get_commands failed with error {error["Error"]}', self.log)
+        except botocore.exceptions.ParamValidationError as error:
+            return format_response(500, 'failed', f'get_commands failed with error {error["Error"]}', self.log)
+        
         file_list = []
         regex = f'{self.task_name}/(.*)'
         if 'Contents' in list_objects_response:
@@ -73,17 +79,25 @@ class Retrieve:
                 if search.group(1):
                     file_list.append(l['Key'])
             for file_entry in file_list:
-                get_object_response = self.aws_s3_client.get_object(
-                    Bucket=f'{self.deployment_name}-workspace',
-                    Key=file_entry
-                )
-                assert get_object_response, f"get_object failed for task_name {self.task_name}, key {file_entry}"
+                try:
+                    get_object_response = self.aws_s3_client.get_object(
+                        Bucket=f'{self.deployment_name}-workspace',
+                        Key=file_entry
+                    )
+                except botocore.exceptions.ClientError as error:
+                    return format_response(500, 'failed', f'get_commands failed with error {error["Error"]}', self.log)
+                except botocore.exceptions.ParamValidationError as error:
+                    return format_response(500, 'failed', f'get_commands failed with error {error["Error"]}', self.log)
                 interaction = json.loads(get_object_response['Body'].read().decode('utf-8'))
                 command_list.append(interaction)
-                delete_object_response = self.aws_s3_client.delete_object(
-                    Bucket=f'{self.deployment_name}-workspace',
-                    Key=file_entry
-                )
-                assert delete_object_response, f"delete_object failed for task_name {self.task_name}, key {file_entry}"
+                try:
+                    self.aws_s3_client.delete_object(
+                        Bucket=f'{self.deployment_name}-workspace',
+                        Key=file_entry
+                    )
+                except botocore.exceptions.ClientError as error:
+                    return format_response(500, 'failed', f'get_commands failed with error {error["Error"]}', self.log)
+                except botocore.exceptions.ParamValidationError as error:
+                    return format_response(500, 'failed', f'get_commands failed with error {error["Error"]}', self.log)
 
         return format_response(200, 'success', 'get_commands succeeded', None, commands=command_list)

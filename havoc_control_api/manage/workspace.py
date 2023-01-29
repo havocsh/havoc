@@ -1,6 +1,7 @@
 import re
 import sys
 import json
+import botocore
 import boto3
 import base64
 
@@ -47,37 +48,47 @@ class Workspace:
         return self.__aws_dynamodb_client
 
     def upload_object(self):
-        response = self.aws_s3_client.put_object(
-            Body=self.file_contents,
-            Bucket=f'{self.deployment_name}-workspace',
-            Key='shared/' + self.filename
-        )
-        assert response, f"Failed to upload object to shared workspace"
-        return True
+        try:
+            self.aws_s3_client.put_object(
+                Body=self.file_contents,
+                Bucket=f'{self.deployment_name}-workspace',
+                Key='shared/' + self.filename
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'object_uploaded'
 
     def list_objects(self):
-        response = self.aws_s3_client.list_objects_v2(
+        return self.aws_s3_client.list_objects_v2(
             Bucket=f'{self.deployment_name}-workspace',
             Prefix='shared/'
         )
-        assert response, f"list_objects in shared workspace failed"
-        return response
 
     def get_object(self):
-        response = self.aws_s3_client.get_object(
-            Bucket=f'{self.deployment_name}-workspace',
-            Key='shared/' + self.filename
-        )
-        assert response, f"get_object from shared workspace failed for filename {self.filename}"
-        return response['Body'].read()
+        try:
+            get_object_response = self.aws_s3_client.get_object(
+                Bucket=f'{self.deployment_name}-workspace',
+                Key='shared/' + self.filename
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return get_object_response
 
     def delete_object(self):
-        response = self.aws_s3_client.delete_object(
-            Bucket=f'{self.deployment_name}-workspace',
-            Key='shared/' + self.filename
-        )
-        assert response, f"delete_object from shared workspace failed for filename {self.filename}"
-        return True
+        try:
+            self.aws_s3_client.delete_object(
+                Bucket=f'{self.deployment_name}-workspace',
+                Key='shared/' + self.filename
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'object_deleted'
 
     def list(self):
 
@@ -115,10 +126,14 @@ class Workspace:
                 file_name_list.append(file_name)
         if self.filename in file_name_list:
             get_object_results = self.get_object()
-            encoded_file = base64.b64encode(get_object_results).decode()
-            return format_response(
-                200, 'success', 'get file succeeded', None, filename=self.filename, file_contents=encoded_file
-            )
+            if 'Body' in get_object_results:
+                object = get_object_results['Body'].read()
+                encoded_file = base64.b64encode(object).decode()
+                return format_response(
+                    200, 'success', 'get file succeeded', None, filename=self.filename, file_contents=encoded_file
+                )
+            else:
+                return format_response(500, 'failed', f'retrieving object failed with error {get_object_results}', self.log)
         else:
             return format_response(404, 'failed', 'file not found', self.log)
 
@@ -140,8 +155,11 @@ class Workspace:
             return format_response(413, 'failed', 'max file size exceeded', self.log)
 
         self.file_contents = decoded_file
-        self.upload_object()
-        return format_response(200, 'success', 'create file succeeded', None)
+        upload_object_response = self.upload_object()
+        if upload_object_response == 'object_uploaded':
+            return format_response(200, 'success', 'create file succeeded', None)
+        else:
+            return format_response(500, 'failed', f'file creation failed with error {upload_object_response}', self.log)
 
     def delete(self):
         if 'filename' not in self.detail:
@@ -162,8 +180,11 @@ class Workspace:
                 file_name = re.search(regex, file_entry).group(1)
                 file_name_list.append(file_name)
         if self.filename in file_name_list:
-            self.delete_object()
-            return format_response(200, 'success', 'delete file succeeded', None)
+            delete_object_response = self.delete_object()
+            if delete_object_response == 'object_deleted':
+                return format_response(200, 'success', 'delete file succeeded', None)
+            else:
+                return format_response(500, 'failed', f'file deletion failed with error {delete_object_response}', self.log)
         else:
             return format_response(404, 'failed', 'file not found', self.log)
 

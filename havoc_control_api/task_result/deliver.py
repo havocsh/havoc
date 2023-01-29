@@ -2,6 +2,7 @@ import re
 import ast
 import json
 import copy
+import botocore
 import boto3
 import time as t
 from datetime import datetime, timedelta
@@ -45,78 +46,96 @@ class Deliver:
         )
 
     def update_domain_entry(self, domain_name, domain_tasks, host_names):
-        return self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-domains',
-            Key={
-                'domain_name': {'S': domain_name}
-            },
-            UpdateExpression='set tasks=:tasks, host_names=:host_names',
-            ExpressionAttributeValues={
-                ':tasks': {'SS': domain_tasks},
-                ':host_names': {'SS': host_names}
-            }
-        )
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-domains',
+                Key={
+                    'domain_name': {'S': domain_name}
+                },
+                UpdateExpression='set tasks=:tasks, host_names=:host_names',
+                ExpressionAttributeValues={
+                    ':tasks': {'SS': domain_tasks},
+                    ':host_names': {'SS': host_names}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'domain_entry_updated'
 
     def delete_resource_record_set(self, hosted_zone, host_name, domain_name, ip_address):
-        return self.aws_route53_client.change_resource_record_sets(
-            HostedZoneId=hosted_zone,
-            ChangeBatch={
-                'Changes': [
-                    {
-                        'Action': 'DELETE',
-                        'ResourceRecordSet': {
-                            'Name': f'{host_name}.{domain_name}',
-                            'Type': 'A',
-                            'TTL': 300,
-                            'ResourceRecords': [
-                                {
-                                    'Value': ip_address
-                                }
-                            ]
+        try:
+            self.aws_route53_client.change_resource_record_sets(
+                HostedZoneId=hosted_zone,
+                ChangeBatch={
+                    'Changes': [
+                        {
+                            'Action': 'DELETE',
+                            'ResourceRecordSet': {
+                                'Name': f'{host_name}.{domain_name}',
+                                'Type': 'A',
+                                'TTL': 300,
+                                'ResourceRecords': [
+                                    {
+                                        'Value': ip_address
+                                    }
+                                ]
+                            }
                         }
-                    }
-                ]
-            }
-        )
+                    ]
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'resource_record_set_deleted'
 
     def add_queue_attribute(self, stime, expire_time, task_instruct_instance, task_instruct_command, task_instruct_args,
                             task_host_name, task_domain_name, task_attack_ip, task_local_ip, json_payload):
-        return self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-queue',
-            Key={
-                'task_name': {'S': self.task_name},
-                'run_time': {'N': stime}
-            },
-            UpdateExpression='set '
-                             'expire_time=:expire_time, '
-                             'user_id=:user_id, '
-                             'task_context=:task_context, '
-                             'task_type=:task_type, '
-                             'task_version=:task_version, '
-                             'instruct_instance=:instruct_instance, '
-                             'instruct_command=:instruct_command, '
-                             'instruct_args=:instruct_args, '
-                             'task_host_name=:task_host_name, '
-                             'task_domain_name=:task_domain_name, '
-                             'attack_ip=:attack_ip, '
-                             'local_ip=:local_ip, '
-                             'instruct_command_output=:payload',
-            ExpressionAttributeValues={
-                ':expire_time': {'N': expire_time},
-                ':user_id': {'S': self.user_id},
-                ':task_context': {'S': self.task_context},
-                ':task_type': {'S': self.task_type},
-                ':task_version': {'S': self.task_version},
-                ':instruct_instance': {'S': task_instruct_instance},
-                ':instruct_command': {'S': task_instruct_command},
-                ':instruct_args': {'M': task_instruct_args},
-                ':task_host_name': {'S': task_host_name},
-                ':task_domain_name': {'S': task_domain_name},
-                ':attack_ip': {'S': task_attack_ip},
-                ':local_ip': {'SS': task_local_ip},
-                ':payload': {'S': json_payload}
-            }
-        )
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-queue',
+                Key={
+                    'task_name': {'S': self.task_name},
+                    'run_time': {'N': stime}
+                },
+                UpdateExpression='set '
+                                'expire_time=:expire_time, '
+                                'user_id=:user_id, '
+                                'task_context=:task_context, '
+                                'task_type=:task_type, '
+                                'task_version=:task_version, '
+                                'instruct_instance=:instruct_instance, '
+                                'instruct_command=:instruct_command, '
+                                'instruct_args=:instruct_args, '
+                                'task_host_name=:task_host_name, '
+                                'task_domain_name=:task_domain_name, '
+                                'attack_ip=:attack_ip, '
+                                'local_ip=:local_ip, '
+                                'instruct_command_output=:payload',
+                ExpressionAttributeValues={
+                    ':expire_time': {'N': expire_time},
+                    ':user_id': {'S': self.user_id},
+                    ':task_context': {'S': self.task_context},
+                    ':task_type': {'S': self.task_type},
+                    ':task_version': {'S': self.task_version},
+                    ':instruct_instance': {'S': task_instruct_instance},
+                    ':instruct_command': {'S': task_instruct_command},
+                    ':instruct_args': {'M': task_instruct_args},
+                    ':task_host_name': {'S': task_host_name},
+                    ':task_domain_name': {'S': task_domain_name},
+                    ':attack_ip': {'S': task_attack_ip},
+                    ':local_ip': {'SS': task_local_ip},
+                    ':payload': {'S': json_payload}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'queue_attribute_added'
 
     def get_task_entry(self):
         return self.aws_dynamodb_client.get_item(
@@ -127,19 +146,25 @@ class Deliver:
         )
 
     def update_task_entry(self, stime, task_status, task_end_time):
-        return self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-tasks',
-            Key={
-                'task_name': {'S': self.task_name}
-            },
-            UpdateExpression='set task_status=:task_status, last_instruct_time=:last_instruct_time, '
-                             'scheduled_end_time=:scheduled_end_time',
-            ExpressionAttributeValues={
-                ':task_status': {'S': task_status},
-                ':last_instruct_time': {'S': stime},
-                ':scheduled_end_time': {'S': task_end_time}
-            }
-        )
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-tasks',
+                Key={
+                    'task_name': {'S': self.task_name}
+                },
+                UpdateExpression='set task_status=:task_status, last_instruct_time=:last_instruct_time, '
+                                'scheduled_end_time=:scheduled_end_time',
+                ExpressionAttributeValues={
+                    ':task_status': {'S': task_status},
+                    ':last_instruct_time': {'S': stime},
+                    ':scheduled_end_time': {'S': task_end_time}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'task_entry_updated'
 
     def get_portgroup_entry(self, portgroup_name):
         return self.aws_dynamodb_client.get_item(
@@ -150,16 +175,22 @@ class Deliver:
         )
 
     def update_portgroup_entry(self, portgroup_name, portgroup_tasks):
-        return self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-portgroups',
-            Key={
-                'portgroup_name': {'S': portgroup_name}
-            },
-            UpdateExpression='set tasks=:tasks',
-            ExpressionAttributeValues={
-                ':tasks': {'SS': portgroup_tasks}
-            }
-        )
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-portgroups',
+                Key={
+                    'portgroup_name': {'S': portgroup_name}
+                },
+                UpdateExpression='set tasks=:tasks',
+                ExpressionAttributeValues={
+                    ':tasks': {'SS': portgroup_tasks}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'portgroup_entry_updated'
 
     def deliver_result(self):
         # Set vars
@@ -241,7 +272,9 @@ class Deliver:
                         portgroup_tasks.remove(self.task_name)
                     if not portgroup_tasks:
                         portgroup_tasks.append('None')
-                    self.update_portgroup_entry(portgroup, portgroup_tasks)
+                    update_portgroup_entry_response = self.update_portgroup_entry(portgroup, portgroup_tasks)
+                    if update_portgroup_entry_response != 'portgroup_entry_updated':
+                        print(f'Error updating portgroup entry: {update_portgroup_entry_response}')
             if task_host_name != 'None':
                 domain_entry = self.get_domain_entry(task_domain_name)
                 hosted_zone = domain_entry['Item']['hosted_zone']['S']
@@ -255,16 +288,25 @@ class Deliver:
                     domain_host_names.remove(task_host_name)
                 if not domain_host_names:
                     domain_host_names.append('None')
-                self.update_domain_entry(task_domain_name, domain_tasks, domain_host_names)
-                self.delete_resource_record_set(hosted_zone, task_host_name, task_domain_name, task_attack_ip)
+                update_domain_entry_response = self.update_domain_entry(task_domain_name, domain_tasks, domain_host_names)
+                if update_domain_entry_response != 'domain_entry_updated':
+                    print(f'Error updating domain entry: {update_domain_entry_response}')
+                delete_resource_record_set_response = self.delete_resource_record_set(hosted_zone, task_host_name, task_domain_name, task_attack_ip)
+                if delete_resource_record_set_response != 'resource_record_set_deleted':
+                    print(f'Error deleting resource record set: {delete_resource_record_set_response}')
             completed_instruction = self.update_task_entry(stime, 'terminated', task_end_time)
+            if completed_instruction != 'task_entry_updated':
+                print(f'Error updating task entry: {completed_instruction}')
             t.sleep(20)
         else:
             completed_instruction = self.update_task_entry(stime, 'idle', task_end_time)
+            if completed_instruction != 'task_entry_updated':
+                print(f'Error updating task entry: {completed_instruction}')
 
         if completed_instruction:
-            self.add_queue_attribute(stime, expiration_stime, task_instruct_instance, task_instruct_command,
-                                 task_instruct_args_fixup, task_host_name, task_domain_name, task_attack_ip,
-                                 task_local_ip, json_payload)
+            add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, task_instruct_instance, task_instruct_command,
+                                 task_instruct_args_fixup, task_host_name, task_domain_name, task_attack_ip, task_local_ip, json_payload)
+            if add_queue_attribute_response != 'queue_attribute_added':
+                print(f'Error adding queue attribute: {add_queue_attribute_response}')
 
         return True

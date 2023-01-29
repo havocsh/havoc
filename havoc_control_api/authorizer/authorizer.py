@@ -1,4 +1,7 @@
-import boto3, datetime, hashlib, hmac
+import boto3
+import datetime
+import hashlib
+import hmac
 
 
 class Login:

@@ -1,4 +1,5 @@
 import json
+import botocore
 import boto3
 
 from datetime import datetime
@@ -45,49 +46,49 @@ class Task:
         return self.__aws_s3_client
 
     def get_task_entry(self):
-        response = self.aws_dynamodb_client.get_item(
+        return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-tasks',
             Key={
                 'task_name': {'S': self.task_name}
             }
         )
-        assert response, f"get_task_entry failed for task_name {self.task_name}"
-        return response
 
     def get_task_type(self, task_type):
-        response = self.aws_dynamodb_client.get_item(
+        return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-task-types',
             Key={
                 'task_type': {'S': task_type}
             }
         )
-        assert response, f"get_task_type failed for task_type {task_type}"
-        return response
 
     def set_task_busy(self, instruct_instances, instruct_instance, instruct_command, instruct_args, timestamp):
         task_status = 'busy'
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-tasks',
-            Key={
-                'task_name': {'S': self.task_name}
-            },
-            UpdateExpression='set task_status=:task_status, instruct_instances=:instruct_instances, '
-                             'last_instruct_user_id=:last_instruct_user_id, '
-                             'last_instruct_instance=:last_instruct_instance, '
-                             'last_instruct_command=:last_instruct_command, last_instruct_args=:last_instruct_args, '
-                             'last_instruct_time=:last_instruct_time',
-            ExpressionAttributeValues={
-                ':task_status': {'S': task_status},
-                ':instruct_instances': {'SS': instruct_instances},
-                ':last_instruct_user_id': {'S': self.user_id},
-                ':last_instruct_instance': {'S': instruct_instance},
-                ':last_instruct_command': {'S': instruct_command},
-                ':last_instruct_args': {'M': instruct_args},
-                ':last_instruct_time': {'S': timestamp}
-            }
-        )
-        assert response, f"add_task_entry failed for task_name {self.task_name}"
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-tasks',
+                Key={
+                    'task_name': {'S': self.task_name}
+                },
+                UpdateExpression='set task_status=:task_status, instruct_instances=:instruct_instances, '
+                                'last_instruct_user_id=:last_instruct_user_id, '
+                                'last_instruct_instance=:last_instruct_instance, '
+                                'last_instruct_command=:last_instruct_command, last_instruct_args=:last_instruct_args, '
+                                'last_instruct_time=:last_instruct_time',
+                ExpressionAttributeValues={
+                    ':task_status': {'S': task_status},
+                    ':instruct_instances': {'SS': instruct_instances},
+                    ':last_instruct_user_id': {'S': self.user_id},
+                    ':last_instruct_instance': {'S': instruct_instance},
+                    ':last_instruct_command': {'S': instruct_command},
+                    ':last_instruct_args': {'M': instruct_args},
+                    ':last_instruct_time': {'S': timestamp}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'task_set_as_busy'
 
     def upload_object(self, instruct_instance, instruct_command, instruct_args, end_time, timestamp):
         payload = {
@@ -96,13 +97,17 @@ class Task:
             'end_time': end_time
         }
         payload_bytes = json.dumps(payload).encode('utf-8')
-        response = self.aws_s3_client.put_object(
-            Body=payload_bytes,
-            Bucket=f'{self.deployment_name}-workspace',
-            Key=self.task_name + '/' + timestamp
-        )
-        assert response, f"Failed to upload object to workspace for task_name {self.task_name}"
-        return True
+        try:
+            self.aws_s3_client.put_object(
+                Body=payload_bytes,
+                Bucket=f'{self.deployment_name}-workspace',
+                Key=self.task_name + '/' + timestamp
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'object_uploaded'
 
     def instruct(self):
         timestamp = datetime.now().strftime('%s')
@@ -165,8 +170,12 @@ class Task:
                 instruct_args_fixup[k] = {'B': f'{v}'}
 
         # Set task to busy and send instructions to the task
-        self.set_task_busy(instruct_instances, instruct_instance, instruct_command, instruct_args_fixup, timestamp)
-        self.upload_object(instruct_instance, instruct_command, instruct_args, end_time, timestamp)
+        set_task_busy_response = self.set_task_busy(instruct_instances, instruct_instance, instruct_command, instruct_args_fixup, timestamp)
+        if set_task_busy_response != 'task_set_as_busy':
+            return format_response(500, 'failed', f'interact failed with error {set_task_busy_response}', self.log)
+        upload_object_response = self.upload_object(instruct_instance, instruct_command, instruct_args, end_time, timestamp)
+        if upload_object_response != 'object_uploaded':
+            return format_response(500, 'failed', f'interact failed with error {upload_object_response}', self.log)
 
         # Send response
         return format_response(200, 'success', f'interact with {self.task_name} succeeded', None)

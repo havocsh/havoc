@@ -1,4 +1,5 @@
 import json
+import botocore
 import boto3
 
 
@@ -43,7 +44,7 @@ class Deployment:
                 'deployment_name': {'S': self.deployment_name}
             }
         )
-
+    
     def create_deployment_entry(self):
         existing_deployment = self.get_deployment_entry()
         if 'Item' in existing_deployment:
@@ -58,44 +59,100 @@ class Deployment:
             tfstate_s3_key = self.detail['tfstate_s3_key']
             tfstate_s3_region = self.detail['tfstate_s3_region']
             tfstate_dynamodb_table = self.detail['tfstate_dynamodb_table']
-            dynamodb_response = self.aws_dynamodb_client.update_item(
-                TableName=f'{self.deployment_name}-deployment',
-                Key={
-                    'deployment_name': {'S': self.deployment_name}
-                },
-                UpdateExpression='set deployment_version=:deployment_version, deployment_admin_email=:deployment_admin_email, '
-                                'results_queue_expiration=:results_queue_expiration, api_domain_name=:api_domain_name, api_region=:api_region, '
-                                'tfstate_s3_bucket=:tfstate_s3_bucket, tfstate_s3_key=:tfstate_s3_key, tfstate_s3_region=:tfstate_s3_region, '
-                                'tfstate_dynamodb_table=:tfstate_dynamodb_table',
-                ExpressionAttributeValues={
-                    ':deployment_version': {'S': deployment_version},
-                    ':deployment_admin_email': {'S': deployment_admin_email},
-                    ':results_queue_expiration': {'S': results_queue_expiration},
-                    ':api_domain_name': {'S': api_domain_name},
-                    ':api_region': {'S': api_region},
-                    ':tfstate_s3_bucket': {'S': tfstate_s3_bucket},
-                    ':tfstate_s3_key': {'S': tfstate_s3_key},
-                    ':tfstate_s3_region': {'S': tfstate_s3_region},
-                    ':tfstate_dynamodb_table': {'S': tfstate_dynamodb_table}
-                }
-            )
-            return dynamodb_response
+            try:
+                self.aws_dynamodb_client.update_item(
+                    TableName=f'{self.deployment_name}-deployment',
+                    Key={
+                        'deployment_name': {'S': self.deployment_name}
+                    },
+                    UpdateExpression='set deployment_version=:deployment_version, deployment_admin_email=:deployment_admin_email, '
+                                    'results_queue_expiration=:results_queue_expiration, api_domain_name=:api_domain_name, api_region=:api_region, '
+                                    'tfstate_s3_bucket=:tfstate_s3_bucket, tfstate_s3_key=:tfstate_s3_key, tfstate_s3_region=:tfstate_s3_region, '
+                                    'tfstate_dynamodb_table=:tfstate_dynamodb_table',
+                    ExpressionAttributeValues={
+                        ':deployment_version': {'S': deployment_version},
+                        ':deployment_admin_email': {'S': deployment_admin_email},
+                        ':results_queue_expiration': {'S': results_queue_expiration},
+                        ':api_domain_name': {'S': api_domain_name},
+                        ':api_region': {'S': api_region},
+                        ':tfstate_s3_bucket': {'S': tfstate_s3_bucket},
+                        ':tfstate_s3_key': {'S': tfstate_s3_key},
+                        ':tfstate_s3_region': {'S': tfstate_s3_region},
+                        ':tfstate_dynamodb_table': {'S': tfstate_dynamodb_table}
+                    }
+                )
+            except botocore.exceptions.ClientError as error:
+                return error['Error']
+            except botocore.exceptions.ParamValidationError as error:
+                return error['Error']
+            return 'deployment_created'
+
+    def update_deployment_entry(self):
+        existing_deployment = self.get_deployment_entry()
+        if 'Item' in existing_deployment:
+            if 'deployment_version' in self.detail:
+                deployment_version = self.detail['deployment_version']
+            else:
+                deployment_version = existing_deployment['deployment_version']
+            if 'deployment_admin_email' in self.detail:
+                deployment_admin_email = self.detail['deployment_admin_email']
+            else:
+                deployment_admin_email = existing_deployment['deployment_admin_email']
+            if 'results_queue_expiration' in self.detail:
+                results_queue_expiration = self.detail['results_queue_expiration']
+            else:
+                results_queue_expiration = existing_deployment['results_queue_expiration']
+            if 'api_domain_name' in self.detail:
+                api_domain_name = self.detail['api_domain_name']
+            else:
+                api_domain_name = existing_deployment['api_domain_name']
+            if 'api_region' in self.detail:
+                api_region = self.detail['api_region']
+            else:
+                api_region = existing_deployment['api_region']
+            try:
+                self.aws_dynamodb_client.update_item(
+                    TableName=f'{self.deployment_name}-deployment',
+                    Key={
+                        'deployment_name': {'S': self.deployment_name}
+                    },
+                    UpdateExpression='set deployment_version=:deployment_version, deployment_admin_email=:deployment_admin_email, '
+                                    'results_queue_expiration=:results_queue_expiration, api_domain_name=:api_domain_name, api_region=:api_region',
+                    ExpressionAttributeValues={
+                        ':deployment_version': {'S': deployment_version},
+                        ':deployment_admin_email': {'S': deployment_admin_email},
+                        ':results_queue_expiration': {'S': results_queue_expiration},
+                        ':api_domain_name': {'S': api_domain_name},
+                        ':api_region': {'S': api_region}
+                    }
+                )
+            except botocore.exceptions.ClientError as error:
+                return error['Error']
+            except botocore.exceptions.ParamValidationError as error:
+                return error['Error']
+            return 'deployment_updated'
+        else:
+            return 'deployment_not_found'
 
     def create(self):
         if self.detail:
-            deployment = self.create_deployment_entry()
+            create_deployment_entry_response = self.create_deployment_entry()
         else:
             return format_response(400, 'failed', 'invalid detail', self.log)
-        if deployment == 'deployment_exists':
-            return format_response(400, 'failed', 'deployment already exists', self.log)
-        else:
+        if create_deployment_entry_response == 'deployment_exists':
+            return format_response(400, 'failed', 'deployment already exists - use update method to modify deployment parameters', self.log)
+        elif create_deployment_entry_response == 'deployment_created':
             return format_response(200, 'success', 'create deployment succeeded', None)
+        else:
+            return format_response(500, 'failed', f'deployment creation failed with error: {create_deployment_entry_response}', self.log)
 
     def delete(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)
 
     def get(self):
         deployment_entry = self.get_deployment_entry()
+        if deployment_entry is None:
+            return format_response(400, 'failed', 'deployment not found - use create method to create deployment parameters', self.log)
         deployment_version = deployment_entry['Item']['deployment_version']['S']
         deployment_admin_email = deployment_entry['Item']['deployment_admin_email']['S']
         results_queue_expiration = deployment_entry['Item']['results_queue_expiration']['S']
@@ -126,7 +183,16 @@ class Deployment:
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)
 
     def update(self):
-        return format_response(405, 'failed', 'command not accepted for this resource', self.log)
+        if self.detail:
+            update_deployment_entry_response = self.update_deployment_entry()
+        else:
+            return format_response(400, 'failed', 'invalid detail', self.log)
+        if update_deployment_entry_response == 'deployment_not_found':
+            return format_response(400, 'failed', 'deployment not found - use create method to create deployment parameters', self.log)
+        elif update_deployment_entry_response == 'deployment_updated':
+            return format_response(200, 'success', 'update deployment succeeded', None)
+        else:
+            return format_response(500, 'failed', f'deployment update failed with error: {update_deployment_entry_response}', self.log)
 
     def kill(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)

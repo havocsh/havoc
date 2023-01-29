@@ -1,5 +1,6 @@
 import json
 import copy
+import botocore
 import boto3
 from datetime import datetime, timedelta
 
@@ -44,44 +45,48 @@ class Deliver:
                             task_instruct_args, task_attack_ip, task_local_ip, json_payload):
         task_host_name = 'None'
         task_domain_name = 'None'
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-queue',
-            Key={
-                'task_name': {'S': self.task_name},
-                'run_time': {'N': stime}
-            },
-            UpdateExpression='set '
-                             'expire_time=:expire_time, '
-                             'user_id=:user_id, '
-                             'task_context=:task_context, '
-                             'task_type=:task_type, '
-                             'task_version=:task_version, '
-                             'instruct_instance=:instruct_instance, '
-                             'instruct_command=:instruct_command, '
-                             'instruct_args=:instruct_args, '
-                             'task_host_name=:task_host_name, '
-                             'task_domain_name=:task_domain_name,'
-                             'attack_ip=:attack_ip, '
-                             'local_ip=:local_ip, '
-                             'instruct_command_output=:payload',
-            ExpressionAttributeValues={
-                ':expire_time': {'N': expire_time},
-                ':user_id': {'S': self.user_id},
-                ':task_context': {'S': self.task_context},
-                ':task_type': {'S': self.task_type},
-                ':task_version': {'S': self.task_version},
-                ':instruct_instance': {'S': task_instruct_instance},
-                ':instruct_command': {'S': task_instruct_command},
-                ':instruct_args': {'M': task_instruct_args},
-                ':task_host_name': {'S': task_host_name},
-                ':task_domain_name': {'S': task_domain_name},
-                ':attack_ip': {'S': task_attack_ip},
-                ':local_ip': {'SS': task_local_ip},
-                ':payload': {'S': json_payload}
-            }
-        )
-        assert response, f'add_queue_attribute failed'
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-queue',
+                Key={
+                    'task_name': {'S': self.task_name},
+                    'run_time': {'N': stime}
+                },
+                UpdateExpression='set '
+                                'expire_time=:expire_time, '
+                                'user_id=:user_id, '
+                                'task_context=:task_context, '
+                                'task_type=:task_type, '
+                                'task_version=:task_version, '
+                                'instruct_instance=:instruct_instance, '
+                                'instruct_command=:instruct_command, '
+                                'instruct_args=:instruct_args, '
+                                'task_host_name=:task_host_name, '
+                                'task_domain_name=:task_domain_name,'
+                                'attack_ip=:attack_ip, '
+                                'local_ip=:local_ip, '
+                                'instruct_command_output=:payload',
+                ExpressionAttributeValues={
+                    ':expire_time': {'N': expire_time},
+                    ':user_id': {'S': self.user_id},
+                    ':task_context': {'S': self.task_context},
+                    ':task_type': {'S': self.task_type},
+                    ':task_version': {'S': self.task_version},
+                    ':instruct_instance': {'S': task_instruct_instance},
+                    ':instruct_command': {'S': task_instruct_command},
+                    ':instruct_args': {'M': task_instruct_args},
+                    ':task_host_name': {'S': task_host_name},
+                    ':task_domain_name': {'S': task_domain_name},
+                    ':attack_ip': {'S': task_attack_ip},
+                    ':local_ip': {'SS': task_local_ip},
+                    ':payload': {'S': json_payload}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'queue_attribute_added'
 
     def get_task_entry(self):
         return self.aws_dynamodb_client.get_item(
@@ -92,21 +97,25 @@ class Deliver:
         )
 
     def update_task_entry(self, stime, task_status, task_end_time):
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-tasks',
-            Key={
-                'task_name': {'S': self.task_name}
-            },
-            UpdateExpression='set task_status=:task_status, last_instruct_time=:last_instruct_time, '
-                             'scheduled_end_time=:scheduled_end_time',
-            ExpressionAttributeValues={
-                ':task_status': {'S': task_status},
-                ':last_instruct_time': {'S': stime},
-                ':scheduled_end_time': {'S': task_end_time}
-            }
-        )
-        assert response, f"update_task_entry failed for task_name {self.task_name}"
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-tasks',
+                Key={
+                    'task_name': {'S': self.task_name}
+                },
+                UpdateExpression='set task_status=:task_status, last_instruct_time=:last_instruct_time, '
+                                'scheduled_end_time=:scheduled_end_time',
+                ExpressionAttributeValues={
+                    ':task_status': {'S': task_status},
+                    ':last_instruct_time': {'S': stime},
+                    ':scheduled_end_time': {'S': task_end_time}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'task_entry_updated'
 
     def deliver_result(self):
         # Set vars
@@ -174,11 +183,18 @@ class Deliver:
                 task_instruct_args_fixup[k] = {'BOOL': v}
             if isinstance(v, bytes):
                 task_instruct_args_fixup[k] = {'B': v}
-        self.add_queue_attribute(stime, expiration_stime, task_instruct_instance, task_instruct_command,
-                                 task_instruct_args_fixup, task_attack_ip, task_local_ip, json_payload)
+        add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, task_instruct_instance, 
+                                            task_instruct_command, task_instruct_args_fixup, task_attack_ip, 
+                                            task_local_ip, json_payload)
+        if add_queue_attribute_response != 'queue_attribute_added':
+            return format_response(500, 'failed', f'post_results failed with error {add_queue_attribute_response}', self.log)
         if task_instruct_command == 'terminate':
-            self.update_task_entry(stime, 'terminated', task_end_time)
+            update_task_entry_response = self.update_task_entry(stime, 'terminated', task_end_time)
+            if update_task_entry_response != 'task_entry_updated':
+                return format_response(500, 'failed', f'post_results failed with error {update_task_entry_response}', self.log)
         else:
-            self.update_task_entry(stime, 'idle', task_end_time)
+            update_task_entry_response = self.update_task_entry(stime, 'idle', task_end_time)
+            if update_task_entry_response != 'task_entry_updated':
+                return format_response(500, 'failed', f'post_results failed with error {update_task_entry_response}', self.log)
 
         return format_response(200, 'success', 'post_results succeeded', None)

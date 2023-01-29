@@ -1,4 +1,5 @@
 import json
+import botocore
 import boto3
 import string, random
 
@@ -86,46 +87,51 @@ class Users:
                 'user_id': {'S': user_id}
             }
         )
-        if response:
-            return response
+        return response
 
     def add_user_attribute(self, attributes):
         """Add details to user, create the user if it does not exist"""
         for k, v in attributes.items():
-            response = self.aws_dynamodb_client.update_item(
-                TableName=f'{self.deployment_name}-authorizer',
-                Key={
-                    'user_id': {'S': self.manage_user_id}
-                },
-                UpdateExpression=f'set {k} = :a',
-                ExpressionAttributeValues={':a': {'S': v}}
-            )
-            assert response, f"add_user_attribute failed for {self.manage_user_id}"
+            try:
+                self.aws_dynamodb_client.update_item(
+                    TableName=f'{self.deployment_name}-authorizer',
+                    Key={
+                        'user_id': {'S': self.manage_user_id}
+                    },
+                    UpdateExpression=f'set {k} = :a',
+                    ExpressionAttributeValues={':a': {'S': v}}
+                )
+            except botocore.exceptions.ClientError as error:
+                return error['Error']
+            except botocore.exceptions.ParamValidationError as error:
+                return error['Error']
+        return 'user_attributes_added'
 
     def delete_user_id(self):
         """Deletes a user"""
-        response = self.aws_dynamodb_client.delete_item(
-            TableName=f'{self.deployment_name}-authorizer',
-            Key={
-                'user_id': {'S': self.manage_user_id}
-            }
-        )
-        assert response, f'delete_user_id for {self.manage_user_id} failed'
+        try:
+            self.aws_dynamodb_client.delete_item(
+                TableName=f'{self.deployment_name}-authorizer',
+                Key={
+                    'user_id': {'S': self.manage_user_id}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'user_id_deleted'
 
     def create(self):
         calling_user = self.get_user_details(self.user_id)
         if calling_user['Item']['admin']['S'] != 'yes':
-            response = format_response(403, 'failed', 'not allowed', self.log)
-            return response
-        if 'user_id' in self.detail:
-            self.manage_user_id = self.detail['user_id']
-        else:
-            response = format_response(400, 'failed', 'invalid detail', self.log)
-            return response
+            return format_response(403, 'failed', 'not allowed', self.log)
+        if 'user_id' not in self.detail:
+            return format_response(400, 'failed', 'invalid detail', self.log)
+        self.manage_user_id = self.detail['user_id']
         existing_user = self.get_user_details(self.manage_user_id)
         if 'Item' in existing_user:
-            response = format_response(409, 'failed', f'User ID {self.manage_user_id} already exists', self.log)
-            return response
+            return format_response(409, 'failed', f'user_id {self.manage_user_id} already exists', self.log)
         api_key = None
         while not api_key:
             api_key = generate_string(12)
@@ -139,35 +145,35 @@ class Users:
         else:
             admin = 'no'
         user_attributes = {'api_key': api_key, 'secret': secret, 'admin': admin}
-        self.add_user_attribute(user_attributes)
-        response = format_response(
-            200, 'success', 'create user succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
-            secret=secret, admin=admin
-        )
-        return response
+        add_user_attribute_response = self.add_user_attribute(user_attributes)
+        if add_user_attribute_response == 'user_attributes_added':
+            return format_response(
+                200, 'success', 'user creation succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
+                secret=secret, admin=admin
+            )
+        else:
+            return format_response(500, 'failed', f'user creation failed with error {add_user_attribute_response}', self.log)
 
     def delete(self):
         calling_user = self.get_user_details(self.user_id)
         if calling_user['Item']['admin']['S'] != 'yes':
-            response = format_response(403, 'failed', 'not allowed', self.log)
-            return response
+            return format_response(403, 'failed', 'not allowed', self.log)
         self.manage_user_id = self.detail['user_id']
         if self.user_id == self.manage_user_id:
-            response = format_response(403, 'failed', f'cannot delete calling user', self.log)
-            return response
+            return format_response(403, 'failed', f'cannot delete calling user', self.log)
         exists = self.get_user_details(self.manage_user_id)
         if 'Item' not in exists:
-            response = format_response(404, 'failed', f'user_id {self.manage_user_id} does not exist', self.log)
-            return response
-        self.delete_user_id()
-        response = format_response(200, 'success', 'delete user succeeded', self.log)
-        return response
+            return format_response(404, 'failed', f'user_id {self.manage_user_id} does not exist', self.log)
+        delete_user_id_response = self.delete_user_id()
+        if delete_user_id_response == 'user_id_deleted':
+            return format_response(200, 'success', 'user deletion succeeded', self.log)
+        else:
+            return format_response(500, 'failed', f'user deletion failed with error {delete_user_id_response}', self.log)
 
     def get(self):
         calling_user = self.get_user_details(self.user_id)
         if calling_user['Item']['admin']['S'] != 'yes':
-            response = format_response(403, 'failed', 'not allowed', self.log)
-            return response
+            return format_response(403, 'failed', 'not allowed', self.log)
         if 'user_id' not in self.detail:
             return format_response(400, 'failed', 'invalid detail', self.log)
         self.manage_user_id = self.detail['user_id']
@@ -209,19 +215,19 @@ class Users:
                 secret = generate_string(24, True)
                 user_attributes['api_key'] = api_key
                 user_attributes['secret'] = secret
-                self.add_user_attribute(user_attributes)
-                response = format_response(
-                    200, 'success', 'update user succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
-                    secret=secret
-                )
-                return response
+                add_user_attribute_response = self.add_user_attribute(user_attributes)
+                if add_user_attribute_response == 'user_attributes_added':
+                    return format_response(
+                        200, 'success', 'update user succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
+                        secret=secret
+                    )
+                else:
+                    return format_response(500, 'failed', f'user update failed with error {add_user_attribute_response}', self.log)
             else:
-                response = format_response(403, 'failed', 'not allowed', self.log)
-                return response
+                return format_response(403, 'failed', 'not allowed', self.log)
         exists = self.get_user_details(self.manage_user_id)
         if 'Item' not in exists:
-            response = format_response(404, 'failed', f'user_id {self.manage_user_id} does not exist', self.log)
-            return response
+            return format_response(404, 'failed', f'user_id {self.manage_user_id} does not exist', self.log)
         new_user_id = None
         api_key = None
         secret = None
@@ -248,14 +254,15 @@ class Users:
         if admin.lower() in ['yes', 'no']:
             user_attributes['admin'] = admin
         if not user_attributes:
-            response = format_response(400, 'failed', 'invalid detail', self.log)
-            return response
-        self.add_user_attribute(user_attributes)
-        response = format_response(
-            200, 'success', 'update user succeeded', self.log, user_id=new_user_id, api_key=api_key, secret=secret,
-            admin=admin
-        )
-        return response
+            return format_response(400, 'failed', 'invalid detail', self.log)
+        add_user_attribute_response = self.add_user_attribute(user_attributes)
+        if add_user_attribute_response == 'user_attributes_added':
+            return format_response(
+                200, 'success', 'user update succeeded', self.log, user_id=new_user_id, api_key=api_key, secret=secret,
+                admin=admin
+            )
+        else:
+            return format_response(500, 'failed', f'user update failed with error {add_user_attribute_response}', self.log)
 
     def kill(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)

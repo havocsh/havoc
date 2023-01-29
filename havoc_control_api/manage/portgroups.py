@@ -1,7 +1,7 @@
 import os
 import json
-import boto3
 import botocore
+import boto3
 import time as t
 from datetime import datetime
 
@@ -79,54 +79,52 @@ class Portgroup:
         )
 
     def create_portgroup_entry(self, description, timestamp):
-        ec2_response = self.aws_ec2_client.create_security_group(
-            Description=description,
-            GroupName=self.portgroup_name,
-            VpcId=self.vpc_id
-        )
+        get_portgroup_entry_response = self.get_portgroup_entry()
+        if get_portgroup_entry_response:
+            return 'portgroup_exists'
+        try:
+            ec2_response = self.aws_ec2_client.create_security_group(
+                Description=description,
+                GroupName=self.portgroup_name,
+                VpcId=self.vpc_id
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
         securitygroup_id = ec2_response['GroupId']
         tasks = 'None'
-        dynamodb_response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-portgroups',
-            Key={
-                'portgroup_name': {'S': self.portgroup_name}
-            },
-            UpdateExpression='set securitygroup_id=:securitygroup_id, portgroup_description=:portgroup_description, '
-                             'tasks=:tasks, create_time=:create_time, user_id=:user_id',
-            ExpressionAttributeValues={
-                ':securitygroup_id': {'S': securitygroup_id},
-                ':portgroup_description': {'S': description},
-                ':tasks': {'SS': [tasks]},
-                ':create_time': {'S': timestamp},
-                ':user_id': {'S': self.user_id}
-            }
-        )
-        if securitygroup_id and dynamodb_response:
-            return True
-        else:
-            return False
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-portgroups',
+                Key={
+                    'portgroup_name': {'S': self.portgroup_name}
+                },
+                UpdateExpression='set securitygroup_id=:securitygroup_id, portgroup_description=:portgroup_description, '
+                                'tasks=:tasks, create_time=:create_time, user_id=:user_id',
+                ExpressionAttributeValues={
+                    ':securitygroup_id': {'S': securitygroup_id},
+                    ':portgroup_description': {'S': description},
+                    ':tasks': {'SS': [tasks]},
+                    ':create_time': {'S': timestamp},
+                    ':user_id': {'S': self.user_id}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'portgroup_created'
 
     def delete_portgroup_entry(self, securitygroup_id):
-        count = 1
-        portgroup_deleted = False
-        response = None
-        while not portgroup_deleted:
-            if count <= 5:
-                response = None
-                try:
-                    self.aws_ec2_client.delete_security_group(
-                        GroupId=securitygroup_id
-                    )
-                    portgroup_deleted = True
-                except botocore.exceptions.ClientError as error:
-                    count += 1
-                    t.sleep(10)
-                    response = f'error_code: {error.response["Error"]["Code"]}, ' \
-                               f'error_message: {error.response["Error"]["Message"]}'
-            else:
-                portgroup_deleted = True
-        if response:
-            return response
+        try:
+            self.aws_ec2_client.delete_security_group(
+                GroupId=securitygroup_id
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
 
         try:
             self.aws_dynamodb_client.delete_item(
@@ -136,49 +134,62 @@ class Portgroup:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            response = f'error_code: {error.response["Error"]["Code"]}, ' \
-                       f'error_message: {error.response["Error"]["Message"]}'
-            return response
-        return 'True'
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'portgroup_deleted'
 
     def update_portgroup_entry(self, securitygroup_id, ip_ranges, port, ip_protocol, portgroup_action):
-        response = None
         if portgroup_action == 'add':
-            response = self.aws_ec2_client.authorize_security_group_ingress(
-                GroupId=securitygroup_id,
-                IpPermissions=[
-                    {
-                        'FromPort': port,
-                        'ToPort': port,
-                        'IpProtocol': ip_protocol,
-                        'IpRanges': [
-                            {
-                            'CidrIp': ip_ranges,
-                            'Description': self.user_id
-                            }
-                        ]
-                    }
-                ]
-            )
+            try:
+                authorize_response = self.aws_ec2_client.authorize_security_group_ingress(
+                    GroupId=securitygroup_id,
+                    IpPermissions=[
+                        {
+                            'FromPort': port,
+                            'ToPort': port,
+                            'IpProtocol': ip_protocol,
+                            'IpRanges': [
+                                {
+                                'CidrIp': ip_ranges,
+                                'Description': self.user_id
+                                }
+                            ]
+                        }
+                    ]
+                )
+            except botocore.exceptions.ClientError as error:
+                return error['Error']
+            except botocore.exceptions.ParamValidationError as error:
+                return error['Error']
+            if authorize_response is False:
+                return 'portgroup_update_failed_rule_exists'
+        
         if portgroup_action == 'remove':
-            response = self.aws_ec2_client.revoke_security_group_ingress(
-                GroupId=securitygroup_id,
-                IpPermissions=[
-                    {
-                        'FromPort': port,
-                        'ToPort': port,
-                        'IpProtocol': ip_protocol,
-                        'IpRanges': [
-                            {
-                            'CidrIp': ip_ranges,
-                            'Description': self.user_id
-                            }
-                        ]
-                    }
-                ]
-            )
-        assert response, f"update_portgroup_entry failed for portgroup_name {self.portgroup_name}"
-        return True
+            try:
+                revoke_response = self.aws_ec2_client.revoke_security_group_ingress(
+                    GroupId=securitygroup_id,
+                    IpPermissions=[
+                        {
+                            'FromPort': port,
+                            'ToPort': port,
+                            'IpProtocol': ip_protocol,
+                            'IpRanges': [
+                                {
+                                'CidrIp': ip_ranges,
+                                'Description': self.user_id
+                                }
+                            ]
+                        }
+                    ]
+                )
+            except botocore.exceptions.ClientError as error:
+                return error['Error']
+            except botocore.exceptions.ParamValidationError as error:
+                return error['Error']
+            if revoke_response['Return'] is False:
+                return 'portgroup_update_failed_rule_not_found'
+        return 'portgroup_updated'
 
     def create(self):
         portgroup_details = ['portgroup_name', 'portgroup_description']
@@ -191,17 +202,15 @@ class Portgroup:
         portgroup_description = self.detail['portgroup_description']
         if not portgroup_description:
             return format_response(400, 'failed', 'invalid detail: empty portgroup_description', self.log)
+        
         timestamp = datetime.now().strftime('%s')
-
-        conflict = self.get_portgroup_entry()
-        if 'Item' in conflict:
-            return format_response(409, 'failed', f'{self.portgroup_name} already exists', self.log)
-
-        try:
-            self.create_portgroup_entry(portgroup_description, timestamp)
+        create_portgroup_entry_response = self.create_portgroup_entry(portgroup_description, timestamp)
+        if create_portgroup_entry_response == 'portgroup_created':
             return format_response(200, 'success', 'create portgroup succeeded', None)
-        except:
-            return format_response(500, 'failed', 'create portgroup failed', self.log)
+        elif create_portgroup_entry_response == 'portgroup_exists':
+            return format_response(409, 'failed', f'{self.portgroup_name} already exists', self.log)
+        else:
+            return format_response(500, 'failed', f'portgroup creation failed with error {create_portgroup_entry_response}', self.log)
 
     def delete(self):
         if 'portgroup_name' not in self.detail:
@@ -212,7 +221,7 @@ class Portgroup:
 
         # Get portgroup details
         portgroup_entry = self.get_portgroup_entry()
-        if 'Item' not in portgroup_entry:
+        if not portgroup_entry:
             return format_response(404, 'failed', f'portgroup {self.portgroup_name} does not exist', self.log)
         securitygroup_id = portgroup_entry['Item']['securitygroup_id']['S']
         tasks = portgroup_entry['Item']['tasks']['SS']
@@ -223,10 +232,10 @@ class Portgroup:
 
         # Delete security group
         delete_portgroup = self.delete_portgroup_entry(securitygroup_id)
-        if delete_portgroup == 'True':
+        if delete_portgroup == 'portgroup_deleted':
             return format_response(200, 'success', 'delete portgroup succeeded', None)
         else:
-            return format_response(409, 'failed', delete_portgroup, self.log)
+            return format_response(409, 'failed', f'portgroup deletion failed with error {delete_portgroup}', self.log)
 
     def get(self):
         if 'portgroup_name' not in self.detail:
@@ -236,7 +245,7 @@ class Portgroup:
             return format_response(400, 'failed', 'invalid detail: empty portgroup_name', self.log)
 
         portgroup_entry = self.get_portgroup_entry()
-        if 'Item' not in portgroup_entry:
+        if not portgroup_entry:
             return format_response(404, 'failed', f'portgroup {self.portgroup_name} does not exist', self.log)
 
         securitygroup_id = portgroup_entry['Item']['securitygroup_id']['S']
@@ -296,19 +305,21 @@ class Portgroup:
 
         # Get portgroup details
         portgroup_entry = self.get_portgroup_entry()
-        if 'Item' not in portgroup_entry:
+        if not portgroup_entry:
             return format_response(404, 'failed', f'portgroup {self.portgroup_name} does not exist', self.log)
         securitygroup_id = portgroup_entry['Item']['securitygroup_id']['S']
 
         # Update security group
-        try:
-            self.update_portgroup_entry(securitygroup_id, ip_ranges, port, ip_protocol, portgroup_action)
+        
+        update_portgroup_entry_response = self.update_portgroup_entry(securitygroup_id, ip_ranges, port, ip_protocol, portgroup_action)
+        if update_portgroup_entry_response == 'portgroup_updated':
             return format_response(200, 'success', 'update portgroup succeeded', None)
-        except:
-            if portgroup_action == 'add':
-                return format_response(409, 'failed', 'portgroup rule already exists', self.log)
-            else:
-                return format_response(404, 'failed', 'portgroup rule not found', self.log)
+        elif update_portgroup_entry_response == 'portgroup_update_failed_rule_exists':
+            return format_response(409, 'failed', 'portgroup rule already exists', self.log)
+        elif update_portgroup_entry_response == 'portgroup_update_failed_rule_not_found':
+            return format_response(404, 'failed', 'portgroup rule not found', self.log)
+        else:
+            return format_response(500, 'failed', f'updating portgroup rule failed with error {update_portgroup_entry_response}', self.log)
 
     def kill(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)

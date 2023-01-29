@@ -1,4 +1,5 @@
 import json
+import botocore
 import boto3
 
 
@@ -74,97 +75,129 @@ class Registration:
         )
 
     def add_task_type_entry(self, task_definition_arn):
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-task-types',
-            Key={
-                'task_type': {'S': self.task_type}
-            },
-            UpdateExpression='set '
-                             'task_type=:task_type, '
-                             'source_image=:source_image, '
-                             'created_by=:created_by, '
-                             'task_definition_arn=:task_definition_arn, '
-                             'capabilities=:capabilities, '
-                             'cpu=:cpu, '
-                             'memory=:memory',
-            ExpressionAttributeValues={
-                ':task_type': {'S': self.task_type},
-                ':task_version': {'S': self.task_version}, 
-                ':source_image': {'S': self.source_image},
-                ':created_by': {'S': self.user_id},
-                ':task_definition_arn': {'S': task_definition_arn},
-                ':capabilities': {'SS': self.capabilities},
-                ':cpu': {'N': self.cpu},
-                ':memory': {'N': self.memory}
-            }
-        )
-        assert response, f"add_task_type_entry failed for task_type {self.task_type}"
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-task-types',
+                Key={
+                    'task_type': {'S': self.task_type}
+                },
+                UpdateExpression='set '
+                                'task_type=:task_type, '
+                                'source_image=:source_image, '
+                                'created_by=:created_by, '
+                                'task_definition_arn=:task_definition_arn, '
+                                'capabilities=:capabilities, '
+                                'cpu=:cpu, '
+                                'memory=:memory',
+                ExpressionAttributeValues={
+                    ':task_type': {'S': self.task_type},
+                    ':task_version': {'S': self.task_version}, 
+                    ':source_image': {'S': self.source_image},
+                    ':created_by': {'S': self.user_id},
+                    ':task_definition_arn': {'S': task_definition_arn},
+                    ':capabilities': {'SS': self.capabilities},
+                    ':cpu': {'N': self.cpu},
+                    ':memory': {'N': self.memory}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'task_type_entry_created'
 
     def remove_task_type_entry(self):
-        response = self.aws_dynamodb_client.delete_item(
-            TableName=f'{self.deployment_name}-task-types',
-            Key={
-                'task_type': {'S': self.task_type}
-            }
-        )
-        assert response, f"remove_task_type_entry failed for task_type {self.task_type}"
-        return True
+        try:
+            self.aws_dynamodb_client.delete_item(
+                TableName=f'{self.deployment_name}-task-types',
+                Key={
+                    'task_type': {'S': self.task_type}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'task_type_entry_removed'
 
     def add_ecs_task_definition(self):
-        response = self.aws_ecs_client.register_task_definition(
-            family=f'{self.deployment_name}-{self.task_type}',
-            taskRoleArn=f'{self.deployment_name}-task-role',
-            executionRoleArn=f'{self.deployment_name}-execution-role',
-            networkMode='awsvpc',
-            containerDefinitions=[
-                {
-                    'name': f'{self.deployment_name}-{self.task_type}',
-                    'image': self.source_image,
-                    'essential': True,
-                    'entryPoint': [
-                        '/bin/bash', '-c'
-                    ],
-                    'command': [
-                        '/usr/bin/supervisord', '-c', '/etc/supervisor/conf.d/supervisord.conf'
-                    ],
-                    'logConfiguration': {
-                        'logDriver': 'awslogs',
-                        'options': {
-                            'awslogs-group': self.deployment_name,
-                            'awslogs-region': self.region,
-                            'awslogs-stream-prefix': self.task_type
+        existing_task_type = self.get_task_type_entry()
+        if existing_task_type:
+            return 'task_type_exists'
+        try:
+            task_registration = self.aws_ecs_client.register_task_definition(
+                family=f'{self.deployment_name}-{self.task_type}',
+                taskRoleArn=f'{self.deployment_name}-task-role',
+                executionRoleArn=f'{self.deployment_name}-execution-role',
+                networkMode='awsvpc',
+                containerDefinitions=[
+                    {
+                        'name': f'{self.deployment_name}-{self.task_type}',
+                        'image': self.source_image,
+                        'essential': True,
+                        'entryPoint': [
+                            '/bin/bash', '-c'
+                        ],
+                        'command': [
+                            '/usr/bin/supervisord', '-c', '/etc/supervisor/conf.d/supervisord.conf'
+                        ],
+                        'logConfiguration': {
+                            'logDriver': 'awslogs',
+                            'options': {
+                                'awslogs-group': self.deployment_name,
+                                'awslogs-region': self.region,
+                                'awslogs-stream-prefix': self.task_type
+                            }
                         }
                     }
-                }
-            ],
-            requiresCompatibilities=['FARGATE'],
-            cpu=self.cpu,
-            memory=self.memory,
-            tags=[
-                {
-                    'key': 'deployment_name',
-                    'value': self.deployment_name
-                },
-                {
-                    'key': 'name',
-                    'value': f'{self.deployment_name}-{self.task_type}'
-                },
-                {
-                    'key': 'task_version',
-                    'value': f'{self.task_version}'
-                }
-            ]
-        )
-        assert response, f"add_ecs_task_definition failed for task_type {self.task_type}"
-        return response
+                ],
+                requiresCompatibilities=['FARGATE'],
+                cpu=self.cpu,
+                memory=self.memory,
+                tags=[
+                    {
+                        'key': 'deployment_name',
+                        'value': self.deployment_name
+                    },
+                    {
+                        'key': 'name',
+                        'value': f'{self.deployment_name}-{self.task_type}'
+                    },
+                    {
+                        'key': 'task_version',
+                        'value': f'{self.task_version}'
+                    }
+                ]
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        task_definition_arn = task_registration['taskDefinition']['taskDefinitionArn']
+        add_task_type_entry_response = self.add_task_type_entry(task_definition_arn)
+        if add_task_type_entry_response == 'task_type_entry_created':
+            return 'task_type_created'
+        else:
+            return add_task_type_entry_response
 
-    def remove_ecs_task_definition(self, task_definition_arn):
-        response = self.aws_ecs_client.deregister_task_definition(
-            taskDefinition=task_definition_arn
-        )
-        assert response, f"remove_ecs_task_definition failed for task_type {self.task_type}"
-        return True
+    def remove_ecs_task_definition(self):
+        task_type = self.get_task_type_entry()
+        if not task_type:
+            return 'task_type_not_found'
+        task_definition_arn = task_type['Item']['task_definition_arn']['S']
+        try:
+            self.aws_ecs_client.deregister_task_definition(
+                taskDefinition=task_definition_arn
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        remove_task_type_entry_response = self.remove_task_type_entry()
+        if remove_task_type_entry_response == 'task_type_entry_removed':
+            return 'task_definition_removed'
+        else:
+            return remove_task_type_entry_response
 
     def create(self):
         task_details = ['task_type', 'task_version', 'source_image', 'capabilities', 'cpu', 'memory']
@@ -178,41 +211,30 @@ class Registration:
         self.cpu = self.detail['cpu']
         self.memory = self.detail['memory']
 
-        # Verify that the task_type is unique
-        conflict = self.get_task_type_entry()
-        if conflict:
+        # Attempt ECS task definition registration and return result
+        add_ecs_task_definition_response = self.add_ecs_task_definition()
+        if add_ecs_task_definition_response == 'task_type_exists':
             return format_response(409, 'failed', f'task_type {self.task_type} already exists', self.log)
-
-        # Add task type entry to task_types table in DynamoDB
-        task_definition = self.add_ecs_task_definition()
-        if task_definition['taskDefinition']['taskDefinitionArn']:
-            task_definition_arn = task_definition['taskDefinition']['taskDefinitionArn']
+        elif add_ecs_task_definition_response == 'task_type_created':
+            return format_response(200, 'success', 'task_type creation succeeded', None)
         else:
-            return format_response(500, 'failed', f'create task_type failed for {self.task_type}', None)
-        self.add_task_type_entry(task_definition_arn)
-
-        # Send response
-        return format_response(200, 'success', 'create task_type succeeded', None)
+            return format_response(500, 'failed', f'task_type creation failed with error {add_ecs_task_definition_response}', self.log)
 
     def delete(self):
         if 'task_type' not in self.detail:
             return format_response(400, 'failed', 'invalid detail', self.log)
         self.task_type = self.detail['task_type']
-
-        # Verify that the task_type exists
-        exists = self.get_task_type_entry()
-        if not exists:
+        
+        # Attempt ECS task definition removal
+        remove_ecs_task_definition_response = self.remove_ecs_task_definition()
+        if remove_ecs_task_definition_response == 'task_type_not_found':
             return format_response(404, 'failed', f'task_type {self.task_type} does not exist', self.log)
-
-        # Remove task type entry from task_types table in DynamoDB
-        task_definition_arn = exists['Item']['task_definition_arn']['S']
-        remove_ecs_task = self.remove_ecs_task_definition(task_definition_arn)
-        if not remove_ecs_task:
-            return format_response(500, 'failed', f'delete task_type failed for {self.task_type}', None)
-        self.remove_task_type_entry()
-
-        # Send response
-        return format_response(200, 'success', 'delete task_type succeeded', None)
+        elif remove_ecs_task_definition_response == 'task_definition_removed':
+            return format_response(200, 'success', 'delete task_type succeeded', None)
+        else:
+            return format_response(500, 'failed', f'task_type deletion failed with error {remove_ecs_task_definition_response}', self.log)
+        
+        
 
     def get(self):
         if 'task_type' not in self.detail:
@@ -227,8 +249,6 @@ class Registration:
         created_by = task_type_entry['Item']['created_by']['S']
         cpu = task_type_entry['Item']['cpu']['N']
         memory = task_type_entry['Item']['memory']['N']
-
-        # Send response
         return format_response(
             200, 'success', 'get task_type succeeded', None, task_type=self.task_type, task_version=task_version,
             capabilities=capabilities, source_image=source_image, created_by=created_by, cpu=cpu, memory=memory
@@ -240,8 +260,6 @@ class Registration:
         for item in task_types['Items']:
             task_type = item['task_type']['S']
             task_types_list.append(task_type)
-
-        # Send response
         return format_response(200, 'success', 'list task_type succeeded', None, task_types=task_types_list)
 
     def kill(self):

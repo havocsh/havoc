@@ -253,7 +253,8 @@ class ManageDeployment:
             self.deployment_version,
             deployment_admin_email,
             results_queue_expiration,
-            api_domain_name, api_region, 
+            api_domain_name,
+            api_region,
             tfstate_s3_bucket, 
             tfstate_s3_key, 
             tfstate_s3_region, 
@@ -265,9 +266,74 @@ class ManageDeployment:
             print('Correct the errors above and run "./havoc --deployment connect_tf_backend" if you would like to have your Terraform state stored in S3.')
         return 'completed'
 
+    def modify(self):
+        # Setup method for modifying deployment parameters. Re-run terraform apply after changes.
+        print('\nAvailable parameters:\n[1] AWS Profile\n[2] Deployment Admin Email\n[3] Results Queue Expiration Time\n')
+        parameters = {}
+        deployment_update = {}
+        mod = True
+        while mod:
+            try:
+                parameter_input = input('Enter the number of the parameter you would like to modify: ')
+                if parameter_input == '1':
+                    parameters['aws_profile'] = input('Enter the desired AWS profile to be used by Terraform: ')
+                if parameter_input == '2':
+                    deployment_admin_email = input('Enter the desired ./HAVOC deployment administrator email: ')
+                    parameters['deployment_admin_email'] = deployment_admin_email
+                    deployment_update['deployment_admin_email'] = deployment_admin_email
+                if parameter_input == '3':
+                    results_queue_expiration = input('Enter the desired task results queue expiration time in number of days: ')
+                    parameters['results_queue_expiration'] = results_queue_expiration
+                    deployment_update['results_queue_expiration'] = results_queue_expiration
+                mod = input('\nWould you like to modify another paramenter? (y|n): ')
+                if mod in ['n', 'N', 'no', 'No', 'NO'] or mod is None:
+                    mod = False
+            except KeyboardInterrupt:
+                print('Ctrl+C detected. Skipping parameter.')
+                mod = False
+        if parameters is None:
+            print('No parameters entered. Exiting.')
+            return 'completed'
+
+        # Read existing tfvars file and extract combine existing parameters with modified parameters.
+        with open('havoc-deploy/aws/terraform/terraform.tfvars', 'r') as f:
+            for line in f:
+                if '=' in line:
+                    parameter_key = line.split(' = ')[0].rstrip()
+                    parameter_value = line.split(' = ')[1].rstrip().replace('"', '')
+                    if parameter_key not in parameters:
+                        parameters[parameter_key] = parameter_value
+        
+        with open('havoc-deploy/aws/terraform/terraform.tfvars', 'w') as f:
+            for k,v in parameters.items():
+                f.write(f'{k} = "{v}"')
+            
+
+        # Run Terraform and check for errors:
+        print('Initializing Terraform...\n')
+        return_code, stdout, stderr = self.tf.init()
+        if stderr:
+            print('\nInitializing Terraform encountered errors:\n')
+            print(stderr)
+            return 'failed'
+        print('Starting Terraform tasks.\n')
+        return_code, stdout, stderr = self.tf.apply()
+        if stderr:
+            print('\nTerraform deployment encountered errors:\n')
+            print(stderr)
+            print('Review errors above, correct the reported issues and try again.')
+            return 'failed'
+        print('Terraform deployment tasks completed.')
+        self.havoc_client.update_deployment(deployment_update)
+        return 'completed'
+
     def update(self):
         # Check for existing deployment
-        if not os.path.isfile('havoc-deploy/aws/terraform/terraform.tfstate'):
+        if not os.path.exists('havoc-deploy/aws/terraform/terraform.tfstate'):
+            no_local_tfstate = True
+        if not os.path.exists('havoc-deploy/aws/terraform/terraform_backend.tf'):
+            no_remote_tfstate = True
+        if no_local_tfstate and no_remote_tfstate:
             print('\nNo existing deployment found.\n')
             print('Perform the update from the system that created the ./HAVOC deployment.\n')
             print('Alternatively, you can connect this system to the Terraform deployment with the "./havoc --deployment connect_tf_backend" command.\n')
@@ -282,11 +348,16 @@ class ManageDeployment:
             print('Review errors above, correct the reported issues and try the update again.')
             return 'failed'
         print('\nTerraform tasks completed.\n')
+        self.havoc_client.update_deployment(self.deployment_version)
         return 'completed'
     
     def remove(self):
         # Check for existing deployment
-        if not os.path.isfile('havoc-deploy/aws/terraform/terraform.tfstate'):
+        if not os.path.exists('havoc-deploy/aws/terraform/terraform.tfstate'):
+            no_local_tfstate = True
+        if not os.path.exists('havoc-deploy/aws/terraform/terraform_backend.tf'):
+            no_remote_tfstate = True
+        if no_local_tfstate and no_remote_tfstate:
             print('\nNo existing deployment found.\n')
             print('Perform the update from the system that created the ./HAVOC deployment.\n')
             print('Alternatively, you can connect this system to the Terraform deployment with the "./havoc --deployment connect_tf_backend" command.\n')
@@ -306,4 +377,8 @@ class ManageDeployment:
         print('Deleting local Terraform state.\n')
         if os.path.exists('havoc-deploy/aws/terraform/terraform.tfstate'):
             os.remove('havoc-deploy/aws/terraform/terraform.tfstate')
+        if os.path.exists('havoc-deploy/aws/terraform/terraform_backend.tf'):
+            os.remove('havoc-deploy/aws/terraform/terraform_backend.tf')
+        if os.path.exists('havoc-deploy/aws/terraform/terraform.tfvars'):
+            os.remove('havoc-deploy/aws/terraform/terraform.tfvars')
         return 'completed'

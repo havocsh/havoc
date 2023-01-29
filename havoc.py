@@ -21,7 +21,7 @@ init_parser.add_argument('--add_profile', help='Add a profile to your local .hav
 init_parser.add_argument('--remove_profile', help='Remove a profile from your local .havoc/profiles file.')
 init_parser.add_argument('--list_profiles', help='List the profiles in your local .havoc/profiles file.')
 init_parser.add_argument('--profile', help='Specify a profile to use when launching the ./HAVOC CLI.')
-init_parser.add_argument('--deployment', help='Manage your ./HAVOC deployment (create|remove|update|get_deployment|connect_tf_backend|disconnect_tf_backend).')
+init_parser.add_argument('--deployment', help='Manage your ./HAVOC deployment (create|modify|update|remove|get_deployment|connect_tf_backend|disconnect_tf_backend).')
 init_args = init_parser.parse_args()
 
 
@@ -104,6 +104,8 @@ if __name__ == "__main__":
         m = ManageDeployment(tf_bin(), deployment_version, profile)
         if init_args.deployment == 'create':
             deploy_task = m.create()
+        if init_args.deployment == 'modify':
+            deploy_task = m.modify()
         if init_args.deployment == 'update':
             deploy_task = m.update()
         if init_args.deployment == 'remove':

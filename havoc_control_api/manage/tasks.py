@@ -1,4 +1,5 @@
 import json
+import botocore
 import boto3
 
 
@@ -59,43 +60,51 @@ class Tasks:
         )
 
     def update_domain_entry(self, domain_name, domain_tasks, host_names):
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-domains',
-            Key={
-                'domain_name': {'S': domain_name}
-            },
-            UpdateExpression='set tasks=:tasks, host_names=:host_names',
-            ExpressionAttributeValues={
-                ':tasks': {'SS': domain_tasks},
-                ':host_names': {'SS': host_names}
-            }
-        )
-        assert response, f"update_domain_entry failed for domain_name {domain_name}"
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-domains',
+                Key={
+                    'domain_name': {'S': domain_name}
+                },
+                UpdateExpression='set tasks=:tasks, host_names=:host_names',
+                ExpressionAttributeValues={
+                    ':tasks': {'SS': domain_tasks},
+                    ':host_names': {'SS': host_names}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'domain_entry_updated'
 
     def delete_resource_record_set(self, hosted_zone, host_name, domain_name, ip_address):
-        response = self.aws_route53_client.change_resource_record_sets(
-            HostedZoneId=hosted_zone,
-            ChangeBatch={
-                'Changes': [
-                    {
-                        'Action': 'DELETE',
-                        'ResourceRecordSet': {
-                            'Name': f'{host_name}.{domain_name}',
-                            'Type': 'A',
-                            'TTL': 300,
-                            'ResourceRecords': [
-                                {
-                                    'Value': ip_address
-                                }
-                            ]
+        try:
+            self.aws_route53_client.change_resource_record_sets(
+                HostedZoneId=hosted_zone,
+                ChangeBatch={
+                    'Changes': [
+                        {
+                            'Action': 'DELETE',
+                            'ResourceRecordSet': {
+                                'Name': f'{host_name}.{domain_name}',
+                                'Type': 'A',
+                                'TTL': 300,
+                                'ResourceRecords': [
+                                    {
+                                        'Value': ip_address
+                                    }
+                                ]
+                            }
                         }
-                    }
-                ]
-            }
-        )
-        if response:
-            return True
+                    ]
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'resource_record_deleted'
 
     def get_portgroup_entry(self, portgroup_name):
         return self.aws_dynamodb_client.get_item(
@@ -106,18 +115,22 @@ class Tasks:
         )
 
     def update_portgroup_entry(self, portgroup_name, portgroup_tasks):
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-portgroups',
-            Key={
-                'portgroup_name': {'S': portgroup_name}
-            },
-            UpdateExpression='set tasks=:tasks',
-            ExpressionAttributeValues={
-                ':tasks': {'SS': portgroup_tasks}
-            }
-        )
-        assert response, f"update_portgroup_entry failed for portgroup_name {portgroup_name}"
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-portgroups',
+                Key={
+                    'portgroup_name': {'S': portgroup_name}
+                },
+                UpdateExpression='set tasks=:tasks',
+                ExpressionAttributeValues={
+                    ':tasks': {'SS': portgroup_tasks}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'portgroup_entry_updated'
 
     def query_tasks(self):
         tasks = {'Items': []}
@@ -143,28 +156,81 @@ class Tasks:
         )
 
     def update_task_entry(self, task_status):
-        return self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-tasks',
-            Key={
-                'task_name': {'S': self.task_name}
-            },
-            UpdateExpression='set task_status=:task_status',
-            ExpressionAttributeValues={
-                ':task_status': {'S': task_status}
-            }
-        )
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-tasks',
+                Key={
+                    'task_name': {'S': self.task_name}
+                },
+                UpdateExpression='set task_status=:task_status',
+                ExpressionAttributeValues={
+                    ':task_status': {'S': task_status}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'task_entry_updated'
 
-    def stop_ecs_task(self, ecs_task_id):
-        response = self.aws_ecs_client.stop_task(
-            cluster=f'{self.deployment_name}-cluster',
-            task=ecs_task_id,
-            reason=f'Task stopped by {self.user_id}'
-        )
-        assert response, f"stop_ecs_task failed for task_name {self.task_name}, ecs_task_id {ecs_task_id}"
-        return True
+    def terminate_task(self):
+        task_entry = self.get_task_entry()
+        if not task_entry:
+            return 'task_not_found'
+        ecs_task_id = task_entry['Item']['ecs_task_id']['S']
+        if ecs_task_id == 'remote_task':
+            update_task_entry_response = self.update_task_entry('terminated')
+            if update_task_entry_response == 'task_entry_updated':
+                return 'task_terminated'
+            else:
+                return update_task_entry_response
+        portgroups = task_entry['Item']['portgroups']['SS']
+        for portgroup in portgroups:
+            if portgroup != 'None':
+                portgroup_entry = self.get_portgroup_entry(portgroup)
+                tasks = portgroup_entry['Item']['tasks']['SS']
+                tasks.remove(self.task_name)
+                if not tasks:
+                    tasks.append('None')
+                portgroup_entry_update = self.update_portgroup_entry(portgroup, tasks)
+                if portgroup_entry_update != 'portgroup_entry_updated':
+                    return portgroup_entry_update
+        try:
+            self.aws_ecs_client.stop_task(
+                cluster=f'{self.deployment_name}-cluster',
+                task=ecs_task_id,
+                reason=f'Task stopped by {self.user_id}'
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        if task_entry['Item']['task_domain_name']['S'] != 'None':
+            task_attack_ip = task_entry['Item']['attack_ip']['S']
+            task_host_name = task_entry['Item']['task_host_name']['S']
+            task_domain_name = task_entry['Item']['task_domain_name']['S']
+            domain_entry = self.get_domain_entry(task_domain_name)
+            hosted_zone = domain_entry['Item']['hosted_zone']['S']
+            tasks = domain_entry['Item']['tasks']['SS']
+            tasks.remove(self.task_name)
+            if not tasks:
+                tasks.append('None')
+            domain_host_names = domain_entry['Item']['host_names']['SS']
+            domain_host_names.remove(task_host_name)
+            if not domain_host_names:
+                domain_host_names.append('None')
+            update_domain_entry_response = self.update_domain_entry(task_domain_name, tasks, domain_host_names)
+            if update_domain_entry_response != 'domain_entry_updated':
+                return update_domain_entry_response
+            delete_resource_record_set_response = self.delete_resource_record_set(hosted_zone, task_host_name, task_domain_name, task_attack_ip)
+            if delete_resource_record_set_response != 'resource_record_deleted':
+                return delete_resource_record_set_response
+        update_task_entry_response = self.update_task_entry('terminated')
+        if update_task_entry_response != 'task_entry_updated':
+            return update_task_entry_response
+        return 'task_terminated'
 
     def get(self):
-
         if 'task_name' not in self.detail:
             return format_response(400, 'failed', 'invalid detail', self.log)
         self.task_name = self.detail['task_name']
@@ -219,43 +285,13 @@ class Tasks:
             return format_response(400, 'failed', 'invalid detail', self.log)
         self.task_name = self.detail['task_name']
 
-        task_entry = self.get_task_entry()
-        if 'Item' not in task_entry:
+        terminate_task_response = self.terminate_task()
+        if terminate_task_response == 'task_not_found':
             return format_response(404, 'failed', f'task {self.task_name} does not exist', self.log)
-
-        ecs_task_id = task_entry['Item']['ecs_task_id']['S']
-        if ecs_task_id == 'remote_task':
-            self.update_task_entry('terminated')
+        elif terminate_task_response == 'task_terminated':
             return format_response(200, 'success', 'kill task succeeded', None)
         else:
-            portgroups = task_entry['Item']['portgroups']['SS']
-            for portgroup in portgroups:
-                if portgroup != 'None':
-                    portgroup_entry = self.get_portgroup_entry(portgroup)
-                    tasks = portgroup_entry['Item']['tasks']['SS']
-                    tasks.remove(self.task_name)
-                    if not tasks:
-                        tasks.append('None')
-                    self.update_portgroup_entry(portgroup, tasks)
-            self.stop_ecs_task(ecs_task_id)
-            if task_entry['Item']['task_domain_name']['S'] != 'None':
-                task_attack_ip = task_entry['Item']['attack_ip']['S']
-                task_host_name = task_entry['Item']['task_host_name']['S']
-                task_domain_name = task_entry['Item']['task_domain_name']['S']
-                domain_entry = self.get_domain_entry(task_domain_name)
-                hosted_zone = domain_entry['Item']['hosted_zone']['S']
-                tasks = domain_entry['Item']['tasks']['SS']
-                tasks.remove(self.task_name)
-                if not tasks:
-                    tasks.append('None')
-                domain_host_names = domain_entry['Item']['host_names']['SS']
-                domain_host_names.remove(task_host_name)
-                if not domain_host_names:
-                    domain_host_names.append('None')
-                self.update_domain_entry(task_domain_name, tasks, domain_host_names)
-                self.delete_resource_record_set(hosted_zone, task_host_name, task_domain_name, task_attack_ip)
-            self.update_task_entry('terminated')
-            return format_response(200, 'success', 'kill task succeeded', None)
+            return format_response(500, 'failed', f'kill task failed with error {terminate_task_response}', self.log)
 
     def list(self):
         if 'task_name_contains' in self.detail:

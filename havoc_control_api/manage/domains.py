@@ -1,4 +1,5 @@
 import json
+import botocore
 import boto3
 
 
@@ -71,54 +72,74 @@ class Domain:
 
     def verify_hosted_zone(self):
         try:
-            response = self.aws_route53_client.get_hosted_zone(
+            zone = self.aws_route53_client.get_hosted_zone(
                 Id=self.hosted_zone
             )
-        except Exception as e:
-            print(e)
-            return False
-        if response:
-            if response['HostedZone']['Name'] == self.domain_name + '.':
-                return True
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        if zone:
+            if zone['HostedZone']['Name'] == self.domain_name + '.':
+                return 'valid_domain'
             else:
-                return False
-        return False
+                return 'invalid_domain'
+        return 'invalid_domain'
 
     def create_domain_entry(self):
+        existing_domain = self.get_domain_entry()
+        if 'Item' in existing_domain:
+            return 'domain_exists'
+        valid_domain = self.verify_hosted_zone()
+        if valid_domain != 'valid_domain':
+            return valid_domain
         api_domain = 'no'
         tasks = 'None'
         host_names = 'None'
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-domains',
-            Key={
-                'domain_name': {'S': self.domain_name}
-            },
-            UpdateExpression='set hosted_zone=:hosted_zone, api_domain=:api_domain, tasks=:tasks, '
-                             'host_names=:host_names, user_id=:user_id',
-            ExpressionAttributeValues={
-                ':hosted_zone': {'S': self.hosted_zone},
-                ':api_domain': {'S': api_domain},
-                ':tasks': {'SS': [tasks]},
-                ':host_names': {'SS': [host_names]},
-                ':user_id': {'S': self.user_id}
-            }
-        )
-        if response:
-            return True
-        else:
-            return False
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-domains',
+                Key={
+                    'domain_name': {'S': self.domain_name}
+                },
+                UpdateExpression='set hosted_zone=:hosted_zone, api_domain=:api_domain, tasks=:tasks, '
+                                'host_names=:host_names, user_id=:user_id',
+                ExpressionAttributeValues={
+                    ':hosted_zone': {'S': self.hosted_zone},
+                    ':api_domain': {'S': api_domain},
+                    ':tasks': {'SS': [tasks]},
+                    ':host_names': {'SS': [host_names]},
+                    ':user_id': {'S': self.user_id}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'domain_created'
 
     def delete_domain_entry(self):
-        response = self.aws_dynamodb_client.delete_item(
-            TableName=f'{self.deployment_name}-domains',
-            Key={
-                'domain_name': {'S': self.domain_name}
-            }
-        )
-        if response:
-            return True
-        else:
-            return False
+        domain_entry = self.get_domain_entry()
+        if not domain_entry:
+            return 'domain_entry_not_found'
+        api_domain = domain_entry['Item']['api_domain']['S']
+        tasks = domain_entry['Item']['tasks']['SS']
+        if api_domain == 'yes':
+            return 'is_api_domain'
+        if 'None' not in tasks:
+            return 'has_associated_tasks'
+        try:
+            self.aws_dynamodb_client.delete_item(
+                TableName=f'{self.deployment_name}-domains',
+                Key={
+                    'domain_name': {'S': self.domain_name}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'domain_deleted'
 
     def create(self):
         domain_details = ['domain_name', 'hosted_zone']
@@ -128,44 +149,34 @@ class Domain:
         self.domain_name = self.detail['domain_name']
         self.hosted_zone = self.detail['hosted_zone']
 
-        conflict = self.get_domain_entry()
-        if 'Item' in conflict:
+        # Create domain entry
+        create_domain_entry_response = self.create_domain_entry()
+        if create_domain_entry_response == 'domain_exists':
             return format_response(409, 'failed', f'{self.domain_name} already exists', self.log)
-
-        valid_domain = self.verify_hosted_zone()
-        if not valid_domain:
+        elif create_domain_entry_response == 'invalid_domain':
             return format_response(404, 'failed', f'hosted_zone {self.hosted_zone} does not exist', self.log)
-        response = self.create_domain_entry()
-        if response:
+        elif create_domain_entry_response == 'domain_created':
             return format_response(200, 'success', 'create domain succeeded', None)
-        return format_response(500, 'failed', 'create domain failed', self.log)
+        else:
+            return format_response(500, 'failed', f'domain creation failed with error {create_domain_entry_response}', self.log)
 
     def delete(self):
         if 'domain_name' not in self.detail:
             return format_response(400, 'failed', 'invalid detail', self.log)
         self.domain_name = self.detail['domain_name']
 
-        # Get domain details
-        domain_entry = self.get_domain_entry()
-        if 'Item' not in domain_entry:
+        # Delete domain entry
+        delete_domain_entry_response = self.delete_domain_entry()
+        if delete_domain_entry_response == 'domain_entry_not_found':
             return format_response(404, 'failed', f'domain {self.domain_name} does not exist', self.log)
-        api_domain = domain_entry['Item']['api_domain']['S']
-        tasks = domain_entry['Item']['tasks']['SS']
-
-        # Verify that domain is not the api_domain
-        if api_domain == 'yes':
+        elif delete_domain_entry_response == 'is_api_domain':
             return format_response(409, 'failed', 'cannot delete the primary API domain', self.log)
-
-        # Verify that domain is not associated with active tasks
-        if 'None' not in tasks:
+        elif delete_domain_entry_response == 'has_associated_tasks':
             return format_response(409, 'failed', 'cannot delete domain that is assigned to active tasks', self.log)
-
-        # Delete Domain
-        try:
-            self.delete_domain_entry()
-            return format_response(200, 'success', 'delete domain succeeded', None)
-        except:
-            return format_response(500, 'failed', 'delete domain failed', self.log)
+        elif delete_domain_entry_response == 'domain_deleted':
+            return format_response(200, 'success', 'domain deletion succeeded', None)
+        else:
+            return format_response(500, 'failed', f'domain deletion failed with error {delete_domain_entry_response}', self.log)
 
     def get(self):
         if 'domain_name' not in self.detail:

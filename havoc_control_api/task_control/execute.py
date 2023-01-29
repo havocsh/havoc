@@ -1,5 +1,6 @@
 import re
 import json
+import botocore
 import boto3
 from datetime import datetime
 import time as t
@@ -85,46 +86,52 @@ class Task:
             }
         )
 
-    def create_resource_record(self, hosted_zone, host_name, domain_name, ip_address):
-        response = self.aws_route53_client.change_resource_record_sets(
-            HostedZoneId=hosted_zone,
-            ChangeBatch={
-                'Changes': [
-                    {
-                        'Action': 'UPSERT',
-                        'ResourceRecordSet':{
-                            'Name': f'{host_name}.{domain_name}',
-                            'Type': 'A',
-                            'TTL': 300,
-                            'ResourceRecords': [
-                                {
-                                    'Value': ip_address
-                                }
-                            ]
+    def create_resource_record_set(self, hosted_zone, host_name, domain_name, ip_address):
+        try:
+            self.aws_route53_client.change_resource_record_sets(
+                HostedZoneId=hosted_zone,
+                ChangeBatch={
+                    'Changes': [
+                        {
+                            'Action': 'UPSERT',
+                            'ResourceRecordSet':{
+                                'Name': f'{host_name}.{domain_name}',
+                                'Type': 'A',
+                                'TTL': 300,
+                                'ResourceRecords': [
+                                    {
+                                        'Value': ip_address
+                                    }
+                                ]
+                            }
                         }
-                    }
-                ]
-            }
-        )
-        if response:
-            return True
-        else:
-            return False
+                    ]
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'resource_record_set_created'
 
     def update_domain_entry(self, domain_name, domain_tasks, host_names):
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-domains',
-            Key={
-                'domain_name': {'S': domain_name}
-            },
-            UpdateExpression='set tasks=:tasks, host_names=:host_names',
-            ExpressionAttributeValues={
-                ':tasks': {'SS': domain_tasks},
-                ':host_names': {'SS': host_names}
-            }
-        )
-        assert response, f"update_domain_entry failed for domain_name {domain_name}"
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-domains',
+                Key={
+                    'domain_name': {'S': domain_name}
+                },
+                UpdateExpression='set tasks=:tasks, host_names=:host_names',
+                ExpressionAttributeValues={
+                    ':tasks': {'SS': domain_tasks},
+                    ':host_names': {'SS': host_names}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'domain_entry_updated'
 
     def get_task_type_entry(self):
         return self.aws_dynamodb_client.get_item(
@@ -151,18 +158,22 @@ class Task:
         )
 
     def update_portgroup_entry(self, portgroup_name, portgroup_tasks):
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-portgroups',
-            Key={
-                'portgroup_name': {'S': portgroup_name}
-            },
-            UpdateExpression='set tasks=:tasks',
-            ExpressionAttributeValues={
-                ':tasks': {'SS': portgroup_tasks}
-            }
-        )
-        assert response, f"update_portgroup_entry failed for portgroup_name {portgroup_name}"
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-portgroups',
+                Key={
+                    'portgroup_name': {'S': portgroup_name}
+                },
+                UpdateExpression='set tasks=:tasks',
+                ExpressionAttributeValues={
+                    ':tasks': {'SS': portgroup_tasks}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'portgroup_entry_updated'
 
     def upload_object(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time):
         payload = {
@@ -171,118 +182,128 @@ class Task:
             'end_time': end_time
         }
         payload_bytes = json.dumps(payload).encode('utf-8')
-        response = self.aws_s3_client.put_object(
-            Body=payload_bytes,
-            Bucket=f'{self.deployment_name}-workspace',
-            Key=self.task_name + '/init.txt'
-        )
-        assert response, f"Failed to initialize workspace for task_name {self.task_name}"
-        return True
+        try:
+            self.aws_s3_client.put_object(
+                Body=payload_bytes,
+                Bucket=f'{self.deployment_name}-workspace',
+                Key=self.task_name + '/init.txt'
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'object_uploaded'
 
-    def run_attack_task(self, securitygroups, end_time):
-        response = self.aws_ecs_client.run_task(
-            cluster=f'{self.deployment_name}-cluster',
-            count=1,
-            launchType='FARGATE',
-            networkConfiguration={
-                'awsvpcConfiguration': {
-                    'subnets': [self.subnet],
-                    'securityGroups': securitygroups,
-                    'assignPublicIp': 'ENABLED'
-                }
-            },
-            overrides={
-                'containerOverrides': [
-                    {
-                        'name': f'{self.deployment_name}-{self.task_type}',
-                        'environment': [
-                            {'name': 'REGION', 'value': self.region},
-                            {'name': 'DEPLOYMENT_NAME', 'value': self.deployment_name},
-                            {'name': 'USER_ID', 'value': self.user_id},
-                            {'name': 'TASK_NAME', 'value': self.task_name},
-                            {'name': 'TASK_CONTEXT', 'value': self.task_context},
-                            {'name': 'END_TIME', 'value': end_time}
-                        ]
+    def run_ecs_task(self, securitygroups, end_time):
+        try:
+            response = self.aws_ecs_client.run_task(
+                cluster=f'{self.deployment_name}-cluster',
+                count=1,
+                launchType='FARGATE',
+                networkConfiguration={
+                    'awsvpcConfiguration': {
+                        'subnets': [self.subnet],
+                        'securityGroups': securitygroups,
+                        'assignPublicIp': 'ENABLED'
                     }
-                ]
-            },
-            tags=[
-                {
-                    'key': 'task_name',
-                    'value': self.task_name
-                }
-            ],
-            taskDefinition=self.task_type
-        )
+                },
+                overrides={
+                    'containerOverrides': [
+                        {
+                            'name': f'{self.deployment_name}-{self.task_type}',
+                            'environment': [
+                                {'name': 'REGION', 'value': self.region},
+                                {'name': 'DEPLOYMENT_NAME', 'value': self.deployment_name},
+                                {'name': 'USER_ID', 'value': self.user_id},
+                                {'name': 'TASK_NAME', 'value': self.task_name},
+                                {'name': 'TASK_CONTEXT', 'value': self.task_context},
+                                {'name': 'END_TIME', 'value': end_time}
+                            ]
+                        }
+                    ]
+                },
+                tags=[
+                    {
+                        'key': 'task_name',
+                        'value': self.task_name
+                    }
+                ],
+                taskDefinition=self.task_type
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
         self.run_task_response = response
+        return 'ecs_task_ran'
 
     def get_ecstask_details(self, ecs_task_id):
-        response = self.aws_ecs_client.describe_tasks(
+        return self.aws_ecs_client.describe_tasks(
             cluster=f'{self.deployment_name}-cluster',
             tasks=[ecs_task_id]
         )
-        assert response, f"get_task_details failed for task_name {self.task_name}"
-        return response
 
     def get_interface_details(self, interface_id):
-        response = self.aws_ec2_client.describe_network_interfaces(
+        return self.aws_ec2_client.describe_network_interfaces(
             NetworkInterfaceIds=[interface_id],
         )
-        assert response, f"get_interface_details failed for task_name {self.task_name}"
-        return response
 
     def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, task_host_name,
                        task_domain_name, attack_ip, portgroups, ecs_task_id, timestamp, end_time):
         task_status = 'starting'
-        response = self.aws_dynamodb_client.update_item(
-            TableName=f'{self.deployment_name}-tasks',
-            Key={
-                'task_name': {'S': self.task_name}
-            },
-            UpdateExpression='set '
-                             'task_type=:task_type, '
-                             'task_version=:task_version, '
-                             'task_context=:task_context, '
-                             'task_status=:task_status, '
-                             'task_host_name=:task_host_name, '
-                             'task_domain_name=:task_domain_name, '
-                             'attack_ip=:attack_ip,'
-                             'local_ip=:local_ip, '
-                             'portgroups=:portgroups, '
-                             'instruct_instances=:instruct_instances, '
-                             'last_instruct_user_id=:last_instruct_user_id, '
-                             'last_instruct_instance=:last_instruct_instance, '
-                             'last_instruct_command=:last_instruct_command, '
-                             'last_instruct_args=:last_instruct_args, '
-                             'last_instruct_time=:last_instruct_time, '
-                             'create_time=:create_time, '
-                             'scheduled_end_time=:scheduled_end_time, '
-                             'user_id=:user_id, '
-                             'ecs_task_id=:ecs_task_id',
-            ExpressionAttributeValues={
-                ':task_type': {'S': self.task_type},
-                ':task_version': {'S': self.task_version},
-                ':task_context': {'S': self.task_context},
-                ':task_status': {'S': task_status},
-                ':task_host_name': {'S': task_host_name},
-                ':task_domain_name': {'S': task_domain_name},
-                ':attack_ip': {'S': attack_ip},
-                ':local_ip': {'SS': ['None']},
-                ':portgroups': {'SS': portgroups},
-                ':instruct_instances': {'SS': [instruct_instance]},
-                ':last_instruct_user_id': {'S': instruct_user_id},
-                ':last_instruct_instance': {'S': instruct_instance},
-                ':last_instruct_command': {'S': instruct_command},
-                ':last_instruct_args': {'M': instruct_args},
-                ':last_instruct_time': {'S': 'None'},
-                ':create_time': {'S': timestamp},
-                ':scheduled_end_time': {'S': end_time},
-                ':user_id': {'S': self.user_id},
-                ':ecs_task_id': {'S': ecs_task_id}
-            }
-        )
-        assert response, f"add_task_entry failed for task_name {self.task_name}"
-        return True
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-tasks',
+                Key={
+                    'task_name': {'S': self.task_name}
+                },
+                UpdateExpression='set '
+                                'task_type=:task_type, '
+                                'task_version=:task_version, '
+                                'task_context=:task_context, '
+                                'task_status=:task_status, '
+                                'task_host_name=:task_host_name, '
+                                'task_domain_name=:task_domain_name, '
+                                'attack_ip=:attack_ip,'
+                                'local_ip=:local_ip, '
+                                'portgroups=:portgroups, '
+                                'instruct_instances=:instruct_instances, '
+                                'last_instruct_user_id=:last_instruct_user_id, '
+                                'last_instruct_instance=:last_instruct_instance, '
+                                'last_instruct_command=:last_instruct_command, '
+                                'last_instruct_args=:last_instruct_args, '
+                                'last_instruct_time=:last_instruct_time, '
+                                'create_time=:create_time, '
+                                'scheduled_end_time=:scheduled_end_time, '
+                                'user_id=:user_id, '
+                                'ecs_task_id=:ecs_task_id',
+                ExpressionAttributeValues={
+                    ':task_type': {'S': self.task_type},
+                    ':task_version': {'S': self.task_version},
+                    ':task_context': {'S': self.task_context},
+                    ':task_status': {'S': task_status},
+                    ':task_host_name': {'S': task_host_name},
+                    ':task_domain_name': {'S': task_domain_name},
+                    ':attack_ip': {'S': attack_ip},
+                    ':local_ip': {'SS': ['None']},
+                    ':portgroups': {'SS': portgroups},
+                    ':instruct_instances': {'SS': [instruct_instance]},
+                    ':last_instruct_user_id': {'S': instruct_user_id},
+                    ':last_instruct_instance': {'S': instruct_instance},
+                    ':last_instruct_command': {'S': instruct_command},
+                    ':last_instruct_args': {'M': instruct_args},
+                    ':last_instruct_time': {'S': 'None'},
+                    ':create_time': {'S': timestamp},
+                    ':scheduled_end_time': {'S': end_time},
+                    ':user_id': {'S': self.user_id},
+                    ':ecs_task_id': {'S': ecs_task_id}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error['Error']
+        except botocore.exceptions.ParamValidationError as error:
+            return error['Error']
+        return 'task_entry_added'
 
     def run_task(self):
         if 'task_type' not in self.detail:
@@ -364,10 +385,14 @@ class Task:
                     else:
                         portgroup_tasks = portgroup_entry['Item']['tasks']['SS']
                     portgroup_tasks.append(self.task_name)
-                    self.update_portgroup_entry(portgroup, portgroup_tasks)
+                    update_portgroup_entry_response = self.update_portgroup_entry(portgroup, portgroup_tasks)
+                    if update_portgroup_entry_response != 'portgroup_entry_updated':
+                        return format_response(500, 'failed', f'run_task failed with error {update_portgroup_entry_response}', self.log)
                 else:
                     return format_response(404, 'failed', f'portgroup_name: {portgroup} does not exist', self.log)
-        self.run_attack_task(securitygroups, end_time)
+        run_ecs_task_response = self.run_ecs_task(securitygroups, end_time)
+        if run_ecs_task_response != 'ecs_task_ran':
+            return format_response(500, 'failed', f'run_task failed with error {run_ecs_task_response}', self.log)
         # Log task execution details
         ecs_task_id = self.run_task_response['tasks'][0]['taskArn']
         t.sleep(15)
@@ -400,11 +425,16 @@ class Task:
         else:
             end_time = 'None'
         timestamp = datetime.now().strftime('%s')
-        self.upload_object(instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time)
+        upload_object_response = self.upload_object(
+            instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time)
+        if upload_object_response != 'object_uploaded':
+            return format_response(500, 'failed', f'run_task failed with error {upload_object_response}', self.log)
 
         # Create a Route53 resource record if a host_name/domain_name is requested for the task.
         if task_host_name != 'None' and task_domain_name != 'None':
-            self.create_resource_record(task_hosted_zone, task_host_name, task_domain_name, attack_ip)
+            create_rr_response = self.create_resource_record_set(task_hosted_zone, task_host_name, task_domain_name, attack_ip)
+            if create_rr_response != 'resource_record_set_created':
+                return format_response(500, 'failed', f'run_task failed with error {create_rr_response}', self.log)
             if 'None' in domain_entry['Item']['tasks']['SS']:
                 domain_tasks = []
             else:
@@ -415,12 +445,16 @@ class Task:
             else:
                 domain_host_names = domain_entry['Item']['host_names']['SS']
             domain_host_names.append(task_host_name)
-            self.update_domain_entry(task_domain_name, domain_tasks, domain_host_names)
+            update_domain_entry_response = self.update_domain_entry(task_domain_name, domain_tasks, domain_host_names)
+            if update_domain_entry_response != 'domain_entry_updated':
+                return format_response(500, 'failed', f'run_task failed with error {update_domain_entry_response}', self.log)
 
         # Add task entry to tasks table in DynamoDB
         instruct_args_fixup = {'no_args': {'S': 'True'}}
-        self.add_task_entry(instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, task_host_name,
-                            task_domain_name, attack_ip, portgroups, ecs_task_id, timestamp, end_time)
+        add_task_entry_response = self.add_task_entry(instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, 
+            task_host_name, task_domain_name, attack_ip, portgroups, ecs_task_id, timestamp, end_time)
+        if add_task_entry_response != 'task_entry_added':
+            return format_response(500, 'failed', f'run_task failed with error {add_task_entry_response}', self.log)
 
         # Send response
         return format_response(200, 'success', 'execute task succeeded', None, attack_ip=attack_ip)
