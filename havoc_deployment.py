@@ -132,7 +132,7 @@ class ManageDeployment:
             '    encrypt         = true' \
             '  }' \
             '}'
-            with open('./havoc-deploy/aws/terraform/terraform_backend.tf', 'w') as f:
+            with open('./havoc-deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
                 terraform_backend.write(f)
             print('Initializing Terraform...\n')
             return_code, stdout, stderr = self.tf.init()
@@ -200,7 +200,7 @@ class ManageDeployment:
         else:
             enable_domain_name = 'false'
 
-        with open('./havoc-deploy/aws/terraform/terraform.tfvars', 'w') as f:
+        with open('./havoc-deploy/aws/terraform/terraform.tfvars', 'w+') as f:
             f.write(f'aws_region = "{aws_region}"')
             f.write(f'aws_profile = "{self.aws_profile}"')
             f.write(f'deployment_name = "{deployment_name}"')
