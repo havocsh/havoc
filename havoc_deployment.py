@@ -26,7 +26,6 @@ class ManageDeployment:
     def tf(self):
         # Initializes terraform
         if self.__tf is None:
-            print('\nInitializing Terraform.')
             self.__tf = Terraform(terraform_bin_path=self.tf_bin, working_dir='havoc_deploy/aws/terraform')
         return self.__tf
     
@@ -201,18 +200,18 @@ class ManageDeployment:
             enable_domain_name = 'false'
 
         with open('./havoc_deploy/aws/terraform/terraform.tfvars', 'w+') as f:
-            f.write(f'aws_region = "{aws_region}"')
-            f.write(f'aws_profile = "{self.aws_profile}"')
-            f.write(f'deployment_name = "{deployment_name}"')
-            f.write(f'deployment_admin_email = "{deployment_admin_email}"')
-            f.write(f'results_queue_expiration = "{results_queue_expiration}"')
-            f.write(f'deployment_version = "{self.deployment_version}"')
+            f.write(f'aws_region = "{aws_region}"\n')
+            f.write(f'aws_profile = "{self.aws_profile}"\n')
+            f.write(f'deployment_name = "{deployment_name}"\n')
+            f.write(f'deployment_admin_email = "{deployment_admin_email}"\n')
+            f.write(f'results_queue_expiration = "{results_queue_expiration}"\n')
+            f.write(f'deployment_version = "{self.deployment_version}"\n')
             if enable_domain_name == 'true':
-                f.write(f'enable_domain_name = {enable_domain_name}')
-                f.write(f'domain_name = "{custom_domain_name}"')
-                f.write(f'hosted_zone = "{hosted_zone}"')
+                f.write(f'enable_domain_name = {enable_domain_name}\n')
+                f.write(f'domain_name = "{custom_domain_name}"\n')
+                f.write(f'hosted_zone = "{hosted_zone}"\n')
             else:
-                f.write(f'enable_domain_name = {enable_domain_name}')
+                f.write(f'enable_domain_name = {enable_domain_name}\n')
 
         # Run Terraform and check for errors:
         print('Initializing Terraform...\n')
@@ -230,7 +229,7 @@ class ManageDeployment:
             print('\nTerraform deployment encountered errors:\n')
             print(stderr)
             print('\nRolling back changes...\n')
-            return_code, stdout, stderr = self.tf.destory()
+            return_code, stdout, stderr = self.tf.destroy()
             if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
                 os.remove('havoc_deploy/aws/terraform/terraform.tfvars') 
             if os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
