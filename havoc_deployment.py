@@ -132,7 +132,7 @@ class ManageDeployment:
             '    encrypt         = true' \
             '  }' \
             '}'
-            with open('havoc-deploy/aws/terraform/terraform_backend.tf', 'w') as f:
+            with open('./havoc-deploy/aws/terraform/terraform_backend.tf', 'w') as f:
                 terraform_backend.write(f)
             print('Initializing Terraform...\n')
             return_code, stdout, stderr = self.tf.init()
@@ -200,7 +200,7 @@ class ManageDeployment:
         else:
             enable_domain_name = 'false'
 
-        with open('havoc-deploy/aws/terraform/terraform.tfvars', 'w') as f:
+        with open('./havoc-deploy/aws/terraform/terraform.tfvars', 'w') as f:
             f.write(f'aws_region = "{aws_region}"')
             f.write(f'aws_profile = "{self.aws_profile}"')
             f.write(f'deployment_name = "{deployment_name}"')
@@ -296,7 +296,7 @@ class ManageDeployment:
             return 'completed'
 
         # Read existing tfvars file and extract combine existing parameters with modified parameters.
-        with open('havoc-deploy/aws/terraform/terraform.tfvars', 'r') as f:
+        with open('./havoc-deploy/aws/terraform/terraform.tfvars', 'r') as f:
             for line in f:
                 if '=' in line:
                     parameter_key = line.split(' = ')[0].rstrip()
@@ -304,7 +304,7 @@ class ManageDeployment:
                     if parameter_key not in parameters:
                         parameters[parameter_key] = parameter_value
         
-        with open('havoc-deploy/aws/terraform/terraform.tfvars', 'w') as f:
+        with open('./havoc-deploy/aws/terraform/terraform.tfvars', 'w') as f:
             for k,v in parameters.items():
                 f.write(f'{k} = "{v}"')
             

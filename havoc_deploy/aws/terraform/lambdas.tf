@@ -3,8 +3,8 @@
 resource "aws_lambda_function" "authorizer" {
   function_name = "${var.deployment_name}-authorizer"
 
-  filenae          = "authorizer.zip"
-  source_code_hash = "authorizer.zip.base64sha256"
+  filename         = "build/authorizer.zip"
+  source_code_hash = "build/authorizer.zip.base64sha256"
 
   handler = "lambda_function.lambda_handler"
   runtime = "python3.8"
@@ -23,8 +23,8 @@ resource "aws_lambda_function" "authorizer" {
 resource "aws_lambda_function" "manage" {
   function_name = "${var.deployment_name}-manage"
 
-  filename         = "manage.zip"
-  source_code_hash = "manage.zip.base64sha256"
+  filename         = "build/manage.zip"
+  source_code_hash = "build/manage.zip.base64sha256"
 
   handler = "lambda_function.lambda_handler"
   runtime = "python3.8"
@@ -52,8 +52,8 @@ resource "aws_lambda_permission" "apigw_manage_lambda" {
 resource "aws_lambda_function" "remote_task" {
   function_name = "${var.deployment_name}-remote-task"
 
-  filename         = "remote_task.zip"
-  source_code_hash = "remote_task.zip.base64sha256"
+  filename         = "build/remote_task.zip"
+  source_code_hash = "build/remote_task.zip.base64sha256"
 
   handler = "lambda_function.lambda_handler"
   runtime = "python3.8"
@@ -81,8 +81,8 @@ resource "aws_lambda_permission" "apigw_remote_task_lambda" {
 resource "aws_lambda_function" "task_control" {
   function_name = "${var.deployment_name}-task-control"
 
-  filename         = "task_control.zip"
-  source_code_hash = "task_control.zip.base64sha256"
+  filename         = "build/task_control.zip"
+  source_code_hash = "build/task_control.zip.base64sha256"
 
   handler = "lambda_function.lambda_handler"
   runtime = "python3.8"
@@ -110,8 +110,8 @@ resource "aws_lambda_permission" "apigw_task_control_lambda" {
 resource "aws_lambda_function" "task_result" {
   function_name = "${var.deployment_name}-task-result"
 
-  filename         = "task_result.zip"
-  source_code_hash = "task_result.zip.base64sha256"
+  filename         = "build/task_result.zip"
+  source_code_hash = "build/task_result.zip.base64sha256"
 
   handler = "lambda_function.lambda_handler"
   runtime = "python3.8"

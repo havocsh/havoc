@@ -43,14 +43,14 @@ def tf_bin():
             print(f'Downloading appropriate Terraform binary for {operating_system}, {architecture} to {cwd}.')
             url=f'https://releases.hashicorp.com/terraform/{tf_version}/terraform_{tf_version}_{operating_system}_{architecture}.zip'
             r = requests.get(url, allow_redirects=True)
-            with open(f'terraform_{tf_version}_{operating_system}_{architecture}.zip', 'wb') as tf_file:
+            with open(f'{cwd}/terraform_{tf_version}_{operating_system}_{architecture}.zip', 'wb') as tf_file:
                 tf_file.write(r.content)
-            if not os.path.isfile(f'terraform_{tf_version}_{operating_system}_{architecture}.zip'):
+            if not os.path.isfile(f'{cwd}/terraform_{tf_version}_{operating_system}_{architecture}.zip'):
                 print('Failed to download Terraform binary.')
                 print(f'Please download the appropriate Terraform binary for your system here: https://releases.hashicorp.com/terraform/{tf_version}/')
                 print('Unzip the binary in your local havoc-framework directory.')
                 exit()
-            tf_zip = f'terraform_{tf_version}_{operating_system}_{architecture}.zip'
+            tf_zip = f'{cwd}/terraform_{tf_version}_{operating_system}_{architecture}.zip'
             subprocess.run(['unzip', tf_zip])
             tf = f'{cwd}/terraform'
         if not tf:
