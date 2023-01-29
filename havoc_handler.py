@@ -43,13 +43,13 @@ def tf_bin():
             print(f'Downloading appropriate Terraform binary for {operating_system}, {architecture} to {cwd}.')
             url=f'https://releases.hashicorp.com/terraform/{tf_version}/terraform_{tf_version}_{operating_system}_{architecture}.zip'
             r = requests.get(url, allow_redirects=True)
-            with open('terraform', 'wb') as tf_file:
+            with open(f'terraform_{tf_version}_{operating_system}_{architecture}.zip', 'wb') as tf_file:
                 tf_file.write(r.content)
             if not os.path.isfile(f'terraform_{tf_version}_{operating_system}_{architecture}.zip'):
                 print('Failed to download Terraform binary.')
                 print(f'Please download the appropriate Terraform binary for your system here: https://releases.hashicorp.com/terraform/{tf_version}/')
                 print('Unzip the binary in your local havoc-framework directory.')
-                exit
+                exit()
             tf_zip = f'terraform_{tf_version}_{operating_system}_{architecture}.zip'
             subprocess.run(['unzip', tf_zip])
             tf = f'{cwd}/terraform'
@@ -57,7 +57,7 @@ def tf_bin():
             print('Could not find a local Terraform binary and one could not be automatically downloaded because your OS architecture could not be determined.')
             print(f'Please download the appropriate Terraform binary for your system here: https://releases.hashicorp.com/terraform/{tf_version}/')
             print('Make sure that the Terraform binary is added to your path.')
-            exit
+            exit()
     return tf
 
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         if init_args.deployment not in ['create', 'modify', 'update', 'remove', 'get_deployment', 'connect_tf_backend', 'disconnect_tf_backend']:
             print('Missing --deployment action. Specify action using "--deployment <action>" notation.')
             print('<action> can be any of the following: create|modify|update|remove|get_deployment|connect_tf_backend|disconnect_tf_backend')
-            exit
+            exit()
         if init_args.profile:
             profile = init_args.profile
         else:
