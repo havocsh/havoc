@@ -1,5 +1,4 @@
 cmd2
-tabulate
 boto3
 botocore
 python-terraform

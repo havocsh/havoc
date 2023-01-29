@@ -12,8 +12,7 @@ if [ ${SUDO_USER} ]; then
 fi
 
 if [ ! -d ./venv ]; then
-    echo "No virtualenv found. Run 'python3 -m venv venv' from your 'havoc' directory first."
-    exit
+    python3 -m venv ./venv
 fi
 python3_bin=./venv/bin/python3
 pip_bin=./venv/bin/pip3

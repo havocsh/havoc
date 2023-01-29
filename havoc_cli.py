@@ -4,7 +4,6 @@ import re
 import ast
 import json
 from configparser import ConfigParser
-from tabulate import tabulate
 from cmd2 import Cmd
 import havoc
 
@@ -49,30 +48,9 @@ def convert_input(args, inp):
     return return_args
 
 
-def print_table(command, data):
-    if data:
-        print(f'{command} output:')
-        table = {}
-        for k, v in data.items():
-            if not isinstance(v, list) and not isinstance(v, dict):
-                table[k] = v
-        print(tabulate([table], headers='keys', tablefmt='pretty'))
-        for k, v in data.items():
-            if isinstance(v, list):
-                print(f'\n{k}:')
-                print(tabulate([data[k]], tablefmt='pretty'))
-        for k, v in data.items():
-            if isinstance(v, dict):
-                print(f'\n{k}:')
-                print(tabulate([data[k]], headers='keys', tablefmt='pretty'))
-
-
 def format_output(command, data):
-    if output == 'table':
-        print_table(command, data)
-    else:
-        data_out = {command: data}
-        print(json.dumps(data_out, indent=4))
+    data_out = {command: data}
+    print(json.dumps(data_out, indent=4))
 
 
 class HavocCMD(Cmd):
@@ -89,6 +67,13 @@ class HavocCMD(Cmd):
 
     def help_exit(self):
         print('\nExit the application. Shorthand: Ctrl-D.\n')
+
+    def do_get_deployment(self, inp):
+        get_deployment_response = h.get_deployment()
+        format_output('get_deployment', get_deployment_response)
+
+    def help_get_deployment(self):
+        print('\nGet details about the ./HAVOC deployment.')
 
     def do_list_tasks(self, inp):
         args = {'task_status': '', 'task_name_contains': ''}
