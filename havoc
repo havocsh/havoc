@@ -75,4 +75,4 @@ if [[ ${@} =~ "--deployment update" ]]; then
     ${pip_bin} --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}" --upgrade
 fi
 
-${python3_bin} ./havoc.py $@
+${python3_bin} ./havoc_handler.py $@
