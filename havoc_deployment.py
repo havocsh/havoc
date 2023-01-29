@@ -48,7 +48,7 @@ class ManageDeployment:
 
 
     def validate_deployment_name(self, name):
-        if not re.search(r'^[a-zA-Z0-9\-]{3,32}$', name):
+        if not re.search(r'^[a-zA-Z0-9\-]{3,63}$', name):
             print('\nDeployment name must be DNS compliant (limited to letters, numbers and hyphens), minimum 3 characters and maximum 32 characters.\n') 
             name = None
         else:
