@@ -27,7 +27,7 @@ class ManageDeployment:
         # Initializes terraform
         if self.__tf is None:
             print('\nInitializing Terraform.')
-            self.__tf = Terraform(terraform_bin_path=self.tf_bin, working_dir='havoc-deploy/aws/terraform')
+            self.__tf = Terraform(terraform_bin_path=self.tf_bin, working_dir='havoc_deploy/aws/terraform')
         return self.__tf
     
     @property
@@ -132,7 +132,7 @@ class ManageDeployment:
             '    encrypt         = true' \
             '  }' \
             '}'
-            with open('./havoc-deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
+            with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
                 terraform_backend.write(f)
             print('Initializing Terraform...\n')
             return_code, stdout, stderr = self.tf.init()
@@ -140,8 +140,8 @@ class ManageDeployment:
                 print('\nInitializing Terraform backend configuration encountered errors:\n')
                 print(stderr)
                 print('\nRolling back changes...\n')
-                if os.path.exists('havoc-deploy/aws/terraform/terraform_backend.tf'):
-                    os.remove('havoc-deploy/aws/terraform/terraform_backend.tf')
+                if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
+                    os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
                 return 'failed'
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 403:
@@ -154,8 +154,8 @@ class ManageDeployment:
 
     def disconnect_tf_backend(self):
         print('\nDeleting the Terraform backend configuration (this will not affect the Terraform state stored with your ./HAVOC deployment).\n')
-        if os.path.exists('havoc-deploy/aws/terraform/terraform_backend.tf'):
-            os.remove('havoc-deploy/aws/terraform/terraform_backend.tf')
+        if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
+            os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
             print('Backend configuration deleted. Initializing Terraform.\n')
             return_code, stdout, stderr = self.tf.init()
             if stderr:
@@ -167,7 +167,7 @@ class ManageDeployment:
 
     def create(self):
         # Check for existing deployment
-        if os.path.isfile('havoc-deploy/aws/terraform/terraform.tfvars'):
+        if os.path.isfile('havoc_deploy/aws/terraform/terraform.tfvars'):
             print('\nExisting deployment found.\n')
             print('If you intend to re-create this ./HAVOC deployment, remove the existing deployment first by running "./havoc --deployment remove".')
             print('If you would like to create another deployment without destroying this one,')
@@ -200,7 +200,7 @@ class ManageDeployment:
         else:
             enable_domain_name = 'false'
 
-        with open('./havoc-deploy/aws/terraform/terraform.tfvars', 'w+') as f:
+        with open('./havoc_deploy/aws/terraform/terraform.tfvars', 'w+') as f:
             f.write(f'aws_region = "{aws_region}"')
             f.write(f'aws_profile = "{self.aws_profile}"')
             f.write(f'deployment_name = "{deployment_name}"')
@@ -221,8 +221,8 @@ class ManageDeployment:
             print('\nInitializing Terraform encountered errors:\n')
             print(stderr)
             print('\nRolling back changes...\n')
-            if os.path.exists('havoc-deploy/aws/terraform/terraform.tfvars'):
-                os.remove('havoc-deploy/aws/terraform/terraform.tfvars')
+            if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
+                os.remove('havoc_deploy/aws/terraform/terraform.tfvars')
             return 'failed'
         print('Starting Terraform tasks.\n')
         return_code, stdout, stderr = self.tf.apply()
@@ -231,10 +231,10 @@ class ManageDeployment:
             print(stderr)
             print('\nRolling back changes...\n')
             return_code, stdout, stderr = self.tf.destory()
-            if os.path.exists('havoc-deploy/aws/terraform/terraform.tfvars'):
-                os.remove('havoc-deploy/aws/terraform/terraform.tfvars') 
-            if os.path.exists('havoc-deploy/aws/terraform/terraform.tfstate'):
-                os.remove('havoc-deploy/aws/terraform/terraform.tfstate')
+            if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
+                os.remove('havoc_deploy/aws/terraform/terraform.tfvars') 
+            if os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
+                os.remove('havoc_deploy/aws/terraform/terraform.tfstate')
             print('\nRollback complete.')
             print('Review errors above, correct the reported issues and try the deployment again.')
             return 'failed'
@@ -296,7 +296,7 @@ class ManageDeployment:
             return 'completed'
 
         # Read existing tfvars file and extract combine existing parameters with modified parameters.
-        with open('./havoc-deploy/aws/terraform/terraform.tfvars', 'r') as f:
+        with open('./havoc_deploy/aws/terraform/terraform.tfvars', 'r') as f:
             for line in f:
                 if '=' in line:
                     parameter_key = line.split(' = ')[0].rstrip()
@@ -304,7 +304,7 @@ class ManageDeployment:
                     if parameter_key not in parameters:
                         parameters[parameter_key] = parameter_value
         
-        with open('./havoc-deploy/aws/terraform/terraform.tfvars', 'w') as f:
+        with open('./havoc_deploy/aws/terraform/terraform.tfvars', 'w') as f:
             for k,v in parameters.items():
                 f.write(f'{k} = "{v}"')
             
@@ -329,9 +329,9 @@ class ManageDeployment:
 
     def update(self):
         # Check for existing deployment
-        if not os.path.exists('havoc-deploy/aws/terraform/terraform.tfstate'):
+        if not os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
             no_local_tfstate = True
-        if not os.path.exists('havoc-deploy/aws/terraform/terraform_backend.tf'):
+        if not os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
             no_remote_tfstate = True
         if no_local_tfstate and no_remote_tfstate:
             print('\nNo existing deployment found.\n')
@@ -353,9 +353,9 @@ class ManageDeployment:
     
     def remove(self):
         # Check for existing deployment
-        if not os.path.exists('havoc-deploy/aws/terraform/terraform.tfstate'):
+        if not os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
             no_local_tfstate = True
-        if not os.path.exists('havoc-deploy/aws/terraform/terraform_backend.tf'):
+        if not os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
             no_remote_tfstate = True
         if no_local_tfstate and no_remote_tfstate:
             print('\nNo existing deployment found.\n')
@@ -375,10 +375,10 @@ class ManageDeployment:
         self.disconnect_tf_backend()
         havoc_profile.remove_profile(mode='deploy_remove')
         print('Deleting local Terraform state.\n')
-        if os.path.exists('havoc-deploy/aws/terraform/terraform.tfstate'):
-            os.remove('havoc-deploy/aws/terraform/terraform.tfstate')
-        if os.path.exists('havoc-deploy/aws/terraform/terraform_backend.tf'):
-            os.remove('havoc-deploy/aws/terraform/terraform_backend.tf')
-        if os.path.exists('havoc-deploy/aws/terraform/terraform.tfvars'):
-            os.remove('havoc-deploy/aws/terraform/terraform.tfvars')
+        if os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
+            os.remove('havoc_deploy/aws/terraform/terraform.tfstate')
+        if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
+            os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
+        if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
+            os.remove('havoc_deploy/aws/terraform/terraform.tfvars')
         return 'completed'

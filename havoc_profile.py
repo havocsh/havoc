@@ -35,7 +35,7 @@ def add_profile(mode):
 
     if mode == 'deploy_add':
         # Get the deployment output details and add them to the profile
-        with open('./havoc-deploy/aws/terraform/terraform.tfstate', 'r') as tfstate_f:
+        with open('./havoc_deploy/aws/terraform/terraform.tfstate', 'r') as tfstate_f:
             tf_state_data = json.load(tfstate_f)
         havoc_profiles[deploy_profile]['DEPLOYMENT_NAME'] = tf_state_data['outputs']['DEPLOYMENT_NAME']['value']
         havoc_profiles[deploy_profile]['DEPLOYMENT_ADMIN_EMAIL'] = tf_state_data['outputs']['DEPLOYMENT_ADMIN_EMAIL']['value']
@@ -85,7 +85,7 @@ def remove_profile(mode):
     
     # If deploy_remove mode, get ./HAVOC profile names based on deployment name
     if mode == 'deploy_remove':
-        with open('./havoc-deploy/aws/terraform/terraform.tfstate', 'r') as tfstate_f:
+        with open('./havoc_deploy/aws/terraform/terraform.tfstate', 'r') as tfstate_f:
             tf_state_data = json.load(tfstate_f)
         deployment_name = tf_state_data['outputs']['DEPLOYMENT_NAME']['value']
         print(f'\nRemoving ./HAVOC profile names for deployment name {deployment_name} from .havoc/profiles.')
