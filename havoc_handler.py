@@ -66,7 +66,7 @@ if __name__ == "__main__":
         import havoc_cli
         havoc_cli()
     
-    if init_args.profile and not init_args.deploy:
+    if init_args.profile and not init_args.deployment:
         import havoc_cli
         havoc_cli.profile = init_args.profile
         havoc_cli()
