@@ -93,23 +93,23 @@ class Deployment:
             if 'deployment_version' in self.detail:
                 deployment_version = self.detail['deployment_version']
             else:
-                deployment_version = existing_deployment['deployment_version']
+                deployment_version = existing_deployment['Item']['deployment_version']
             if 'deployment_admin_email' in self.detail:
                 deployment_admin_email = self.detail['deployment_admin_email']
             else:
-                deployment_admin_email = existing_deployment['deployment_admin_email']
+                deployment_admin_email = existing_deployment['Item']['deployment_admin_email']
             if 'results_queue_expiration' in self.detail:
                 results_queue_expiration = self.detail['results_queue_expiration']
             else:
-                results_queue_expiration = existing_deployment['results_queue_expiration']
+                results_queue_expiration = existing_deployment['Item']['results_queue_expiration']
             if 'api_domain_name' in self.detail:
                 api_domain_name = self.detail['api_domain_name']
             else:
-                api_domain_name = existing_deployment['api_domain_name']
+                api_domain_name = existing_deployment['Item']['api_domain_name']
             if 'api_region' in self.detail:
                 api_region = self.detail['api_region']
             else:
-                api_region = existing_deployment['api_region']
+                api_region = existing_deployment['Item']['api_region']
             try:
                 self.aws_dynamodb_client.update_item(
                     TableName=f'{self.deployment_name}-deployment',
