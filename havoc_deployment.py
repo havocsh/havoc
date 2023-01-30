@@ -369,6 +369,9 @@ class ManageDeployment:
             print('Alternatively, you can connect this system to the Terraform deployment with the "./havoc --deployment connect_tf_backend" command.\n')
             return 'failed'
         
+        # Rebuild havoc-control-api packages for AWS Lambda
+        subprocess.run('./havoc_build_packages.sh', shell=True)
+
         # Run Terraform and check for errors:
         print('\nStarting Terraform tasks.')
         tf_apply_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'apply', '-no-color', '-auto-approve']
