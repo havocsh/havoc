@@ -126,17 +126,17 @@ class ManageDeployment:
                 print(f'No S3 bucket/key found for {tfstate_s3_bucket}/{tfstate_s3_key}')
             return 'failed'
         print('Access verified. Writing Terraform backend configuration.\n')
-        terraform_backend = 'terraform {' \
-        '  backend "s3" {' \
-        f'    bucket         = "{tfstate_s3_bucket}"' \
-        f'    key            = "{tfstate_s3_key}"' \
-        f'    region         = "{tfstate_s3_region}"' \
-        f'    dynamodb_table = "{tfstate_dynamodb_table}"' \
-        '    encrypt         = true' \
-        '  }' \
-        '}'
+        terraform_backend = 'terraform {\n' \
+        '  backend "s3" {\n' \
+        f'    bucket         = "{tfstate_s3_bucket}"\n' \
+        f'    key            = "{tfstate_s3_key}"\n' \
+        f'    region         = "{tfstate_s3_region}"\n' \
+        f'    dynamodb_table = "{tfstate_dynamodb_table}"\n' \
+        '    encrypt         = true\n' \
+        '  }\n' \
+        '}\n'
         with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
-            terraform_backend.write(f)
+            f.write(terraform_backend)
         print('Initializing Terraform...\n')
         tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
         tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
