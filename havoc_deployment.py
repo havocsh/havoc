@@ -24,6 +24,7 @@ class ManageDeployment:
         self.__tf = None
         self.__havoc_client = None
     
+    @property
     def havoc_client(self):
         havoc_profiles = load_havoc_config()
         if self.profile:
