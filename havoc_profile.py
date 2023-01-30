@@ -19,7 +19,7 @@ def list_profiles():
 
 def add_profile(mode):
     # Create ./HAVOC profile (used by ./havoc -a, -d and -s options)
-    print('\Adding a ./HAVOC profile to .havoc/profiles. Please provide the requested details below.')
+    print('Adding a ./HAVOC profile to .havoc/profiles. Please provide the requested details below.')
 
     # Get the profile name and make sure it is unique
     deploy_profile = None

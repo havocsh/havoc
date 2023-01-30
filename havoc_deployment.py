@@ -245,9 +245,9 @@ class ManageDeployment:
         self.profile = profile_output['profile_name']
         api_domain_name = profile_output['api_domain_name']
         api_region = profile_output['api_region']
+        tfstate_s3_region = api_region
         tfstate_s3_bucket = profile_output['tfstate_s3_bucket']
         tfstate_s3_key = 'havoc_terraform/terraform.tfstate'
-        tfstate_s3_region = profile_output['tfstate_s3_region']
         tfstate_dynamodb_table = profile_output['tfstate_dynamodb_table']
         self.havoc_client.create_deployment(
             self.deployment_version,
