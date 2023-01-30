@@ -91,7 +91,7 @@ class ManageDeployment:
         return 'completed'
 
     
-    def connect_tf_backend(self):
+    def connect_tf_backend(self, deployment=None):
         # Get the Terraform backend details
         print('Starting configuration for Terraform backend connection.')
         if not self.aws_profile:
@@ -115,35 +115,38 @@ class ManageDeployment:
             if self.aws_profile:
                 boto3.setup_default_session(profile_name=self.aws_profile)
             s3 = boto3.client('s3')
-            s3.head_object(Bucket=tfstate_s3_bucket, Key=tfstate_s3_key)
-            print('Access verified. Writing Terraform backend configuration.\n')
-            terraform_backend = 'terraform {' \
-            '  backend "s3" {' \
-            f'    bucket         = "{tfstate_s3_bucket}"' \
-            f'    key            = "{tfstate_s3_key}"' \
-            f'    region         = "{tfstate_s3_region}"' \
-            f'    dynamodb_table = "{tfstate_dynamodb_table}"' \
-            '    encrypt         = true' \
-            '  }' \
-            '}'
-            with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
-                terraform_backend.write(f)
-            print('Initializing Terraform...\n')
-            tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
-            tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            tf_init_output = tf_init.communicate()[1].decode('ascii')
-            if tf_init_output:
-                print('\nInitializing Terraform backend configuration encountered errors:\n')
-                print(tf_init_output)
-                print('\nRolling back changes...\n')
-                if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
-                    os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
-                return 'failed'
+            if deployment:
+                s3.head_bucket(Bucket=tfstate_s3_bucket)
+            else:
+                s3.head_object(Bucket=tfstate_s3_bucket, Key=tfstate_s3_key)
         except botocore.exceptions.ClientError as error:
-            if error.response['Error']['Code'] == 403:
+            if error['Error']['Code'] == 403:
                 print(f'S3 bucket/key {tfstate_s3_bucket}/{tfstate_s3_key} found but access was denied.')
-            if error.response['Error']['Code'] == 404:
+            if error['Error']['Code'] == 404:
                 print(f'No S3 bucket/key found for {tfstate_s3_bucket}/{tfstate_s3_key}')
+            return 'failed'
+        print('Access verified. Writing Terraform backend configuration.\n')
+        terraform_backend = 'terraform {' \
+        '  backend "s3" {' \
+        f'    bucket         = "{tfstate_s3_bucket}"' \
+        f'    key            = "{tfstate_s3_key}"' \
+        f'    region         = "{tfstate_s3_region}"' \
+        f'    dynamodb_table = "{tfstate_dynamodb_table}"' \
+        '    encrypt         = true' \
+        '  }' \
+        '}'
+        with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
+            terraform_backend.write(f)
+        print('Initializing Terraform...\n')
+        tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
+        tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        tf_init_output = tf_init.communicate()[1].decode('ascii')
+        if tf_init_output:
+            print('\nInitializing Terraform backend configuration encountered errors:\n')
+            print(tf_init_output)
+            print('\nRolling back changes...\n')
+            if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
+                os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
             return 'failed'
         print('Terraform initialization completed.\n')
         return 'completed'
@@ -263,7 +266,7 @@ class ManageDeployment:
             tfstate_s3_region, 
             tfstate_dynamodb_table
             )
-        tf_connection = self.connect_tf_backend()
+        tf_connection = self.connect_tf_backend(deployment=True)
         if tf_connection == 'failed':
             print('\nThe ./HAVOC deployment succeeded but the Terraform backend could not be connected to S3 for backing up Terraform state.\n')
             print('Correct the errors above and run "./havoc --deployment connect_tf_backend" if you would like to have your Terraform state stored in S3.')
