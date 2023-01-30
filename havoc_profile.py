@@ -87,13 +87,14 @@ def remove_profile(mode):
     if mode == 'deploy_remove':
         with open('./havoc_deploy/aws/terraform/terraform.tfstate', 'r') as tfstate_f:
             tf_state_data = json.load(tfstate_f)
-        deployment_name = tf_state_data['outputs']['DEPLOYMENT_NAME']['value']
-        print(f'\nRemoving ./HAVOC profile names for deployment name {deployment_name} from .havoc/profiles.')
+        if 'outputs' in tf_state_data:
+            deployment_name = tf_state_data['outputs']['DEPLOYMENT_NAME']['value']
+            print(f'\nRemoving ./HAVOC profile names for deployment name {deployment_name} from .havoc/profiles.')
 
-        # Find profiles associated with the deployment
-        for section in havoc_profiles.sections():
-            if havoc_profiles[section]['DEPLOYMENT_NAME'] == deployment_name:
-                profile_names.append(section)
+            # Find profiles associated with the deployment
+            for section in havoc_profiles.sections():
+                if havoc_profiles[section]['DEPLOYMENT_NAME'] == deployment_name:
+                    profile_names.append(section)
 
     # if remove mode, get the profile name from user input and make sure it exists in .havoc/profiles
     if mode == 'remove':

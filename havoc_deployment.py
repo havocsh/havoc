@@ -359,6 +359,8 @@ class ManageDeployment:
     
     def remove(self):
         # Check for existing deployment
+        no_local_tfstate = False
+        no_remote_tfstate = False
         if not os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
             no_local_tfstate = True
         if not os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
