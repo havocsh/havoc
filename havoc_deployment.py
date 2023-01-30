@@ -144,14 +144,15 @@ class ManageDeployment:
                 return 'failed'
         print('Access verified. Writing Terraform backend configuration.\n')
         terraform_backend = 'terraform {\n' \
-        '  backend "s3" {\n' \
-        f'    bucket         = "{tfstate_s3_bucket}"\n' \
-        f'    key            = "{tfstate_s3_key}"\n' \
-        f'    region         = "{tfstate_s3_region}"\n' \
-        f'    dynamodb_table = "{tfstate_dynamodb_table}"\n' \
-        '    encrypt         = true\n' \
-        '  }\n' \
-        '}\n'
+            '  backend "s3" {\n' \
+            f'    profile        = "{self.aws_profile}"\n' \
+            f'    bucket         = "{tfstate_s3_bucket}"\n' \
+            f'    key            = "{tfstate_s3_key}"\n' \
+            f'    region         = "{tfstate_s3_region}"\n' \
+            f'    dynamodb_table = "{tfstate_dynamodb_table}"\n' \
+            '    encrypt         = true\n' \
+            '  }\n' \
+            '}\n'
         with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
             f.write(terraform_backend)
         print('Initializing Terraform...\n')
