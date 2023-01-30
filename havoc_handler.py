@@ -8,7 +8,6 @@ from configparser import ConfigParser
 from havoc_deployment import ManageDeployment
 
 config = ConfigParser()
-config.optionxform = str
 config.read('.havoc/havoc.cfg')
 
 deployment_version = config.get('version', 'deployment_version')

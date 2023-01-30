@@ -24,22 +24,20 @@ class ManageDeployment:
         self.__tf = None
         self.__havoc_client = None
     
-    @property
     def havoc_client(self):
-        if self.__havoc_client is None:
-            havoc_profiles = load_havoc_config()
-            if self.profile:
-                api_key = havoc_profiles.get(self.profile, 'API_KEY')
-                secret = havoc_profiles.get(self.profile, 'SECRET')
-                api_region = havoc_profiles.get(self.profile, 'API_REGION')
-                api_domain_name = havoc_profiles.get(self.profile, 'API_DOMAIN_NAME')
-            else:
-                api_key = havoc_profiles.get('default', 'API_KEY')
-                secret = havoc_profiles.get('default', 'SECRET')
-                api_region = havoc_profiles.get('default', 'API_REGION')
-                api_domain_name = havoc_profiles.get('default', 'API_DOMAIN_NAME')
-            self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret)
-            return self.__havoc_client
+        havoc_profiles = load_havoc_config()
+        if self.profile:
+            api_key = havoc_profiles.get(self.profile, 'API_KEY')
+            secret = havoc_profiles.get(self.profile, 'SECRET')
+            api_region = havoc_profiles.get(self.profile, 'API_REGION')
+            api_domain_name = havoc_profiles.get(self.profile, 'API_DOMAIN_NAME')
+        else:
+            api_key = havoc_profiles.get('default', 'API_KEY')
+            secret = havoc_profiles.get('default', 'SECRET')
+            api_region = havoc_profiles.get('default', 'API_REGION')
+            api_domain_name = havoc_profiles.get('default', 'API_DOMAIN_NAME')
+        self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret)
+        return self.__havoc_client
 
 
     def validate_deployment_name(self, name):
