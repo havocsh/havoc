@@ -111,20 +111,37 @@ class ManageDeployment:
             return 'failed'
 
         print('Verifying the S3 bucket and key...\n')
-        try:
-            if self.aws_profile:
-                boto3.setup_default_session(profile_name=self.aws_profile)
-            s3 = boto3.client('s3')
-            if deployment:
+        if self.aws_profile:
+            boto3.setup_default_session(profile_name=self.aws_profile)
+        s3 = boto3.client('s3')
+        if deployment:
+            try:
                 s3.head_bucket(Bucket=tfstate_s3_bucket)
-            else:
+            except botocore.exceptions.ClientError as error:
+                if error['Error']['Code'] == 403:
+                    print(f'S3 bucket {tfstate_s3_bucket} found but access was denied.')
+                if error['Error']['Code'] == 404:
+                    print(f'No S3 bucket found for {tfstate_s3_bucket}')
+                return 'failed'
+            try:
+                with open('havoc_deploy/aws/terraform/terraform.tfstate', 'r') as tfstate_f:
+                    tfstate_data = tfstate_f.read().encode()
+                s3.put_object(Bucket=tfstate_s3_bucket, Key=tfstate_s3_key, Body=tfstate_data) 
+            except botocore.exceptions.ClientError as error:
+                if error['Error']['Code'] == 403:
+                    print(f'Writing tfstate file to {tfstate_s3_bucket} failed with access denied.')
+                else:
+                    print(f'Terraform state file creation failed with error {error["Error"]}')
+                return 'failed'
+        else:
+            try:
                 s3.head_object(Bucket=tfstate_s3_bucket, Key=tfstate_s3_key)
-        except botocore.exceptions.ClientError as error:
-            if error['Error']['Code'] == 403:
-                print(f'S3 bucket/key {tfstate_s3_bucket}/{tfstate_s3_key} found but access was denied.')
-            if error['Error']['Code'] == 404:
-                print(f'No S3 bucket/key found for {tfstate_s3_bucket}/{tfstate_s3_key}')
-            return 'failed'
+            except botocore.exceptions.ClientError as error:
+                if error['Error']['Code'] == 403:
+                    print(f'S3 bucket/key {tfstate_s3_bucket}/{tfstate_s3_key} found but access was denied.')
+                if error['Error']['Code'] == 404:
+                    print(f'No S3 bucket/key found for {tfstate_s3_bucket}/{tfstate_s3_key}.')
+                return 'failed'
         print('Access verified. Writing Terraform backend configuration.\n')
         terraform_backend = 'terraform {\n' \
         '  backend "s3" {\n' \
