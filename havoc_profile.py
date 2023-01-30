@@ -21,19 +21,9 @@ def add_profile(mode):
     # Create ./HAVOC profile (used by ./havoc -a, -d and -s options)
     print('Adding a ./HAVOC profile to .havoc/profiles. Please provide the requested details below.')
 
-    # Get the profile name and make sure it is unique
-    deploy_profile = None
-    while not deploy_profile:
-        deploy_profile = input('\n./HAVOC credential profile name [default]: ')
-        if not deploy_profile:
-            deploy_profile = 'default'
-        if deploy_profile in havoc_profiles.sections():
-            print(f'Profile {deploy_profile} already exists.')
-            deploy_profile = None
-
-    havoc_profiles[deploy_profile] = {}
-
     if mode == 'deploy_add':
+        deploy_profile = 'default'
+        havoc_profiles[deploy_profile] = {}
         # Get the deployment output details and add them to the profile
         with open('./havoc_deploy/aws/terraform/terraform.tfstate', 'r') as tfstate_f:
             tf_state_data = json.load(tfstate_f)
@@ -47,6 +37,16 @@ def add_profile(mode):
         tfstate_s3_bucket = tf_state_data['outputs']['TERRAFORM_STATE_S3_BUCKET']['value']
         tfstate_dynamodb_table = tf_state_data['outputs']['TERRAFORM_STATE_DYNAMODB_TABLE']['value']
     else:
+        # Get the profile name and make sure it is unique
+        deploy_profile = None
+        while not deploy_profile:
+            deploy_profile = input('\n./HAVOC credential profile name [default]: ')
+            if not deploy_profile:
+                deploy_profile = 'default'
+            if deploy_profile in havoc_profiles.sections():
+                print(f'Profile {deploy_profile} already exists.')
+                deploy_profile = None
+        havoc_profiles[deploy_profile] = {}
         # Get the profile details from user inputs and add them to the profile
         havoc_profiles[deploy_profile]['DEPLOYMENT_NAME'] = input('Deployment name: ')
         havoc_profiles[deploy_profile]['DEPLOYMENT_ADMIN_EMAIL'] = input('Deployment admin email: ')
