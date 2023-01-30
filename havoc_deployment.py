@@ -401,9 +401,9 @@ class ManageDeployment:
         if no_remote_tfstate is False:
             with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'r') as tf_backend_f:
                 tf_backend = tf_backend_f.read()
-            self.aws_profile = re.search('profile\s+= "([^"]+)"', tf_backend)
-            tfstate_s3_bucket = re.search('bucket\s+= "([^"]+)"', tf_backend)
-            tfstate_s3_key = re.search('key\s+= "([^"]+)"', tf_backend)
+            self.aws_profile = re.search('profile\s+= "([^"]+)"', tf_backend).group(1)
+            tfstate_s3_bucket = re.search('bucket\s+= "([^"]+)"', tf_backend).group(1)
+            tfstate_s3_key = re.search('key\s+= "([^"]+)"', tf_backend).group(1)
             self.disconnect_tf_backend()
             boto3.setup_default_session(profile_name=self.aws_profile)
             s3 = boto3.client('s3')
