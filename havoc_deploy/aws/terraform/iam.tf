@@ -8,6 +8,7 @@ data "template_file" "lambda_policy" {
   authorizer_index = "${aws_dynamodb_table.authorizer.arn}/index/${var.deployment_name}-ApiKeyIndex"
   portgroups_table = aws_dynamodb_table.portgroups.arn,
   task_types_table = aws_dynamodb_table.task_types.arn,
+  deployment_table = aws_dynamodb_table.deployment.arn,
   domains_table    = aws_dynamodb_table.domains.arn,
   tasks_table      = aws_dynamodb_table.tasks.arn,
   queue_table      = aws_dynamodb_table.queue.arn,
@@ -41,7 +42,7 @@ EOF
 resource "aws_iam_policy" "lambda_policy" {
   name        = "${var.deployment_name}-lambda-policy"
   path        = "/"
-  description = "Policy for havoc.sh Lambda functions"
+  description = "Policy for ./HAVOC Lambda functions"
   policy = data.template_file.lambda_policy.rendered
 }
 
@@ -82,7 +83,7 @@ EOF
 resource "aws_iam_policy" "ecs_task_policy" {
   name        = "${var.deployment_name}-ecs-task-policy"
   path        = "/"
-  description = "Policy for havoc.sh ECS tasks"
+  description = "Policy for ./HAVOC ECS tasks"
   policy = data.template_file.ecs_task_policy.rendered
 }
 
@@ -153,7 +154,7 @@ EOF
 resource "aws_iam_policy" "api_gateway_policy" {
   name        = "${var.deployment_name}-api-gateway-policy"
   path        = "/"
-  description = "Policy for havoc.sh REST API gateway"
+  description = "Policy for ./HAVOC REST API gateway"
   policy = data.template_file.api_gateway_policy.rendered
 }
 

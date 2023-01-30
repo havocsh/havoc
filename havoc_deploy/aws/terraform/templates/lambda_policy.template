@@ -16,6 +16,7 @@
                 "${authorizer_index}",
                 "${portgroups_table}",
                 "${task_types_table}",
+                "${deployment_table}",
                 "${domains_table}",
                 "${tasks_table}",
                 "${queue_table}"
