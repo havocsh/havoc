@@ -174,7 +174,7 @@ class ManageDeployment:
         if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
             os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
             print('Backend configuration deleted. Initializing Terraform.\n')
-            tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
+            tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-migrate-state', '-force-copy', '-no-color']
             tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             tf_init_output = tf_init.communicate()[1].decode('ascii')
             if tf_init_output:
@@ -393,10 +393,28 @@ class ManageDeployment:
             no_remote_tfstate = True
         if no_local_tfstate and no_remote_tfstate:
             print('\nNo existing deployment found.\n')
-            print('Perform the update from the system that created the ./HAVOC deployment.\n')
+            print('Perform the remove operation from the system that created the ./HAVOC deployment.\n')
             print('Alternatively, you can connect this system to the Terraform deployment with the "./havoc --deployment connect_tf_backend" command.\n')
             return 'failed'
         
+        # Disconnect Terraform from S3 backend if present and delete terraform state from S3
+        if no_remote_tfstate is False:
+            with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'r') as tf_backend_f:
+                tf_backend = tf_backend_f.read()
+            self.aws_profile = re.search('profile\s+= "([^"]+)"', tf_backend)
+            tfstate_s3_bucket = re.search('bucket\s+= "([^"]+)"', tf_backend)
+            tfstate_s3_key = re.search('key\s+= "([^"]+)"', tf_backend)
+            self.disconnect_tf_backend()
+            boto3.setup_default_session(profile_name=self.aws_profile)
+            s3 = boto3.client('s3')
+            list_object_versions_response = s3.list_object_versions(Bucket=tfstate_s3_bucket, Prefix=tfstate_s3_key)
+            tfstate_versions = list_object_versions_response['Versions']
+            for tfstate_version in tfstate_versions:
+                s3.delete_object(Bucket=tfstate_s3_bucket, Key=tfstate_s3_key, VersionId=tfstate_version['VersionId'])
+        
+        # Remove ./HAVOC profiles for deployment
+        havoc_profile.remove_profile(mode='deploy_remove')
+
         # Run Terraform and check for errors
         print('\nStarting Terraform tasks.')
         tf_destroy_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'destroy', '-no-color', '-auto-approve']
@@ -408,8 +426,6 @@ class ManageDeployment:
             print('Review errors above, correct the reported issues and try the uninstall again.')
             return 'failed'
         print('\nTerraform tasks completed.\n')
-        self.disconnect_tf_backend()
-        havoc_profile.remove_profile(mode='deploy_remove')
         print('Deleting local Terraform state.\n')
         if os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
             os.remove('havoc_deploy/aws/terraform/terraform.tfstate')
