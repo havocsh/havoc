@@ -66,7 +66,7 @@ def lambda_handler(event, context):
         return format_response(400, 'failed', 'missing resource', log)
     resource = data['resource']
 
-    allowed_resources = ['domain', 'portgroup', 'task_type', 'task', 'user', 'workspace']
+    allowed_resources = ['deployment', 'domain', 'portgroup', 'task_type', 'task', 'user', 'workspace']
     if resource not in allowed_resources:
         return format_response(400, 'failed', 'invalid resource', log)
 
