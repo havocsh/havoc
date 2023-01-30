@@ -69,7 +69,7 @@ if [[ ${@} =~ "--deployment update" ]]; then
         echo "The havoc script will restart so that the changes can take affect."
         echo "The update will continue automatically upon restart."
         echo ""
-        exec havoc $@
+        exec ./havoc $@
     fi
     echo " - Updating the ./HAVOC module."
     ${pip_bin} --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}" --upgrade
