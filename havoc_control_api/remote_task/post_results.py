@@ -83,9 +83,9 @@ class Deliver:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'queue_attribute_added'
 
     def get_task_entry(self):
@@ -112,9 +112,9 @@ class Deliver:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'task_entry_updated'
 
     def deliver_result(self):

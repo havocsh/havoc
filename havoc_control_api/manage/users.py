@@ -102,9 +102,9 @@ class Users:
                     ExpressionAttributeValues={':a': {'S': v}}
                 )
             except botocore.exceptions.ClientError as error:
-                return error['Error']
+                return error
             except botocore.exceptions.ParamValidationError as error:
-                return error['Error']
+                return error
         return 'user_attributes_added'
 
     def delete_user_id(self):
@@ -117,9 +117,9 @@ class Users:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'user_id_deleted'
 
     def create(self):

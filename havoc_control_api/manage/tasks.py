@@ -73,9 +73,9 @@ class Tasks:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'domain_entry_updated'
 
     def delete_resource_record_set(self, hosted_zone, host_name, domain_name, ip_address):
@@ -101,9 +101,9 @@ class Tasks:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'resource_record_deleted'
 
     def get_portgroup_entry(self, portgroup_name):
@@ -127,9 +127,9 @@ class Tasks:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'portgroup_entry_updated'
 
     def query_tasks(self):
@@ -168,9 +168,9 @@ class Tasks:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'task_entry_updated'
 
     def terminate_task(self):
@@ -202,9 +202,9 @@ class Tasks:
                 reason=f'Task stopped by {self.user_id}'
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         if task_entry['Item']['task_domain_name']['S'] != 'None':
             task_attack_ip = task_entry['Item']['attack_ip']['S']
             task_host_name = task_entry['Item']['task_host_name']['S']

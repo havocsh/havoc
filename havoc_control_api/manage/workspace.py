@@ -55,9 +55,9 @@ class Workspace:
                 Key='shared/' + self.filename
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'object_uploaded'
 
     def list_objects(self):
@@ -73,9 +73,9 @@ class Workspace:
                 Key='shared/' + self.filename
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return get_object_response
 
     def delete_object(self):
@@ -85,9 +85,9 @@ class Workspace:
                 Key='shared/' + self.filename
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'object_deleted'
 
     def list(self):

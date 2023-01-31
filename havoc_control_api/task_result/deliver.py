@@ -59,9 +59,9 @@ class Deliver:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'domain_entry_updated'
 
     def delete_resource_record_set(self, hosted_zone, host_name, domain_name, ip_address):
@@ -87,9 +87,9 @@ class Deliver:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'resource_record_set_deleted'
 
     def add_queue_attribute(self, stime, expire_time, task_instruct_instance, task_instruct_command, task_instruct_args,
@@ -132,9 +132,9 @@ class Deliver:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'queue_attribute_added'
 
     def get_task_entry(self):
@@ -161,9 +161,9 @@ class Deliver:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'task_entry_updated'
 
     def get_portgroup_entry(self, portgroup_name):
@@ -187,9 +187,9 @@ class Deliver:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'portgroup_entry_updated'
 
     def deliver_result(self):

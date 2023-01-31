@@ -89,9 +89,9 @@ class Portgroup:
                 VpcId=self.vpc_id
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         securitygroup_id = ec2_response['GroupId']
         tasks = 'None'
         try:
@@ -111,9 +111,9 @@ class Portgroup:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'portgroup_created'
 
     def delete_portgroup_entry(self, securitygroup_id):
@@ -122,9 +122,9 @@ class Portgroup:
                 GroupId=securitygroup_id
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
 
         try:
             self.aws_dynamodb_client.delete_item(
@@ -134,9 +134,9 @@ class Portgroup:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'portgroup_deleted'
 
     def update_portgroup_entry(self, securitygroup_id, ip_ranges, port, ip_protocol, portgroup_action):
@@ -159,9 +159,9 @@ class Portgroup:
                     ]
                 )
             except botocore.exceptions.ClientError as error:
-                return error['Error']
+                return error
             except botocore.exceptions.ParamValidationError as error:
-                return error['Error']
+                return error
             if authorize_response is False:
                 return 'portgroup_update_failed_rule_exists'
         
@@ -184,9 +184,9 @@ class Portgroup:
                     ]
                 )
             except botocore.exceptions.ClientError as error:
-                return error['Error']
+                return error
             except botocore.exceptions.ParamValidationError as error:
-                return error['Error']
+                return error
             if revoke_response['Return'] is False:
                 return 'portgroup_update_failed_rule_not_found'
         return 'portgroup_updated'

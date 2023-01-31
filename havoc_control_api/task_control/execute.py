@@ -109,9 +109,9 @@ class Task:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'resource_record_set_created'
 
     def update_domain_entry(self, domain_name, domain_tasks, host_names):
@@ -128,9 +128,9 @@ class Task:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'domain_entry_updated'
 
     def get_task_type_entry(self):
@@ -170,9 +170,9 @@ class Task:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'portgroup_entry_updated'
 
     def upload_object(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time):
@@ -189,9 +189,9 @@ class Task:
                 Key=self.task_name + '/init.txt'
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'object_uploaded'
 
     def run_ecs_task(self, securitygroups, end_time):
@@ -231,9 +231,9 @@ class Task:
                 taskDefinition=self.task_type
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         self.run_task_response = response
         return 'ecs_task_ran'
 
@@ -300,9 +300,9 @@ class Task:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'task_entry_added'
 
     def run_task(self):

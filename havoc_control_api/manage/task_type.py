@@ -101,9 +101,9 @@ class Registration:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'task_type_entry_created'
 
     def remove_task_type_entry(self):
@@ -115,9 +115,9 @@ class Registration:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'task_type_entry_removed'
 
     def add_ecs_task_definition(self):
@@ -170,9 +170,9 @@ class Registration:
                 ]
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         task_definition_arn = task_registration['taskDefinition']['taskDefinitionArn']
         add_task_type_entry_response = self.add_task_type_entry(task_definition_arn)
         if add_task_type_entry_response == 'task_type_entry_created':
@@ -190,9 +190,9 @@ class Registration:
                 taskDefinition=task_definition_arn
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         remove_task_type_entry_response = self.remove_task_type_entry()
         if remove_task_type_entry_response == 'task_type_entry_removed':
             return 'task_definition_removed'

@@ -85,9 +85,9 @@ class Task:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'task_set_as_busy'
 
     def upload_object(self, instruct_instance, instruct_command, instruct_args, end_time, timestamp):
@@ -104,9 +104,9 @@ class Task:
                 Key=self.task_name + '/' + timestamp
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'object_uploaded'
 
     def instruct(self):

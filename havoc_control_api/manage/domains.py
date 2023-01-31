@@ -76,9 +76,9 @@ class Domain:
                 Id=self.hosted_zone
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         if zone:
             if zone['HostedZone']['Name'] == self.domain_name + '.':
                 return 'valid_domain'
@@ -113,9 +113,9 @@ class Domain:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'domain_created'
 
     def delete_domain_entry(self):
@@ -136,9 +136,9 @@ class Domain:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'domain_deleted'
 
     def create(self):

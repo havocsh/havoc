@@ -80,9 +80,9 @@ class Task:
                 Key=self.task_name + '/init.txt'
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'object_uploaded'
 
     def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
@@ -139,9 +139,9 @@ class Task:
                 }
             )
         except botocore.exceptions.ClientError as error:
-            return error['Error']
+            return error
         except botocore.exceptions.ParamValidationError as error:
-            return error['Error']
+            return error
         return 'task_entry_added'
 
     def registration(self):
