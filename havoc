@@ -52,6 +52,7 @@ fi
 
 # Check for update request and pull latest commits plus attempt to upgrade ./HAVOC module
 if [[ ${@} =~ "--deployment update" ]]; then
+    echo " - Applying updates for version ${deployment_version}."
     echo " - Updating local files."
     havoc_orig_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
     git pull > /dev/null 2>&1
