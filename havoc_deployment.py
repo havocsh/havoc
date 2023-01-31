@@ -193,13 +193,13 @@ class ManageDeployment:
             print('clone the https://github.com/havocsh/havoc-framework.git repo to a different directory and deploy from there.')
             print('Exiting...')
             return 'failed'
-        print('Deployment dependencies met. Proceeding with deployment.\n')
+        print(' - Deployment dependencies met. Proceeding with deployment.\n')
 
         # Build havoc-control-api packages for AWS Lambda
         subprocess.run('./havoc_build_packages.sh', shell=True)
 
         # Write out terraform.tfvars file
-        print('\nSetting up Terraform variables. Please provide the requested details.')
+        print('\n - Setting up Terraform variables. Please provide the requested details.')
         aws_region = input('\nAWS region: ')
         self.aws_profile = input('AWS profile: ')
         deployment_name = None
@@ -234,7 +234,7 @@ class ManageDeployment:
                 f.write(f'enable_domain_name = {enable_domain_name}\n')
 
         # Run Terraform and check for errors:
-        print('Initializing Terraform...\n')
+        print(' - Initializing Terraform...\n')
         tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
         tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_init_output = tf_init.communicate()[1].decode('ascii')
@@ -245,7 +245,7 @@ class ManageDeployment:
             if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
                 os.remove('havoc_deploy/aws/terraform/terraform.tfvars')
             return 'failed'
-        print('Starting Terraform tasks.\n')
+        print(' - Starting Terraform tasks.\n')
         tf_apply_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'apply', '-no-color', '-auto-approve']
         tf_apply = subprocess.Popen(tf_apply_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_apply_output = tf_apply.communicate()[1].decode('ascii')
@@ -262,7 +262,7 @@ class ManageDeployment:
             print('\nRollback complete.')
             print('Review errors above, correct the reported issues and try the deployment again.')
             return 'failed'
-        print('Terraform deployment tasks completed.')
+        print(' - Terraform deployment tasks completed.')
 
         # Create ./HAVOC profile
         profile_output = havoc_profile.add_profile('deploy_add')
@@ -373,7 +373,7 @@ class ManageDeployment:
         subprocess.run('./havoc_build_packages.sh', shell=True)
 
         # Run Terraform and check for errors:
-        print('\nStarting Terraform tasks.')
+        print('\n - Starting Terraform tasks.')
         tf_apply_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'apply', '-no-color', '-auto-approve']
         tf_apply = subprocess.Popen(tf_apply_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_apply_output = tf_apply.communicate()[1].decode('ascii')
@@ -382,7 +382,7 @@ class ManageDeployment:
             print(tf_apply_output)
             print('Review errors above, correct the reported issues and try the update again.')
             return 'failed'
-        print('\nTerraform tasks completed.\n')
+        print(' - Terraform tasks completed.\n')
         self.havoc_client.update_deployment(deployment_version=self.deployment_version)
         return 'completed'
     
@@ -419,7 +419,7 @@ class ManageDeployment:
         havoc_profile.remove_profile(mode='deploy_remove')
 
         # Run Terraform and check for errors
-        print('\nStarting Terraform tasks.')
+        print('\n - Starting Terraform tasks.')
         tf_destroy_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'destroy', '-no-color', '-auto-approve']
         tf_destroy = subprocess.Popen(tf_destroy_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_destroy_output = tf_destroy.communicate()[1].decode('ascii')
@@ -428,8 +428,8 @@ class ManageDeployment:
             print(tf_destroy_output)
             print('Review errors above, correct the reported issues and try the uninstall again.')
             return 'failed'
-        print('\nTerraform tasks completed.\n')
-        print('Deleting local Terraform state.\n')
+        print(' - Terraform tasks completed.\n')
+        print('\n - Deleting local Terraform state.\n')
         if os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
             os.remove('havoc_deploy/aws/terraform/terraform.tfstate')
         if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
