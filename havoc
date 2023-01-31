@@ -39,6 +39,7 @@ fi
 
 # Check for install request and if so, install requirements and pull ./HAVOC module
 if [[ ${@} =~ "--deployment create" ]]; then
+    echo " - Deploying version ${deployment_version}."
     echo " - Installing requirements."
     ${pip_bin} --disable-pip-version-check install -q -r requirements.txt
     echo " - Installing the ./HAVOC module."
