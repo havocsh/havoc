@@ -352,7 +352,7 @@ class ManageDeployment:
             print('Review errors above, correct the reported issues and try again.')
             return 'failed'
         print('Terraform deployment tasks completed.')
-        self.havoc_client.update_deployment(deployment_update)
+        self.havoc_client.update_deployment(**deployment_update)
         return 'completed'
 
     def update(self):
