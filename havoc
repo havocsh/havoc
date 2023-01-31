@@ -54,14 +54,12 @@ fi
 if [[ ${@} =~ "--deployment update" ]]; then
     echo " - Updating local files."
     havoc_orig_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
-    git stash push -- .havoc/*
-    git pull -q
+    git pull > /dev/null 2>&1
     current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
     target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
     if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
         git checkout ${target_git_branch}
     fi
-    git stash pop
     havoc_new_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
     if [[ ! ${havoc_orig_hash} == ${havoc_new_hash} ]]; then
         echo ""
