@@ -2,7 +2,9 @@
 
 echo ""
 echo "Building ./HAVOC Lambda deployment packages."
-mkdir havoc_deploy/aws/terraform/build
+if [ ! -d havoc_deploy/aws/terraform/build ]; then
+    mkdir havoc_deploy/aws/terraform/build
+fi
 echo " - packaging havoc_control_api/authorizer"
 cd havoc_control_api/authorizer && zip -q -r ../../havoc_deploy/aws/terraform/build/authorizer.zip .
 cd .. && openssl dgst -sha256 -binary ../havoc_deploy/aws/terraform/build/authorizer.zip | openssl enc -base64 > ../havoc_deploy/aws/terraform/build/authorizer.zip.base64sha256
