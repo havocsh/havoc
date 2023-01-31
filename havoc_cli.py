@@ -7,25 +7,12 @@ from configparser import ConfigParser
 from cmd2 import Cmd
 import havoc
 
-# Load the ./HAVOC configuration file
-havoc_profiles = ConfigParser()
-havoc_profiles.read('.havoc/profiles')
 
-profile = None
-
-# Get api_key and secret_key
-if profile:
-    api_key = havoc_profiles.get(profile, 'API_KEY')
-    secret = havoc_profiles.get(profile, 'SECRET')
-    api_region = havoc_profiles.get(profile, 'API_REGION')
-    api_domain_name = havoc_profiles.get(profile, 'API_DOMAIN_NAME')
-else:
-    api_key = havoc_profiles.get('default', 'API_KEY')
-    secret = havoc_profiles.get('default', 'SECRET')
-    api_region = havoc_profiles.get('default', 'API_REGION')
-    api_domain_name = havoc_profiles.get('default', 'API_DOMAIN_NAME')
-
-h = havoc.Connect(api_region, api_domain_name, api_key, secret)
+# Load the ./HAVOC profiles
+def load_havoc_profiles():
+    havoc_profiles = ConfigParser()
+    havoc_profiles.read('.havoc/profiles')
+    return havoc_profiles
 
 
 def convert_input(args, inp):
@@ -55,8 +42,37 @@ def format_output(command, data):
 
 class HavocCMD(Cmd):
 
+    print('         _ _         _    _  _____   ______ ')
+    print('        / | |      \| |  | |/ ___ \ / _____)')
+    print('       / /| |__  /  \ |  | | |   | | /      ')
+    print('      / / |  __)/ /\ \ \/ /| |   | | |      ')
+    print('     / /  | |  / |__| \  / | |___| | \_____ ')
+    print('  ()/_/   |_| / ______|\/   \_____/ \______)')
+    
     prompt = 'havoc> '
     intro = "havoc CLI - Type ? to list commands"
+
+    def __init__(self):
+        super().__init__()
+        self.profile = None
+        self.__havoc_client = None
+
+    @property
+    def havoc_client(self):
+        if self.__havoc_client is None:
+            havoc_profiles = load_havoc_profiles()
+            if self.profile:
+                api_key = havoc_profiles.get(self.profile, 'API_KEY')
+                secret = havoc_profiles.get(self.profile, 'SECRET')
+                api_region = havoc_profiles.get(self.profile, 'API_REGION')
+                api_domain_name = havoc_profiles.get(self.profile, 'API_DOMAIN_NAME')
+            else:
+                api_key = havoc_profiles.get('default', 'API_KEY')
+                secret = havoc_profiles.get('default', 'SECRET')
+                api_region = havoc_profiles.get('default', 'API_REGION')
+                api_domain_name = havoc_profiles.get('default', 'API_DOMAIN_NAME')
+            self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret)
+        return self.__havoc_client
 
     def emptyline(self):
         pass
@@ -69,7 +85,7 @@ class HavocCMD(Cmd):
         print('\nExit the application. Shorthand: Ctrl-D.\n')
 
     def do_get_deployment(self, inp):
-        get_deployment_response = h.get_deployment()
+        get_deployment_response = self.havoc_client.get_deployment()
         format_output('get_deployment', get_deployment_response)
 
     def help_get_deployment(self):
@@ -78,7 +94,7 @@ class HavocCMD(Cmd):
     def do_list_tasks(self, inp):
         args = {'task_status': '', 'task_name_contains': ''}
         command_args = convert_input(args, inp)
-        list_tasks_response = h.list_tasks(**command_args)
+        list_tasks_response = self.havoc_client.list_tasks(**command_args)
         format_output('list_tasks', list_tasks_response)
 
     def help_list_tasks(self):
@@ -89,7 +105,7 @@ class HavocCMD(Cmd):
     def do_get_task(self, inp):
         args = {'task_name': ''}
         command_args = convert_input(args, inp)
-        get_task_response = h.get_task(**command_args)
+        get_task_response = self.havoc_client.get_task(**command_args)
         format_output('get_task', get_task_response)
 
     def help_get_task(self):
@@ -99,7 +115,7 @@ class HavocCMD(Cmd):
     def do_kill_task(self, inp):
         args = {'task_name': ''}
         command_args = convert_input(args, inp)
-        kill_task_response = h.kill_task(**command_args)
+        kill_task_response = self.havoc_client.kill_task(**command_args)
         format_output('kill_task', kill_task_response)
 
     def help_kill_task(self):
@@ -109,7 +125,7 @@ class HavocCMD(Cmd):
     def do_verify_task(self, inp):
         args = {'task_name': '', 'task_type': ''}
         command_args = convert_input(args, inp)
-        verify_task_response = h.verify_task(**command_args)
+        verify_task_response = self.havoc_client.verify_task(**command_args)
         if verify_task_response:
             format_output('verify_task', verify_task_response)
         else:
@@ -121,7 +137,7 @@ class HavocCMD(Cmd):
         print('\n--task_type=<string> - (required) the type of task that the verified task should be')
 
     def do_list_task_types(self, inp):
-        list_task_types_response = h.list_task_types()
+        list_task_types_response = self.havoc_client.list_task_types()
         format_output('list_task_types', list_task_types_response)
 
     def help_list_task_types(self):
@@ -130,7 +146,7 @@ class HavocCMD(Cmd):
     def do_get_task_type(self, inp):
         args = {'task_type': ''}
         command_args = convert_input(args, inp)
-        get_task_type_response = h.get_task_type(**command_args)
+        get_task_type_response = self.havoc_client.get_task_type(**command_args)
         format_output('get_task_type', get_task_type_response)
 
     def help_get_task_type(self):
@@ -140,7 +156,7 @@ class HavocCMD(Cmd):
     def do_create_task_type(self, inp):
         args = {'task_type': '', 'task_version': '', 'source_image': '', 'capabilities': '', 'cpu': '', 'memory': ''}
         command_args = convert_input(args, inp)
-        create_task_type_response = h.create_task_type(**command_args)
+        create_task_type_response = self.havoc_client.create_task_type(**command_args)
         format_output('create_task_type', create_task_type_response)
 
     def help_create_task_type(self):
@@ -155,7 +171,7 @@ class HavocCMD(Cmd):
     def do_delete_task_type(self, inp):
         args = {'task_type': ''}
         command_args = convert_input(args, inp)
-        delete_task_type_response = h.delete_task_type(**command_args)
+        delete_task_type_response = self.havoc_client.delete_task_type(**command_args)
         format_output('delete_task_type', delete_task_type_response)
 
     def help_delete_task_type(self):
@@ -163,7 +179,7 @@ class HavocCMD(Cmd):
         print('\n--task_type=<string> - (required) the name of the task type to delete')
 
     def do_list_users(self, inp):
-        list_users_response = h.list_users()
+        list_users_response = self.havoc_client.list_users()
         format_output('list_users', list_users_response)
 
     def help_list_users(self):
@@ -172,7 +188,7 @@ class HavocCMD(Cmd):
     def do_get_user(self, inp):
         args = {'user_id': ''}
         command_args = convert_input(args, inp)
-        get_user_response = h.get_user(**command_args)
+        get_user_response = self.havoc_client.get_user(**command_args)
         format_output('get_user', get_user_response)
 
     def help_get_user(self):
@@ -182,7 +198,7 @@ class HavocCMD(Cmd):
     def do_create_user(self, inp):
         args = {'user_id': '', 'admin': ''}
         command_args = convert_input(args, inp)
-        create_user_response = h.create_user(**command_args)
+        create_user_response = self.havoc_client.create_user(**command_args)
         format_output('create_user', create_user_response)
 
     def help_create_user(self):
@@ -193,7 +209,7 @@ class HavocCMD(Cmd):
     def do_update_user(self, inp):
         args = {'user_id': '', 'new_user_id': '', 'admin': '', 'reset_keys': ''}
         command_args = convert_input(args, inp)
-        update_user_response = h.update_user(**command_args)
+        update_user_response = self.havoc_client.update_user(**command_args)
         format_output('update_user', update_user_response)
 
     def help_update_user(self):
@@ -207,7 +223,7 @@ class HavocCMD(Cmd):
     def do_delete_user(self, inp):
         args = {'user_id': ''}
         command_args = convert_input(args, inp)
-        delete_user_response = h.delete_user(**command_args)
+        delete_user_response = self.havoc_client.delete_user(**command_args)
         format_output('delete_user', delete_user_response)
 
     def help_delete_user(self):
@@ -215,7 +231,7 @@ class HavocCMD(Cmd):
         print('\n--user_id=<string> - (required) the user_id of the user to be deleted')
 
     def do_list_files(self, inp):
-        list_files_response = h.list_files()
+        list_files_response = self.havoc_client.list_files()
         format_output('list_files', list_files_response)
 
     def help_list_files(self):
@@ -228,7 +244,7 @@ class HavocCMD(Cmd):
         file_name = command_args['file_name']
         f = open(f'{file_path}/{file_name}', 'wb')
         del command_args['file_path']
-        get_file_response = h.get_file(**command_args)
+        get_file_response = self.havoc_client.get_file(**command_args)
         file_contents = get_file_response['file_contents']
         f.write(file_contents)
         f.close()
@@ -250,7 +266,7 @@ class HavocCMD(Cmd):
         raw_file = f.read()
         command_args['raw_file'] = raw_file
         del command_args['file_path']
-        create_file_response = h.create_file(**command_args)
+        create_file_response = self.havoc_client.create_file(**command_args)
         format_output('create_file', create_file_response)
 
     def help_create_file(self):
@@ -261,7 +277,7 @@ class HavocCMD(Cmd):
     def do_delete_file(self, inp):
         args = {'file_name': ''}
         command_args = convert_input(args, inp)
-        delete_file_response = h.delete_file(**command_args)
+        delete_file_response = self.havoc_client.delete_file(**command_args)
         format_output('delete_file', delete_file_response)
 
     def help_delete_file(self):
@@ -269,7 +285,7 @@ class HavocCMD(Cmd):
         print('\n--file_name=<string> - (required) the name of the file to be deleted.')
 
     def do_list_portgroups(self, inp):
-        list_portgroups_response = h.list_portgroups()
+        list_portgroups_response = self.havoc_client.list_portgroups()
         format_output('list_portgroups', list_portgroups_response)
 
     def help_list_portgroups(self):
@@ -278,7 +294,7 @@ class HavocCMD(Cmd):
     def do_get_portgroup(self, inp):
         args = {'portgroup_name': ''}
         command_args = convert_input(args, inp)
-        get_portgroup_response = h.get_portgroup(**command_args)
+        get_portgroup_response = self.havoc_client.get_portgroup(**command_args)
         format_output('get_portgroup', get_portgroup_response)
 
     def help_get_portgroup(self):
@@ -288,7 +304,7 @@ class HavocCMD(Cmd):
     def do_create_portgroup(self, inp):
         args = {'portgroup_name': '', 'portgroup_description': ''}
         command_args = convert_input(args, inp)
-        create_portgroup_response = h.create_portgroup(**command_args)
+        create_portgroup_response = self.havoc_client.create_portgroup(**command_args)
         format_output('create_portgroup', create_portgroup_response)
 
     def help_create_portgroup(self):
@@ -299,7 +315,7 @@ class HavocCMD(Cmd):
     def do_update_portgroup_rule(self, inp):
         args = {'portgroup_name': '', 'portgroup_action': '', 'ip_ranges': '', 'port': '', 'ip_protocol': ''}
         command_args = convert_input(args, inp)
-        update_portgroup_rule_response = h.update_portgroup_rule(**command_args)
+        update_portgroup_rule_response = self.havoc_client.update_portgroup_rule(**command_args)
         format_output('update_portgroup_rule', update_portgroup_rule_response)
 
     def help_update_portgroup_rule(self):
@@ -313,7 +329,7 @@ class HavocCMD(Cmd):
     def do_delete_portgroup(self, inp):
         args = {'portgroup_name': ''}
         command_args = convert_input(args, inp)
-        delete_portgroup_response = h.delete_portgroup(**command_args)
+        delete_portgroup_response = self.havoc_client.delete_portgroup(**command_args)
         format_output('delete_portgroup', delete_portgroup_response)
 
     def help_delete_portgroup(self):
@@ -321,7 +337,7 @@ class HavocCMD(Cmd):
         print('\n--portgroup_name=<string> - (required) the name of the portgroup to be deleted')
 
     def do_list_domains(self, inp):
-        list_domains_response = h.list_domains()
+        list_domains_response = self.havoc_client.list_domains()
         format_output('list_domains', list_domains_response)
 
     def help_list_domains(self):
@@ -330,7 +346,7 @@ class HavocCMD(Cmd):
     def do_get_domain(self, inp):
         args = {'domain_name': ''}
         command_args = convert_input(args, inp)
-        get_domain_response = h.get_domain(**command_args)
+        get_domain_response = self.havoc_client.get_domain(**command_args)
         format_output('get_domain', get_domain_response)
 
     def help_get_domain(self):
@@ -340,7 +356,7 @@ class HavocCMD(Cmd):
     def do_create_domain(self, inp):
         args = {'domain_name': '', 'hosted_zone': ''}
         command_args = convert_input(args, inp)
-        create_domain_response = h.create_domain(**command_args)
+        create_domain_response = self.havoc_client.create_domain(**command_args)
         format_output('create_domain', create_domain_response)
 
     def help_create_domain(self):
@@ -351,7 +367,7 @@ class HavocCMD(Cmd):
     def do_delete_domain(self, inp):
         args = {'domain_name': ''}
         command_args = convert_input(args, inp)
-        delete_domain_response = h.delete_domain(**command_args)
+        delete_domain_response = self.havoc_client.delete_domain(**command_args)
         format_output('delete_domain', delete_domain_response)
 
     def help_delete_domain(self):
@@ -362,7 +378,7 @@ class HavocCMD(Cmd):
         args = {'task_name': '', 'task_type': '', 'task_host_name': '', 'task_domain_name': '', 'portgroups': '',
                 'end_time': ''}
         command_args = convert_input(args, inp)
-        run_task_response = h.run_task(**command_args)
+        run_task_response = self.havoc_client.run_task(**command_args)
         format_output('run_task', run_task_response)
 
     def help_run_task(self):
@@ -378,7 +394,7 @@ class HavocCMD(Cmd):
         args = {'task_name': '', 'task_type': '', 'task_host_name': '', 'task_domain_name': '', 'portgroups': '',
                 'end_time': ''}
         command_args = convert_input(args, inp)
-        task_startup_response = h.task_startup(**command_args)
+        task_startup_response = self.havoc_client.task_startup(**command_args)
         format_output('task_startup', task_startup_response)
 
     def help_task_startup(self):
@@ -393,7 +409,7 @@ class HavocCMD(Cmd):
     def do_task_shutdown(self, inp):
         args = {'task_name': ''}
         command_args = convert_input(args, inp)
-        task_shutdown_response = h.task_shutdown(**command_args)
+        task_shutdown_response = self.havoc_client.task_shutdown(**command_args)
         format_output('task_shutdown', task_shutdown_response)
 
     def help_task_shutdown(self):
@@ -403,7 +419,7 @@ class HavocCMD(Cmd):
     def do_instruct_task(self, inp):
         args = {'task_name': '', 'instruct_instance': '', 'instruct_command': '', 'instruct_args': ''}
         command_args = convert_input(args, inp)
-        instruct_task_response = h.instruct_task(**command_args)
+        instruct_task_response = self.havoc_client.instruct_task(**command_args)
         format_output('instruct_task', instruct_task_response)
 
     def help_instruct_task(self):
@@ -416,7 +432,7 @@ class HavocCMD(Cmd):
     def do_interact_with_task(self, inp):
         args = {'task_name': '', 'instruct_command': '', 'instruct_instance': '', 'instruct_args': ''}
         command_args = convert_input(args, inp)
-        interact_with_task_response = h.interact_with_task(**command_args)
+        interact_with_task_response = self.havoc_client.interact_with_task(**command_args)
         format_output('interact_with_task', interact_with_task_response)
 
     def help_interact_with_task(self):
@@ -429,7 +445,7 @@ class HavocCMD(Cmd):
     def do_get_task_results(self, inp):
         args = {'task_name': ''}
         command_args = convert_input(args, inp)
-        get_task_results_response = h.get_task_results(**command_args)
+        get_task_results_response = self.havoc_client.get_task_results(**command_args)
         format_output('get_task_results', get_task_results_response)
 
     def help_get_task_results(self):
@@ -439,7 +455,7 @@ class HavocCMD(Cmd):
     def do_get_filtered_task_results(self, inp):
         args = {'task_name': '', 'instruct_command': '', 'instruct_instance': ''}
         command_args = convert_input(args, inp)
-        get_filtered_task_results_response = h.get_filtered_task_results(**command_args)
+        get_filtered_task_results_response = self.havoc_client.get_filtered_task_results(**command_args)
         format_output('get_filtered_task_results', get_filtered_task_results_response)
 
     def help_get_filtered_task_results(self):
@@ -452,7 +468,7 @@ class HavocCMD(Cmd):
         args = {'task_name': ''}
         command_args = convert_input(args, inp)
         try:
-            wait_for_c2_response = h.wait_for_c2(**command_args)
+            wait_for_c2_response = self.havoc_client.wait_for_c2(**command_args)
             format_output('wait_for_c2', wait_for_c2_response)
         except KeyboardInterrupt:
             print('wait_for_c2 stopped.')
@@ -466,7 +482,7 @@ class HavocCMD(Cmd):
         args = {'task_name': ''}
         command_args = convert_input(args, inp)
         try:
-            wait_for_idle_task_response = h.wait_for_idle_task(**command_args)
+            wait_for_idle_task_response = self.havoc_client.wait_for_idle_task(**command_args)
             format_output('wait_for_idle_task', wait_for_idle_task_response)
         except KeyboardInterrupt:
             print('wait_for_idle_task stopped.')
@@ -479,7 +495,7 @@ class HavocCMD(Cmd):
     def do_verify_agent(self, inp):
         args = {'task_name': '', 'agent_name': ''}
         command_args = convert_input(args, inp)
-        verify_agent_response = h.verify_agent(**command_args)
+        verify_agent_response = self.havoc_client.verify_agent(**command_args)
         if verify_agent_response:
             format_output('verify_agent', verify_agent_response)
         else:
@@ -494,7 +510,7 @@ class HavocCMD(Cmd):
         args = {'task_name': '', 'agent_name': '', 'command': '', 'wait_for_results': '', 'completion_string': ''}
         command_args = convert_input(args, inp)
         try:
-            execute_agent_shell_command_response = h.execute_agent_shell_command(**command_args)
+            execute_agent_shell_command_response = self.havoc_client.execute_agent_shell_command(**command_args)
             format_output('execute_agent_shell_command', execute_agent_shell_command_response)
         except KeyboardInterrupt:
             print('execute_agent_shell_command stopped.')
@@ -511,7 +527,7 @@ class HavocCMD(Cmd):
         args = {'task_name': '', 'agent_name': '', 'module': '', 'module_args': '', 'wait_for_results': '', 'completion_string': ''}
         command_args = convert_input(args, inp)
         try:
-            execute_agent_module_response = h.execute_agent_module(**command_args)
+            execute_agent_module_response = self.havoc_client.execute_agent_module(**command_args)
             format_output('execute_agent_module', execute_agent_module_response)
         except KeyboardInterrupt:
             print('execute_agent_module stopped.')
@@ -528,7 +544,7 @@ class HavocCMD(Cmd):
     def do_get_agent_results(self, inp):
         args = {'task_name': '', 'agent_name': '', 'task_id': ''}
         command_args = convert_input(args, inp)
-        get_agent_results_response = h.get_agent_results(**command_args)
+        get_agent_results_response = self.havoc_client.get_agent_results(**command_args)
         format_output('get_agent_results', get_agent_results_response)
     
     def help_get_agent_results(self):
@@ -543,17 +559,5 @@ class HavocCMD(Cmd):
 
     do_EOF = do_exit
     help_EOF = help_exit
-
-if __name__ == '__main__':
-
-    print('         _ _         _    _  _____   ______ ')
-    print('        / | |      \| |  | |/ ___ \ / _____)')
-    print('       / /| |__  /  \ |  | | |   | | /      ')
-    print('      / / |  __)/ /\ \ \/ /| |   | | |      ')
-    print('     / /  | |  / |__| \  / | |___| | \_____ ')
-    print('  ()/_/   |_| / ______|\/   \_____/ \______)')
-
-    havoc_cmd = HavocCMD()
-    havoc_cmd.cmdloop()
 
 

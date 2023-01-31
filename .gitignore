@@ -37,5 +37,21 @@ ehthumbs.db
 Thumbs.db
 
 # Local environment files #
-##########################
+###########################
 .idea
+venv
+
+# Local config files #
+######################
+.havoc
+havoc_deploy/aws/terraform/.terraform.lock.hcl
+havoc_deploy/aws/terraform/.terraform/
+havoc_deploy/aws/terraform/build/
+havoc_deploy/aws/terraform/terraform.tfstate
+havoc_deploy/aws/terraform/terraform.tfstate.backup
+havoc_deploy/aws/terraform/terraform.tfvars
+havoc_deploy/aws/terraform/terraform_backend.tf
+
+# Local binary files #
+######################
+terraform

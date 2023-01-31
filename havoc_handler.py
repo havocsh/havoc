@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import platform
 import requests
@@ -62,14 +63,16 @@ def tf_bin():
 
 if __name__ == "__main__":
 
-    if not init_args:
+    if not len(sys.argv) > 1:
         import havoc_cli
-        havoc_cli()
+        havoc_cmd = havoc_cli.HavocCMD()
+        havoc_cmd.cmdloop()
     
     if init_args.profile and not init_args.deployment:
         import havoc_cli
-        havoc_cli.profile = init_args.profile
-        havoc_cli()
+        havoc_cmd = havoc_cli.HavocCMD()
+        havoc_cmd.profile = init_args.profile
+        havoc_cmd.cmdloop()
     
     if init_args.add_profile:
         profile_task = havoc_profile.add_profile('add')

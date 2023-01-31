@@ -8,7 +8,7 @@ import havoc
 from configparser import ConfigParser
 
 
-def load_havoc_config():
+def load_havoc_profiles():
     # Load the ./HAVOC profiles file
     havoc_profiles = ConfigParser()
     havoc_profiles.read('.havoc/profiles')
@@ -26,7 +26,7 @@ class ManageDeployment:
     @property
     def havoc_client(self):
         if self.__havoc_client is None:
-            havoc_profiles = load_havoc_config()
+            havoc_profiles = load_havoc_profiles()
             if self.profile:
                 api_key = havoc_profiles.get(self.profile, 'API_KEY')
                 secret = havoc_profiles.get(self.profile, 'SECRET')
