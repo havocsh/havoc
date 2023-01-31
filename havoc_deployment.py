@@ -330,7 +330,7 @@ class ManageDeployment:
         
         with open('./havoc_deploy/aws/terraform/terraform.tfvars', 'w') as f:
             for k,v in parameters.items():
-                f.write(f'{k} = "{v}"')
+                f.write(f'{k} = "{v}"\n')
             
 
         # Run Terraform and check for errors:
