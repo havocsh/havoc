@@ -40,10 +40,10 @@ Thumbs.db
 ###########################
 .idea
 venv
+__pycache__
 
 # Local config files #
 ######################
-.havoc
 havoc_deploy/aws/terraform/.terraform.lock.hcl
 havoc_deploy/aws/terraform/.terraform/
 havoc_deploy/aws/terraform/build/
