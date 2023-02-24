@@ -135,7 +135,6 @@ class Deliver:
         del db_payload['operator_command']
         del db_payload['command_args']
         del db_payload['timestamp']
-        del db_payload['user_id']
         json_payload = json.dumps(db_payload['command_output'])
         command_args_fixup = {}
         for k, v in command_args.items():
