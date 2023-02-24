@@ -217,11 +217,11 @@ class Playbook:
         operator_command = 'Initialize'
         command_args = {'no_args': 'True'}
         payload = {'operator_command': operator_command, 'command_args': command_args, 'timestamp': timestamp, 'end_time': end_time}
-        file_name = 'init.json'
+        file_name = '00_init.json'
         upload_object_response = self.upload_object(payload, file_name)
         if upload_object_response != 'object_uploaded':
             return format_response(500, 'failed', f'initialize playbook operator failed with error {upload_object_response}', self.log)
-        t.sleep(20)
+
         # Send execute_playbook command to the playbook operator
         operator_command = 'execute_playbook'
         command_args = {'api_region': api_region, 'api_domain_name': api_domain_name, 'api_key': api_key, 'secret': secret_key, 'config_pointer': config_pointer}
