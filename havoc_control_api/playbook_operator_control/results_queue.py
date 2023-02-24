@@ -73,18 +73,30 @@ class Queue:
         if 'end_time' in self.detail:
             end_time = self.detail['end_time']
         if start_time != '' and start_time is not None:
-            start = parser.parse(start_time)
+            start_timestamp = None
+            try:
+                start_timestamp = str(int(start_time))
+            except:
+                pass
+            if not start_timestamp:
+                start = parser.parse(start_time)
+                start_timestamp = str(int(datetime.timestamp(start)))
         else:
             start = datetime.now() - timedelta(minutes=1440)
+            start_timestamp = str(int(datetime.timestamp(start)))
 
         if end_time != '' and end_time is not None:
-            end = parser.parse(end_time)
+            end_timestamp = None
+            try:
+                end_timestamp = str(int(end_time))
+            except:
+                pass
+            if not end_timestamp:
+                end = parser.parse(end_time)
+                end_timestamp = str(int(datetime.timestamp(end)))
         else:
             end = datetime.now()
-
-        # Assign query parameters
-        start_timestamp = str(int(datetime.timestamp(start)))
-        end_timestamp = str(int(datetime.timestamp(end)))
+            end_timestamp = str(int(datetime.timestamp(end)))
             
         # Run query
         queue_data = self.query_queue(start_timestamp, end_timestamp)
