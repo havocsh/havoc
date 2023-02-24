@@ -57,7 +57,7 @@ class ConfigPlaybook:
         # Get the playbook type details and parse the playbook template
         print(f'\nGetting the template for playbook_type {playbook_selection}.')
         playbook_type_details = self.havoc_client.get_playbook_type(playbook_selection)
-        playbook_template = hcl2.load(playbook_type_details['playbook_template'])
+        playbook_template = hcl2.loads(playbook_type_details['playbook_template'])
         if 'variable' in playbook_template:
             print('The playbook template contains variables that require static values.')
             print('Please provide values for the variables below. They will be inserted into your playbook configuration:')
