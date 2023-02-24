@@ -100,7 +100,9 @@
             "Action": "iam:PassRole",
             "Resource": [
                 "${task_role}",
-                "${task_exec_role}"
+                "${task_exec_role}",
+                "${playbook_operator_role}",
+                "${playbook_operator_exec_role}"
             ]
         }
     ]
