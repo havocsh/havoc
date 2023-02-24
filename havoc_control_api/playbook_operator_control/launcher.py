@@ -180,7 +180,7 @@ class Playbook:
             return format_response(404, 'failed', f'playbook {self.playbook_name} does not exist', self.log)
 
         self.playbook_type = playbook_entry['Item']['playbook_type']['S']
-        playbook_timeout = playbook_entry['Item']['playbook_timeout']['N']
+        playbook_timeout = int(playbook_entry['Item']['playbook_timeout']['N'])
         config_pointer = playbook_entry['Item']['config_pointer']['S']
         created_by = playbook_entry['Item']['created_by']['S']
         current_time = datetime.datetime.now()
