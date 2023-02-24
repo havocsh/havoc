@@ -108,7 +108,7 @@ class Playbook:
                     ':playbook_timeout': {'N': self.playbook_timeout},
                     ':config_pointer': {'S': self.config_pointer},
                     ':created_by': {'S': self.user_id},
-                    ':last_executed_by': {'S': 'None'}
+                    ':last_executed_by': {'S': 'None'},
                     ':last_execution_time': {'S': 'None'}
                 }
             )
