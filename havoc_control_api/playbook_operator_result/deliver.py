@@ -146,6 +146,7 @@ class Deliver:
                 command_args_fixup[k] = {'BOOL': v}
             if isinstance(v, bytes):
                 command_args_fixup[k] = {'B': v}
+        completed_instruction = None
         if operator_command == 'terminate':
             completed_instruction = self.update_playbook_entry(None, 'terminated')
             if completed_instruction != 'playbook_entry_updated':
