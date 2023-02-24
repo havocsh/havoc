@@ -113,7 +113,7 @@ class Playbook:
                 overrides={
                     'containerOverrides': [
                         {
-                            'name': f'{self.deployment_name}-{self.playbook_type}',
+                            'name': f'{self.deployment_name}-playbook_operator',
                             'environment': [
                                 {'name': 'REGION', 'value': self.region},
                                 {'name': 'DEPLOYMENT_NAME', 'value': self.deployment_name},
