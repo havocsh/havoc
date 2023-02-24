@@ -370,7 +370,8 @@ class HavocCMD(Cmd):
                 get_playbook_results_response = self.havoc_client.get_playbook_results(**command_args)
                 if 'queue' in get_playbook_results_response:
                     get_playbook_results_response['queue'].sort(key=sortFunc)
-                    command_args['start_time'] = get_playbook_results_response['queue'][-1]['run_time']
+                    last_run_time = get_playbook_results_response['queue'][-1]['run_time']
+                    command_args['start_time'] = str(int(last_run_time) + 1)
                     format_output('get_task_results', get_playbook_results_response)
                 t.sleep(5)
         except KeyboardInterrupt:
