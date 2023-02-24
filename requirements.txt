@@ -2,3 +2,5 @@ cmd2
 boto3
 botocore
 requests
+python-hcl2
+dpath

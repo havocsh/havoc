@@ -1,5 +1,4 @@
 import json
-import botocore
 import boto3
 from dateutil import parser
 from datetime import datetime
@@ -22,9 +21,9 @@ def format_response(status_code, result, message, log, **kwargs):
 
 class Queue:
 
-    def __init__(self, deployment_name, task_name, region, detail: dict, user_id, log):
+    def __init__(self, deployment_name, playbook_name, region, detail: dict, user_id, log):
         self.deployment_name = deployment_name
-        self.task_name = task_name
+        self.playbook_name = playbook_name
         self.region = region
         self.user_id = user_id
         self.detail = detail
@@ -41,10 +40,10 @@ class Queue:
     def query_queue(self, start_timestamp, end_timestamp):
         queue_results = {'Items': []}
         scan_kwargs = {
-            'TableName': f'{self.deployment_name}-task-queue',
-            'KeyConditionExpression': 'task_name = :task_name AND run_time BETWEEN :start_time AND :end_time',
+            'TableName': f'{self.deployment_name}-playbook-queue',
+            'KeyConditionExpression': 'playbook_name = :playbook_name AND run_time BETWEEN :start_time AND :end_time',
             'ExpressionAttributeValues': {
-                ':task_name': {'S': self.task_name},
+                ':playbook_name': {'S': self.playbook_name},
                 ':start_time': {'N': start_timestamp},
                 ':end_time': {'N': end_timestamp}
             }
@@ -92,45 +91,35 @@ class Queue:
         if queue_data:
             for item in queue_data['Items']:
                 run_time = item['run_time']['N']
-                task_name = item['task_name']['S']
-                task_type = item['task_type']['S']
-                task_version = item['task_version']['S']
-                task_context = item['task_context']['S']
-                task_host_name = item['task_host_name']['S']
-                task_domain_name = item['task_domain_name']['S']
-                instruct_command_output = item['instruct_command_output']['S']
-                attack_ip = item['attack_ip']['S']
-                local_ip = item['local_ip']['SS']
-                instruct_user_id = item['user_id']['S']
-                instruct_instance = item['instruct_instance']['S']
-                instruct_command = item['instruct_command']['S']
-                instruct_args = item['instruct_args']['M']
-                instruct_args_fixup = {}
-                for key, value in instruct_args.items():
+                playbook_name = item['playbook_name']['S']
+                playbook_type = item['playbook_type']['S']
+                playbook_version = item['playbook_version']['S']
+                playbook_operator_version = item['playbook_operator_version']['S']
+                command_output = item['command_output']['S']
+                user_id = item['user_id']['S']
+                operator_command = item['operator_command']['S']
+                command_args = item['command_args']['M']
+                command_args_fixup = {}
+                for key, value in command_args.items():
                     if 'S' in value:
-                        instruct_args_fixup[key] = value['S']
+                        command_args_fixup[key] = value['S']
                     if 'N' in value:
-                        instruct_args_fixup[key] = value['N']
+                        command_args_fixup[key] = value['N']
                     if 'BOOL' in value:
-                        instruct_args_fixup[key] = value['BOOL']
+                        command_args_fixup[key] = value['BOOL']
                     if 'B' in value:
-                        instruct_args_fixup[key] = value['B']
+                        command_args_fixup[key] = value['B']
 
                 # Add queue entry to results
                 queue_list.append({
-                    'task_name': task_name,
-                    'task_type': task_type,
-                    'task_version': task_version,
-                    'task_context': task_context,
-                    'task_host_name': task_host_name,
-                    'task_domain_name': task_domain_name,
-                    'task_attack_ip': attack_ip,
-                    'task_local_ip': local_ip,
-                    'instruct_user_id': instruct_user_id,
-                    'instruct_instance': instruct_instance,
-                    'instruct_command': instruct_command,
-                    'instruct_args': instruct_args_fixup,
-                    'instruct_command_output': instruct_command_output,
+                    'playbook_name': playbook_name,
+                    'playbook_type': playbook_type,
+                    'playbook_version': playbook_version,
+                    'playbook_operator_version': playbook_operator_version,
+                    'user_id': user_id,
+                    'operator_command': operator_command,
+                    'command_args': command_args_fixup,
+                    'command_output': command_output,
                     'run_time': run_time
                     })
 

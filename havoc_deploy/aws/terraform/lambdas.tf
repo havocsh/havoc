@@ -107,6 +107,35 @@ resource "aws_lambda_permission" "apigw_task_control_lambda" {
   source_arn = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
 }
 
+resource "aws_lambda_function" "playbook_operator_control" {
+  function_name = "${var.deployment_name}-playbook-operator-control"
+
+  filename         = "build/playbook_operator_control.zip"
+  source_code_hash = "build/playbook_operator_control.zip.base64sha256"
+
+  handler = "lambda_function.lambda_handler"
+  runtime = "python3.8"
+  timeout = 300
+
+  role = aws_iam_role.lambda_role.arn
+
+  environment {
+    variables = {
+      DEPLOYMENT_NAME = var.deployment_name
+      SUBNET = aws_subnet.deployment_subnet.id
+    }
+  }
+}
+
+resource "aws_lambda_permission" "apigw_playbook_operator_control_lambda" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.playbook_operator_control.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
+}
+
 resource "aws_lambda_function" "task_result" {
   function_name = "${var.deployment_name}-task-result"
 
@@ -132,4 +161,31 @@ resource "aws_lambda_permission" "cwlogs_task_result_lambda" {
   function_name = aws_lambda_function.task_result.function_name
   principal     = "logs.${var.aws_region}.amazonaws.com"
   source_arn = "${aws_cloudwatch_log_group.ecs_task_logs.arn}:*"
+}
+
+resource "aws_lambda_function" "playbook_operator_result" {
+  function_name = "${var.deployment_name}-playbook-operator-result"
+
+  filename         = "build/playbook_operator_result.zip"
+  source_code_hash = "build/playbook_operator_result.zip.base64sha256"
+
+  handler = "lambda_function.lambda_handler"
+  runtime = "python3.8"
+  timeout = 60
+
+  role = aws_iam_role.lambda_role.arn
+
+  environment {
+    variables = {
+      DEPLOYMENT_NAME = var.deployment_name
+      RESULTS_QUEUE_EXPIRATION = var.results_queue_expiration
+    }
+  }
+}
+
+resource "aws_lambda_permission" "cwlogs_playbook_operator_result_lambda" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.playbook_operator_result.function_name
+  principal     = "logs.${var.aws_region}.amazonaws.com"
+  source_arn = "${aws_cloudwatch_log_group.ecs_playbook_operator_logs.arn}:*"
 }

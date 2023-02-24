@@ -96,7 +96,7 @@ class Deliver:
                             task_host_name, task_domain_name, task_attack_ip, task_local_ip, json_payload):
         try:
             self.aws_dynamodb_client.update_item(
-                TableName=f'{self.deployment_name}-queue',
+                TableName=f'{self.deployment_name}-task-queue',
                 Key={
                     'task_name': {'S': self.task_name},
                     'run_time': {'N': stime}

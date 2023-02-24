@@ -233,8 +233,6 @@ class Registration:
             return format_response(200, 'success', 'delete task_type succeeded', None)
         else:
             return format_response(500, 'failed', f'task_type deletion failed with error {remove_ecs_task_definition_response}', self.log)
-        
-        
 
     def get(self):
         if 'task_type' not in self.detail:

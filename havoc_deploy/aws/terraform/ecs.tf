@@ -1,7 +1,11 @@
 # ecs.tf
 
-resource "aws_ecs_cluster" "cluster" {
-  name = "${var.deployment_name}-cluster"
+resource "aws_ecs_cluster" "task_cluster" {
+  name = "${var.deployment_name}-task-cluster"
+}
+
+resource "aws_ecs_cluster" "playbook_operator_cluster" {
+  name = "${var.deployment_name}-playbook-operator-cluster"
 }
 
 data "template_file" "nmap_task_definition" {
@@ -157,5 +161,31 @@ resource "aws_ecs_task_definition" "exfilkit" {
     deployment_name    = var.deployment_name
     name               = "exfilkit"
     task_version = var.deployment_version
+  }
+}
+
+data "template_file" "playbook_operator_definition" {
+  template = file("templates/playbook_operator_definition.template")
+
+  vars = {
+    deployment_version = var.deployment_version
+    deployment_name    = var.deployment_name
+    aws_region         = var.aws_region
+  }
+}
+
+resource "aws_ecs_task_definition" "playbook_operator" {
+  family                   = "playbook_operator"
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  network_mode             = "awsvpc"
+  container_definitions    = data.template_file.playbook_operator_definition.rendered
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 1024
+  memory                   = 4096
+  tags                     = {
+    deployment_name    = var.deployment_name
+    name               = "playbook_operator"
+    playbook_operator_version = var.deployment_version
   }
 }

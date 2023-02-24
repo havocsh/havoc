@@ -284,6 +284,139 @@ class HavocCMD(Cmd):
         print('\nDelete a file in the shared workspace.')
         print('\n--file_name=<string> - (required) the name of the file to be deleted.')
 
+    def do_list_playbooks(self, inp):
+        list_playbooks_response = self.havoc_client.list_playbooks()
+        format_output('list_playbooks', list_playbooks_response)
+
+    def help_list_playbooks(self):
+        print('\nList all existing playbooks.')
+
+    def do_get_playbook(self, inp):
+        args = {'playbook_name': ''}
+        command_args = convert_input(args, inp)
+        get_playbook_response = self.havoc_client.get_playbook(**command_args)
+        format_output('get_playbook', get_playbook_response)
+
+    def help_get_playbook(self):
+        print('\nGet details of a given playbook.')
+        print('\n--playbook_name=<string> - (required) the name of the playbook to retrieve details for')
+
+    def do_create_playbook(self, inp):
+        args = {'playbook_name': '', 'playbook_type': '', 'playbook_schedule': None, 'playbook_timeout': '',
+                'playbook_config': ''}
+        command_args = convert_input(args, inp)
+        create_playbook_response = self.havoc_client.create_playbook(**command_args)
+        format_output('create_playbook', create_playbook_response)
+
+    def help_create_playbook(self):
+        print('\nCreate a new playbook with the given parameters.')
+        print('\n--playbook_name=<string> - (required) a unique identifier to associate with the playbook')
+        print('\n--playbook_type=<string> - (required) the source playbook type')
+        print('\n--playbook_timeout=<string> - (required) the amount of time to wait for the playbook to finish')
+        print('\n--playbook_config=<string> - (required) the playbook configuration definition')
+
+    def do_delete_playbook(self, inp):
+        args = {'playbook_name': ''}
+        command_args = convert_input(args, inp)
+        delete_playbook_response = self.havoc_client.delete_playbook(**command_args)
+        format_output('delete_playbook', delete_playbook_response)
+
+    def help_delete_playbook(self):
+        print('\nDelete an existing playbook.')
+        print('\n--playbook_name=<string> - (required) the name of the playbook to be deleted')
+
+    def do_kill_playbook(self, inp):
+        args = {'playbook_name': ''}
+        command_args = convert_input(args, inp)
+        kill_playbook_response = self.havoc_client.kill_playbook(**command_args)
+        format_output('kill_playbook', kill_playbook_response)
+
+    def help_kill_playbook(self):
+        print('\nForce quit a running playbook.')
+        print('\n--playbook_name=<string> - (required) the name of the running playbook to be killed')
+
+    def do_run_playbook(self, inp):
+        args = {'playbook_name': ''}
+        command_args = convert_input(args, inp)
+        run_playbook_response = self.havoc_client.run_playbook(**command_args)
+        format_output('run_playbook', run_playbook_response)
+
+    def help_run_playbook(self):
+        print('\nRun a playbook.')
+        print('\n--playbook_name=<string> - (required) the name of the playbook to run')
+    
+    def do_get_playbook_results(self, inp):
+        args = {'playbook_name': '', 'start_time': '', 'end_time': ''}
+        command_args = convert_input(args, inp)
+        get_playbook_results_response = self.havoc_client.get_playbook_results(**command_args)
+        format_output('get_task_results', get_playbook_results_response)
+
+    def help_get_playbook_results(self):
+        print('\nGet all results for a given playbook.')
+        print('\n--playbook_name=<string> - (required) the name of the playbook to retrieve results from')
+        print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
+        print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
+    
+    def do_tail_playbook_results(self, inp):
+        def sortFunc(e):
+            return e['run_time']
+        args = {'playbook_name': ''}
+        command_args = convert_input(args, inp)
+        get_playbook_response = self.havoc_client.get_playbook(**command_args)
+        command_args['start_time'] = get_playbook_response['last_execution_time']
+        try:
+            while True:
+                get_playbook_results_response = self.havoc_client.get_playbook_results(**command_args)
+                if get_playbook_results_response['queue']:
+                    get_playbook_results_response['queue'].sort(key=sortFunc)
+                    command_args['start_time'] = get_playbook_results_response['queue'][-1]['run_time']
+                    format_output('get_task_results', get_playbook_results_response)
+        except KeyboardInterrupt:
+            print('tail_playbook_results stopped.')
+
+    def help_tail_playbook_results(self):
+        print('\nFollow results for a given playbook.')
+        print('\n--playbook_name=<string> - (required) the name of the playbook to retrieve results from')
+    
+    def do_list_playbook_types(self, inp):
+        list_playbook_types_response = self.havoc_client.list_playbook_types()
+        format_output('list_playbook_types', list_playbook_types_response)
+
+    def help_list_playbook_types(self):
+        print('\nList all existing playbook types.')
+
+    def do_get_playbook_type(self, inp):
+        args = {'playbook_type': ''}
+        command_args = convert_input(args, inp)
+        get_playbook_type_response = self.havoc_client.get_playbook_type(**command_args)
+        format_output('get_playbook_type', get_playbook_type_response)
+
+    def help_get_playbook_type(self):
+        print('\nGet details of a given playbook type.')
+        print('\n--playbook_type=<string> - (required) the playbook type to retrieve details for')
+
+    def do_create_playbook_type(self, inp):
+        args = {'playbook_type': '', 'playbook_version': '', 'playbook_template': ''}
+        command_args = convert_input(args, inp)
+        create_playbook_type_response = self.havoc_client.create_playbook_type(**command_args)
+        format_output('create_playbook_type', create_playbook_type_response)
+
+    def help_create_playbook_type(self):
+        print('\nCreate a new playbook type with the given parameters.')
+        print('\n--playbook_type=<string> - (required) a unique identifier to associate with the playbook type')
+        print('\n--playbook_version=<string> - (required) the version number for the playbook type')
+        print('\n--playbook_template=<string> - (required) the configuration template to use as the source when configuring a playbook of this type')
+
+    def do_delete_playbook_type(self, inp):
+        args = {'playbook_type': ''}
+        command_args = convert_input(args, inp)
+        delete_playbook_type_response = self.havoc_client.delete_playbook_type(**command_args)
+        format_output('delete_playbook_type', delete_playbook_type_response)
+
+    def help_delete_playbook_type(self):
+        print('\nDelete an existing playbook type.')
+        print('\n--playbook_type=<string> - (required) the playbook type to be deleted')
+
     def do_list_portgroups(self, inp):
         list_portgroups_response = self.havoc_client.list_portgroups()
         format_output('list_portgroups', list_portgroups_response)
@@ -382,7 +515,7 @@ class HavocCMD(Cmd):
         format_output('run_task', run_task_response)
 
     def help_run_task(self):
-        print('\nRun a ./havoc Attack Container as an ECS task.')
+        print('\nRun a task.')
         print('\n--task_name=<string> - (required) a unique identifier to associate with the task')
         print('\n--task_type=<string> - (required) the type of Attack Container to be executed')
         print('\n--task_host_name=<string> - (optional) a host name to associate with the task')
@@ -398,7 +531,7 @@ class HavocCMD(Cmd):
         format_output('task_startup', task_startup_response)
 
     def help_task_startup(self):
-        print('\nRun a ./havoc Attack Container as an ECS task and wait for task to be ready.')
+        print('\nRun a task and wait for it to be ready.')
         print('\n--task_name=<string> - (required) a unique identifier to associate with the task')
         print('\n--task_type=<string> - (required) the type of Attack Container to be executed')
         print('\n--task_host_name=<string> - (optional) a host name to associate with the task')
@@ -413,7 +546,7 @@ class HavocCMD(Cmd):
         format_output('task_shutdown', task_shutdown_response)
 
     def help_task_shutdown(self):
-        print('\nCleanly shutdown a ./havoc Container.')
+        print('\nCleanly shutdown a task.')
         print('\n--task_name=<string> - (required) a unique identifier to associate with the task')
 
     def do_instruct_task(self, inp):
@@ -443,7 +576,7 @@ class HavocCMD(Cmd):
         print('\n--instruct_args=<dict> - (optional) a dictionary of arguments to pass with the command')
 
     def do_get_task_results(self, inp):
-        args = {'task_name': ''}
+        args = {'task_name': '', 'start_time': '', 'end_time': ''}
         command_args = convert_input(args, inp)
         get_task_results_response = self.havoc_client.get_task_results(**command_args)
         format_output('get_task_results', get_task_results_response)
@@ -451,6 +584,8 @@ class HavocCMD(Cmd):
     def help_get_task_results(self):
         print('\nGet all instruct_command results for a given task.')
         print('\n--task_name=<string> - (required) the name of the task to retrieve results from')
+        print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
+        print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
 
     def do_get_filtered_task_results(self, inp):
         args = {'task_name': '', 'instruct_command': '', 'instruct_instance': ''}

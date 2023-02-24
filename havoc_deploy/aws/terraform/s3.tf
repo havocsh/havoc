@@ -1,5 +1,53 @@
 # s3.tf
 
+resource "aws_s3_bucket" "playbooks" {
+  bucket = "${var.deployment_name}-playbooks"
+
+  tags = {
+    Name = "${var.deployment_name}-playbooks"
+  }
+}
+
+resource "aws_s3_bucket_acl" "playbooks" {
+  bucket = aws_s3_bucket.playbooks.id
+  acl    = "private"
+}
+
+resource "aws_s3_bucket_public_access_block" "playbooks" {
+  bucket                  = aws_s3_bucket.playbooks.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket" "playbook_types" {
+  bucket = "${var.deployment_name}-playbook-types"
+
+  tags = {
+    Name = "${var.deployment_name}-playbook-types"
+  }
+}
+
+resource "aws_s3_bucket_acl" "playbook_types" {
+  bucket = aws_s3_bucket.playbook_types.id
+  acl    = "private"
+}
+
+resource "aws_s3_bucket_public_access_block" "playbook_types" {
+  bucket                  = aws_s3_bucket.playbook_types.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_object" "conti_ransomware_playbook_template" {
+  bucket = aws_s3_bucket.playbook_types.id
+  key    = "conti_ransomware.template"
+  source = "havoc_deploy/aws/terraform/build/conti_ransomware.template"
+}
+
 resource "aws_s3_bucket" "workspace" {
   bucket = "${var.deployment_name}-workspace"
 

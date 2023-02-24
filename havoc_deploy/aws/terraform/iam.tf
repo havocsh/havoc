@@ -4,17 +4,21 @@ data "template_file" "lambda_policy" {
   template = file("templates/lambda_policy.template")
 
   vars = {
-  authorizer_table = aws_dynamodb_table.authorizer.arn,
-  authorizer_index = "${aws_dynamodb_table.authorizer.arn}/index/${var.deployment_name}-ApiKeyIndex"
-  portgroups_table = aws_dynamodb_table.portgroups.arn,
-  task_types_table = aws_dynamodb_table.task_types.arn,
-  deployment_table = aws_dynamodb_table.deployment.arn,
-  domains_table    = aws_dynamodb_table.domains.arn,
-  tasks_table      = aws_dynamodb_table.tasks.arn,
-  queue_table      = aws_dynamodb_table.queue.arn,
-  workspace_bucket = "${var.deployment_name}-workspace",
-  task_role        = aws_iam_role.ecs_task_role.arn
-  task_exec_role   = aws_iam_role.ecs_task_execution_role.arn
+  authorizer_table      = aws_dynamodb_table.authorizer.arn,
+  authorizer_index      = "${aws_dynamodb_table.authorizer.arn}/index/${var.deployment_name}-ApiKeyIndex"
+  task_types_table      = aws_dynamodb_table.task_types.arn,
+  deployment_table      = aws_dynamodb_table.deployment.arn,
+  domains_table         = aws_dynamodb_table.domains.arn,
+  playbooks_table       = aws_dynamodb_table.playbooks.arn,
+  playbook_types_table  = aws_dynamodb_table.playbook_types.arn,
+  portgroups_table      = aws_dynamodb_table.portgroups.arn,
+  tasks_table           = aws_dynamodb_table.tasks.arn,
+  queue_table           = aws_dynamodb_table.queue.arn,
+  playbooks_bucket      = "${var.deployment_name}-playbooks",
+  playbook_types_bucket = "${var.deployment_name}-playbook-types",
+  workspace_bucket      = "${var.deployment_name}-workspace",
+  task_role             = aws_iam_role.ecs_task_role.arn
+  task_exec_role        = aws_iam_role.ecs_task_execution_role.arn
   }
 }
 

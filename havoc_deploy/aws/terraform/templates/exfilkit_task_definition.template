@@ -12,7 +12,7 @@
         "logConfiguration": {
             "logDriver": "awslogs",
             "options": {
-                "awslogs-group": "${deployment_name}/ecs",
+                "awslogs-group": "${deployment_name}/task_cluster",
                 "awslogs-region": "${aws_region}",
                 "awslogs-stream-prefix": "exfilkit"
             }

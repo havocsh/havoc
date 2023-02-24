@@ -168,7 +168,7 @@ resource "aws_dynamodb_table_item" "http_server_task_type" {
     "S": "${var.deployment_version}"
   },
   "capabilities": {
-    "SS": ${jsonencode(["start_server","stop_server","cert_gen","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
+    "SS": ${jsonencode(["create_listener","kill_listener","cert_gen","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
   },
   "source_image": {
     "S": "public.ecr.aws/havoc_sh/http_server:${var.deployment_version}"
@@ -248,6 +248,28 @@ resource "aws_dynamodb_table_item" "exfilkit_task_type" {
 ITEM
 }
 
+resource "aws_dynamodb_table_item" "conti_ransomware_playbook_type" {
+  table_name = aws_dynamodb_table.playbook_types.name
+  hash_key   = aws_dynamodb_table.playbook_types.hash_key
+
+  item = <<ITEM
+{
+  "playbook_type": {
+    "S": "conti_ransomware"
+  },
+  "playbook_version": {
+    "S": "${var.deployment_version}"
+  },
+  "template_pointer": {
+    "S": "${aws_s3_bucket.playbook_types.bucket}/conti_ransomware.template"
+  },
+  "created_by": {
+    "S": "${var.deployment_admin_email}"
+  }
+}
+ITEM
+}
+
 resource "aws_dynamodb_table" "authorizer" {
   name           = "${var.deployment_name}-authorizer"
   billing_mode   = "PAY_PER_REQUEST"
@@ -288,6 +310,28 @@ resource "aws_dynamodb_table" "domains" {
 
   attribute {
     name = "domain_name"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "playbooks" {
+  name           = "${var.deployment_name}-playbooks"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "playbook_name"
+
+  attribute {
+    name = "playbook_name"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "playbook_types" {
+  name           = "${var.deployment_name}-playbook-types"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "playbook_type"
+
+  attribute {
+    name = "playbook_type"
     type = "S"
   }
 }
@@ -336,14 +380,36 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 }
 
-resource "aws_dynamodb_table" "queue" {
-  name           = "${var.deployment_name}-queue"
+resource "aws_dynamodb_table" "task_queue" {
+  name           = "${var.deployment_name}-task-queue"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "task_name"
   range_key      = "run_time"
 
   attribute {
     name = "task_name"
+    type = "S"
+  }
+
+  attribute {
+  name = "run_time"
+  type = "N"
+  }
+
+  ttl {
+  attribute_name = "expire_time"
+  enabled        = true
+  }
+}
+
+resource "aws_dynamodb_table" "playbook_queue" {
+  name           = "${var.deployment_name}-playbook-queue"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "playbook_name"
+  range_key      = "run_time"
+
+  attribute {
+    name = "playbook_name"
     type = "S"
   }
 

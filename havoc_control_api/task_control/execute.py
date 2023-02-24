@@ -197,7 +197,7 @@ class Task:
     def run_ecs_task(self, securitygroups, end_time):
         try:
             response = self.aws_ecs_client.run_task(
-                cluster=f'{self.deployment_name}-cluster',
+                cluster=f'{self.deployment_name}-task-cluster',
                 count=1,
                 launchType='FARGATE',
                 networkConfiguration={
@@ -239,7 +239,7 @@ class Task:
 
     def get_ecstask_details(self, ecs_task_id):
         return self.aws_ecs_client.describe_tasks(
-            cluster=f'{self.deployment_name}-cluster',
+            cluster=f'{self.deployment_name}-task-cluster',
             tasks=[ecs_task_id]
         )
 

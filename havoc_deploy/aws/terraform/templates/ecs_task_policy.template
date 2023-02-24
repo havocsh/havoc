@@ -7,12 +7,22 @@
             ],
             "Effect": "Allow",
             "Resource": [
-                "arn:aws:s3:::${deployment_name}-workspace"
+                "arn:aws:s3:::${deployment_name}-workspace",
+                "arn:aws:s3:::${deployment_name}-playbooks"
             ]
         },
         {
             "Action": [
-                "s3:GetObject",
+                "s3:GetObject"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::${deployment_name}-workspace/*",
+                "arn:aws:s3:::${deployment_name}-playbooks/*"
+            ]
+        },
+        {
+            "Action": [
                 "s3:PutObject",
                 "s3:DeleteObject"
             ],

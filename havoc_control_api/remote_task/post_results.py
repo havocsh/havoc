@@ -47,7 +47,7 @@ class Deliver:
         task_domain_name = 'None'
         try:
             self.aws_dynamodb_client.update_item(
-                TableName=f'{self.deployment_name}-queue',
+                TableName=f'{self.deployment_name}-task-queue',
                 Key={
                     'task_name': {'S': self.task_name},
                     'run_time': {'N': stime}

@@ -197,7 +197,7 @@ class Tasks:
                     return portgroup_entry_update
         try:
             self.aws_ecs_client.stop_task(
-                cluster=f'{self.deployment_name}-cluster',
+                cluster=f'{self.deployment_name}-task-cluster',
                 task=ecs_task_id,
                 reason=f'Task stopped by {self.user_id}'
             )

@@ -14,10 +14,12 @@
             "Resource": [
                 "${authorizer_table}",
                 "${authorizer_index}",
-                "${portgroups_table}",
                 "${task_types_table}",
                 "${deployment_table}",
                 "${domains_table}",
+                "${playbooks_table}",
+                "${playbook_types_table}",
+                "${portgroups_table}",
                 "${tasks_table}",
                 "${queue_table}"
             ]
@@ -32,7 +34,11 @@
             ],
             "Resource": [
                 "arn:aws:s3:::${workspace_bucket}",
-                "arn:aws:s3:::${workspace_bucket}/*"
+                "arn:aws:s3:::${workspace_bucket}/*",
+                "arn:aws:s3:::${playbooks_bucket}",
+                "arn:aws:s3:::${playbooks_bucket}/*",
+                "arn:aws:s3:::${playbook_types_bucket}",
+                "arn:aws:s3:::${playbook_types_bucket}/*"
             ]
         },
         {
