@@ -99,6 +99,7 @@ class Playbook:
                                 'playbook_timeout=:playbook_timeout, '
                                 'config_pointer=:config_pointer, '
                                 'created_by=:created_by, '
+                                'last_executed_by=:last_executed_by, '
                                 'last_execution_time=:last_execution_time',
                 ExpressionAttributeValues={
                     ':playbook_type': {'S': self.playbook_type},
@@ -107,6 +108,7 @@ class Playbook:
                     ':playbook_timeout': {'N': self.playbook_timeout},
                     ':config_pointer': {'S': self.config_pointer},
                     ':created_by': {'S': self.user_id},
+                    ':last_executed_by': {'S': 'None'}
                     ':last_execution_time': {'S': 'None'}
                 }
             )

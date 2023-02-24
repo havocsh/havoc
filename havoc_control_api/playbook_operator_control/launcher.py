@@ -34,7 +34,6 @@ class Playbook:
         self.user_id = user_id
         self.log = log
         self.playbook_type = None
-        self.playbook_version = None
         self.run_ecs_task_response = None
         self.__aws_dynamodb_client = None
         self.__aws_ecs_client = None
@@ -181,7 +180,6 @@ class Playbook:
             return format_response(404, 'failed', f'playbook {self.playbook_name} does not exist', self.log)
 
         self.playbook_type = playbook_entry['Item']['playbook_type']['S']
-        self.playbook_version = playbook_entry['Item']['playbook_version']['S']
         playbook_timeout = playbook_entry['Item']['playbook_timeout']['N']
         config_pointer = playbook_entry['Item']['config_pointer']['S']
         created_by = playbook_entry['Item']['created_by']['S']
@@ -209,7 +207,6 @@ class Playbook:
                 'user_id': self.user_id,
                 'playbook_name': self.playbook_name,
                 'playbook_type': self.playbook_type,
-                'playbook_version': self.playbook_version
             },
             'playbook_operator_task_details': ecs_task_details,
         }
