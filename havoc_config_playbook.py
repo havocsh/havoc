@@ -96,13 +96,14 @@ class ConfigPlaybook:
                             json_section = re.sub(re_sub, dep_value, json_section)
                             new_section = json.loads(json_section)
                             playbook_template[section] = new_section
+            playbook_config = json.dumps(playbook_template)
             print('Done.')
             playbook_name = input('\nPlease enter a name for this playbook: ')
             playbook_timeout = input('Please enter a timeout value in minutes that this playbook will be allowed to run before self-terminating: ')
             playbook_schedule = 'None'
             print('Creating a playbook with the configured properties. To run the configured playbook, use the following command in the ./HAVOC CLI:')
             print(f'  run_playbook --playbook_name={playbook_name}')
-            create_playbook_response = self.havoc_client.create_playbook(playbook_name, playbook_selection, playbook_schedule, playbook_timeout, playbook_template)
+            create_playbook_response = self.havoc_client.create_playbook(playbook_name, playbook_selection, playbook_schedule, playbook_timeout, playbook_config)
             if 'success' in create_playbook_response:
                 return 'completed'
             else:
