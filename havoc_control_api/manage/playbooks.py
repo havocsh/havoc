@@ -53,7 +53,7 @@ class Playbook:
     
     def get_playbook_type_entry(self):
         return self.aws_dynamodb_client.get_item(
-            TableName=f'{self.deployment_name}-playbook_types',
+            TableName=f'{self.deployment_name}-playbook-types',
             Key={
                 'playbook_type': {'S': self.playbook_type}
             }
@@ -169,7 +169,7 @@ class Playbook:
     
     def add_playbook_configuration(self):
         existing_playbook = self.get_playbook_entry()
-        if existing_playbook:
+        if 'Item' in existing_playbook:
             return 'playbook_exists'
         add_playbook_entry_response = self.add_playbook_entry()
         if add_playbook_entry_response != 'playbook_entry_created':
