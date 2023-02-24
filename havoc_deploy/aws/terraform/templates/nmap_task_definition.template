@@ -12,7 +12,7 @@
         "logConfiguration": {
             "logDriver": "awslogs",
             "options": {
-                "awslogs-group": "${deployment_name}/task_cluster",
+                "awslogs-group": "${deployment_name}/tasks_cluster",
                 "awslogs-region": "${aws_region}",
                 "awslogs-stream-prefix": "nmap"
             }
