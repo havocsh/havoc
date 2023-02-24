@@ -202,16 +202,18 @@ class Playbook:
             return delete_object_response
         return 'playbook_configuration_deleted'
     
-    def update_playbook_entry(self, playbook_status):
+    def update_playbook_entry(self):
         try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-playbooks',
                 Key={
                     'playbook_name': {'S': self.playbook_name}
                 },
-                UpdateExpression='set playbook_status=:playbook_status',
+                UpdateExpression='set playbook_status=:playbook_status, '
+                                 'ecs_task_id=:ecs_task_id',
                 ExpressionAttributeValues={
-                    ':playbook_status': {'S': playbook_status}
+                    ':playbook_status': {'S': 'terminated'},
+                    ':ecs_task_id': {'S': 'None'}
                 }
             )
         except botocore.exceptions.ClientError as error:
@@ -235,7 +237,7 @@ class Playbook:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
-        update_playbook_entry_response = self.update_task_entry('terminated')
+        update_playbook_entry_response = self.update_playbook_entry()
         if update_playbook_entry_response != 'playbook_entry_updated':
             return update_playbook_entry_response
         return 'playbook_operator_terminated'

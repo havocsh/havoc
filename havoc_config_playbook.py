@@ -101,7 +101,7 @@ class ConfigPlaybook:
             playbook_name = input('\nPlease enter a name for this playbook: ')
             playbook_timeout = input('Please enter a timeout value in minutes that this playbook will be allowed to run before self-terminating: ')
             playbook_schedule = 'None'
-            print('Creating a playbook with the configured properties. To run the configured playbook, use the following command in the ./HAVOC CLI:')
+            print('Creating a playbook with the configured properties. To run the configured playbook, use the following command in the ./HAVOC CLI:\n')
             print(f'  run_playbook --playbook_name={playbook_name}')
             create_playbook_response = self.havoc_client.create_playbook(playbook_name, playbook_selection, playbook_schedule, playbook_timeout, playbook_config)
             if create_playbook_response:
