@@ -126,6 +126,80 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy_attachment"
     policy_arn = data.aws_iam_policy.ecs_task_execution_policy.arn
 }
 
+---------
+data "template_file" "ecs_playbook_operator_policy" {
+  template = file("templates/ecs_playbook_operator_policy.template")
+
+  vars = {
+  deployment_name = var.deployment_name
+  }
+}
+
+resource "aws_iam_role" "ecs_playbook_operator_role" {
+  name = "${var.deployment_name}-playbook-operator-role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+              "Service": "ecs-tasks.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "ecs_playbook_operator_policy" {
+  name        = "${var.deployment_name}-ecs-playbook-operator-policy"
+  path        = "/"
+  description = "Policy for ./HAVOC ECS playbook operator"
+  policy = data.template_file.ecs_playbook_operator_policy.rendered
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_playbook_operator_policy_attachment" {
+    role = aws_iam_role.ecs_playbook_operator_role.name
+    policy_arn = aws_iam_policy.ecs_playbook_operator_policy.arn
+}
+
+resource "aws_iam_role" "ecs_playbook_operator_execution_role" {
+  name = "${var.deployment_name}-playbook-operator-execution-role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+              "Service": "ecs-tasks.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+data "aws_iam_policy" "ecs_playbook_operator_execution_policy" {
+  name = "AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_playbook_operator_execution_policy_attachment" {
+    role = aws_iam_role.ecs_playbook_operator_execution_role.name
+    policy_arn = data.aws_iam_policy.ecs_playbook_operator_execution_policy.arn
+}
+
+------
+
 data "template_file" "api_gateway_policy" {
   template = file("templates/api_gateway_policy.template")
 

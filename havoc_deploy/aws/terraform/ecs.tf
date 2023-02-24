@@ -176,8 +176,8 @@ data "template_file" "playbook_operator_definition" {
 
 resource "aws_ecs_task_definition" "playbook_operator" {
   family                   = "playbook_operator"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  execution_role_arn       = aws_iam_role.ecs_playbook_operator_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_playbook_operator_role.arn
   network_mode             = "awsvpc"
   container_definitions    = data.template_file.playbook_operator_definition.rendered
   requires_compatibilities = ["FARGATE"]
