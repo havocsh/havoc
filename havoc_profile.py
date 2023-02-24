@@ -1,3 +1,4 @@
+import re
 import json
 from configparser import ConfigParser
 
@@ -85,16 +86,18 @@ def remove_profile(mode):
     
     # If deploy_remove mode, get ./HAVOC profile names based on deployment name
     if mode == 'deploy_remove':
-        with open('./havoc_deploy/aws/terraform/terraform.tfstate', 'r') as tfstate_f:
-            tf_state_data = json.load(tfstate_f)
-        if 'outputs' in tf_state_data:
-            deployment_name = tf_state_data['outputs']['DEPLOYMENT_NAME']['value']
+        with open('./havoc_deploy/aws/terraform/terraform.tfvars', 'r') as tfvars_f:
+            re_search = re.search('deployment_name = "([^"]+)"', tfvars_f.read())
+        if re_search:
+            deployment_name = re_search.group(1)
             print(f'\nRemoving ./HAVOC profile names for deployment name {deployment_name} from .havoc/profiles.')
 
             # Find profiles associated with the deployment
             for section in havoc_profiles.sections():
                 if havoc_profiles[section]['DEPLOYMENT_NAME'] == deployment_name:
                     profile_names.append(section)
+        else:
+            print('Did not find a deployment name. No profiles removed.')
 
     # if remove mode, get the profile name from user input and make sure it exists in .havoc/profiles
     if mode == 'remove':
