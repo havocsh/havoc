@@ -200,7 +200,7 @@ class Playbook:
         if run_ecs_task_response != 'ecs_task_ran':
             return format_response(500, 'failed', f'playbook launch failed with error {run_ecs_task_response}', self.log)
         # Log task execution details
-        ecs_task_id = self.run_task_response['tasks'][0]['taskArn']
+        ecs_task_id = self.run_ecs_task_response['tasks'][0]['taskArn']
         t.sleep(15)
         ecs_task_details = self.get_ecstask_details(ecs_task_id)
         recorded_info = {
