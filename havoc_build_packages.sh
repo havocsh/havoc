@@ -28,6 +28,6 @@ cd playbook_operator_result && zip -q -r ../../havoc_deploy/aws/terraform/build/
 cd .. && openssl dgst -sha256 -binary ../havoc_deploy/aws/terraform/build/playbook_operator_result.zip | openssl enc -base64 > ../havoc_deploy/aws/terraform/build/playbook_operator_result.zip.base64sha256
 cd ..
 echo " - Packaging havoc_playbooks/conti_ransomware playbook"
-cd havoc_playbooks && cp conti_ransomware/conti_ransomware.template ../havoc_deploy/aws/terraform/build/conti_ransomware.template
+cd havoc_playbooks/conti_ransomware/ && cp conti_ransomware.template ../../havoc_deploy/aws/terraform/build/conti_ransomware.template
 echo " - Build complete."
 exit
