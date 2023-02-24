@@ -12,7 +12,8 @@
         },
         {
             "Action": [
-                "s3:GetObject"
+                "s3:GetObject",
+                "s3:DeleteObject"
             ],
             "Effect": "Allow",
             "Resource": [
