@@ -5,6 +5,7 @@ import platform
 import requests
 import argparse
 import havoc_profile
+import havoc_config_playbook
 from configparser import ConfigParser
 from havoc_deployment import ManageDeployment
 
@@ -21,6 +22,7 @@ init_parser.add_argument('--remove_profile', help='Remove a profile from your lo
 init_parser.add_argument('--list_profiles', help='List the profiles in your local .havoc/profiles file.')
 init_parser.add_argument('--profile', help='Specify a profile to use when launching the ./HAVOC CLI.')
 init_parser.add_argument('--deployment', help='Manage your ./HAVOC deployment (create|modify|update|remove|get_deployment|connect_tf_backend|disconnect_tf_backend).')
+init_parser.add_argument('--playbook_config', help='Configure a ./HAVOC playbook.')
 init_args = init_parser.parse_args()
 
 
@@ -68,7 +70,7 @@ if __name__ == "__main__":
         havoc_cmd = havoc_cli.HavocCMD()
         havoc_cmd.cmdloop()
     
-    if init_args.profile and not init_args.deployment:
+    if init_args.profile and not init_args.deployment and not init_args.playbook_config:
         import havoc_cli
         havoc_cmd = havoc_cli.HavocCMD()
         havoc_cmd.profile = init_args.profile
@@ -124,3 +126,19 @@ if __name__ == "__main__":
             print('\nDeployment task completed successfully.\n')
         else:
             print('\nDeployment task failed.\n')
+    
+    if init_args.playbook_config:
+        profiles_test = havoc_config_playbook.load_havoc_profiles()
+        if not profiles_test:
+            print('\nPlaybook configuration task failed. No ./HAVOC profiles found.')
+        else:
+            if init_args.profile:
+                profile = init_args.profile
+            else:
+                profile = None
+            c = havoc_config_playbook.ConfigPlaybook(profile)
+            configure_task = c.configure()
+            if configure_task == 'completed':
+                print('\nPlaybook configuration task completed successfully.\n')
+            else:
+                print('\nPlaybook configuration task failed.')

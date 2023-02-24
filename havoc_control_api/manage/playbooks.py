@@ -279,6 +279,7 @@ class Playbook:
         playbook_timeout = playbook_entry['Item']['playbook_timeout']['N']
         self.config_pointer = playbook_entry['Item']['config_pointer']['S']
         get_object_results = self.get_object()
+        playbook_config = None
         if 'Body' in get_object_results:
                 playbook_config = get_object_results['Body'].read()
         created_by = playbook_entry['Item']['created_by']['S']
