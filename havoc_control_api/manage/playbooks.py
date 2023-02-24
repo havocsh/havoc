@@ -36,6 +36,7 @@ class Playbook:
         self.config_pointer = None
         self.__aws_s3_client = None
         self.__aws_dynamodb_client = None
+        self.__aws_ecs_client = None
 
     @property
     def aws_s3_client(self):
@@ -50,6 +51,13 @@ class Playbook:
         if self.__aws_dynamodb_client is None:
             self.__aws_dynamodb_client = boto3.client('dynamodb', region_name=self.region)
         return self.__aws_dynamodb_client
+    
+    @property
+    def aws_ecs_client(self):
+        """Returns the boto3 ECS session (establishes one automatically if one does not already exist)"""
+        if self.__aws_ecs_client is None:
+            self.__aws_ecs_client = boto3.client('ecs', region_name=self.region)
+        return self.__aws_ecs_client
     
     def get_playbook_type_entry(self):
         return self.aws_dynamodb_client.get_item(
