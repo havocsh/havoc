@@ -284,7 +284,8 @@ class Playbook:
         get_object_results = self.get_object()
         playbook_config = None
         if 'Body' in get_object_results:
-                playbook_config = get_object_results['Body'].read()
+                body = get_object_results['Body'].read()
+                playbook_config = body.decode()
         created_by = playbook_entry['Item']['created_by']['S']
         last_executed_by = playbook_entry['Item']['last_executed_by']['S']
         last_execution_time = playbook_entry['Item']['last_execution_time']['S']

@@ -185,7 +185,7 @@ class Playbook:
         created_by = playbook_entry['Item']['created_by']['S']
         current_time = datetime.datetime.now()
         end_time_object = current_time + datetime.timedelta(playbook_timeout)
-        end_time = end_time_object.strftime('%m-%d-%Y %H:%M:%S')
+        end_time = end_time_object.strftime('%s')
         timestamp = current_time.strftime('%s')
 
         deployment_details = self.get_deployment_details()
