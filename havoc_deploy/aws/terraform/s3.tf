@@ -45,7 +45,7 @@ resource "aws_s3_bucket_public_access_block" "playbook_types" {
 resource "aws_s3_object" "conti_ransomware_playbook_template" {
   bucket = aws_s3_bucket.playbook_types.id
   key    = "conti_ransomware.template"
-  source = "havoc_deploy/aws/terraform/build/conti_ransomware.template"
+  source = "build/conti_ransomware.template"
 }
 
 resource "aws_s3_bucket" "workspace" {
