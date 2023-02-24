@@ -18,10 +18,8 @@ class Deliver:
         self.results = results
         self.playbook_name = None
         self.playbook_type = None
-        self.playbook_version = None
         self.playbook_operator_version = None
         self.__aws_dynamodb_client = None
-        self.__aws_route53_client = None
 
     @property
     def aws_dynamodb_client(self):
@@ -42,7 +40,6 @@ class Deliver:
                                 'expire_time=:expire_time, '
                                 'user_id=:user_id, '
                                 'playbook_type=:playbook_type, '
-                                'playbook_version=:playbook_version, '
                                 'playbook_operator_version=:playbook_operator_version, '
                                 'operator_command=:operator_command, '
                                 'command_args=:command_args, '
@@ -51,7 +48,6 @@ class Deliver:
                     ':expire_time': {'N': expire_time},
                     ':user_id': {'S': self.user_id},
                     ':playbook_type': {'S': self.playbook_type},
-                    ':playbook_version': {'S': self.playbook_version},
                     ':playbook_operator_version': {'S': self.playbook_operator_version},
                     ':operator_command': {'S': operator_command},
                     ':command_args': {'M': command_args},
@@ -126,7 +122,6 @@ class Deliver:
         # Get playbook portgroups
         playbook_entry = self.get_playbook_entry()
         self.playbook_type = playbook_entry['Item']['playbook_type']['S']
-        self.playbook_version = playbook_entry['Item']['playbook_version']['S']
         
         # Clear out unwanted payload entries
         del payload['user_id']
