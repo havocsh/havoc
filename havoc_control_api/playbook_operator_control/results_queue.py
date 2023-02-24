@@ -105,7 +105,6 @@ class Queue:
                 run_time = item['run_time']['N']
                 playbook_name = item['playbook_name']['S']
                 playbook_type = item['playbook_type']['S']
-                playbook_version = item['playbook_version']['S']
                 playbook_operator_version = item['playbook_operator_version']['S']
                 command_output = item['command_output']['S']
                 user_id = item['user_id']['S']
@@ -126,7 +125,6 @@ class Queue:
                 queue_list.append({
                     'playbook_name': playbook_name,
                     'playbook_type': playbook_type,
-                    'playbook_version': playbook_version,
                     'playbook_operator_version': playbook_operator_version,
                     'user_id': user_id,
                     'operator_command': operator_command,
