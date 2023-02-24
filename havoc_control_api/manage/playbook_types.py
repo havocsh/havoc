@@ -66,7 +66,7 @@ class Registration:
     
     def get_playbook_type_entry(self):
         return self.aws_dynamodb_client.get_item(
-            TableName=f'{self.deployment_name}-playbook_types',
+            TableName=f'{self.deployment_name}-playbook-types',
             Key={
                 'playbook_type': {'S': self.playbook_type}
             }
