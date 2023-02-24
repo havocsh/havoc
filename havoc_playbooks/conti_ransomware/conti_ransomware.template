@@ -28,37 +28,37 @@ variable "http_port" {
 }
 
 variable "exfil_port" {
-    description = "Port number to use for the exfil server's HTTP"
+    description = "Port number to use for the exfil server's HTTP."
     default = "443"
 }
 
 variable "exfil_file" {
-    description = ""
+    description = "File name to use for the exfil file."
     default     = "exfil_file.txt"
 }
 
 variable "exfil_path" {
-    description = ""
+    description = "Path where the exfil file will be generated and uploaded from."
     default     = "%USERPROFILE%"
 }
 
 variable "exfil_size" {
-    description = ""
+    description = "Size of the exfil file to generate in megabytes."
     default     = "1000"
 }
 
 variable "scan_ports" {
-    description = ""
+    description = "Range of ports to be scanned by the port scan module."
     default     = "1-3500"
 }
 
 variable "initial_access_task_name" {
-    description = ""
+    description = "The name of the remote task where the C2 implant should run."
     default     = "workstation_host"
 }
 
 variable "lateral_movement_task_name" {
-    description = ""
+    description = "The name of the remote task that should be targeted by the lateral movement module."
     default     = "server_host"
 }
 
@@ -86,31 +86,30 @@ resource "random_string" "random_32" {
 }
 
 resource "portgroup" "c2_portgroup" {
-    portgroup_name     = "c2_portgroup_${local.function.date_stamp}"
-    permitted_cidr     = variable.public_cidr
-    permitted_port     = variable.c2_port
-    permitted_protocol = "tcp"
+    portgroup_name = "c2_portgroup_${local.function.date_stamp}"
+    ip_ranges      = variable.public_cidr
+    port           = variable.c2_port
+    ip_protocol    = "tcp"
 }
 
 resource "portgroup" "http_portgroup" {
-    portgroup_name     = "http_portgroup_${local.function.date_stamp}"
-    permitted_cidr     = variable.public_cidr
-    permitted_port     = variable.http_port
-    permitted_protocol = "tcp"
+    portgroup_name = "http_portgroup_${local.function.date_stamp}"
+    ip_ranges      = variable.public_cidr
+    port           = variable.http_port
+    ip_protocol    = "tcp"
 }
 
 resource "portgroup" "exfil_portgroup" {
-    portgroup_name     = "exfil_portgroup_${local.function.date_stamp}"
-    permitted_cidr     = variable.public_cidr
-    permitted_port     = variable.exfil_port
-    permitted_protocol = "tcp"
+    portgroup_name = "exfil_portgroup_${local.function.date_stamp}"
+    ip_ranges      = variable.public_cidr
+    port           = variable.exfil_port
+    ip_protocol    = "tcp"
 }
 
 resource "task" "c2_server" {
-    task_type      = "powershell_empire"
-    task_name      = "c2_server_${local.function.date_stamp}"
-    task_fqdn      = "c2-${resource.random_string.random_6.result}.${variable.domain_name}"
-    task_portgroup = resource.portgroup.c2_portgroup.portgroup_name
+    task_type  = "powershell_empire"
+    task_name  = "c2_server_${local.function.date_stamp}"
+    portgroups = [resource.portgroup.c2_portgroup.portgroup_name]
 
     listener {
         http_malleable {
@@ -130,10 +129,9 @@ resource "task" "c2_server" {
 }
 
 resource "task" "http_server" {
-    task_type      = "http_server"
-    task_name      = "http_server_${local.function.date_stamp}"
-    task_fqdn      = "downloads-${resource.random_string.random_6.result}.${variable.domain_name}"
-    task_portgroup = resource.portgroup.http_portgroup.portgroup_name
+    task_type  = "http_server"
+    task_name  = "http_server_${local.function.date_stamp}"
+    portgroups = [resource.portgroup.http_portgroup.portgroup_name]
 
     listener {
         http {
@@ -143,10 +141,9 @@ resource "task" "http_server" {
 }
 
 resource "task" "exfil_server" {
-    task_type      = "exfil_server"
-    task_name      = "exfil_server_${local.function.date_stamp}"
-    task_fqdn      = "uploads-${resource.random_string.random_6.result}.${variable.domain_name}"
-    task_portgroup = resource.portgroup.exfil_portgroup.portgroup_name
+    task_type  = "exfil_server"
+    task_name  = "exfil_server_${local.function.date_stamp}"
+    portgroups = resource.portgroup.exfil_portgroup.portgroup_name
 
     listener {
         http {
