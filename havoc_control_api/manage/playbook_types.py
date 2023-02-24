@@ -210,8 +210,8 @@ class Registration:
         playbook_type_entry = self.get_playbook_type_entry()
         if not playbook_type_entry:
             return format_response(404, 'failed', f'playbook_type {self.playbook_type} does not exist', self.log)
-        playbook_version = playbook_type_entry['Item']['playbook_schedule']['S']
-        self.template_pointer = playbook_type_entry['Item']['config_pointer']['S']
+        playbook_version = playbook_type_entry['Item']['playbook_version']['S']
+        self.template_pointer = playbook_type_entry['Item']['template_pointer']['S']
         get_object_results = self.get_object()
         playbook_template = None
         if 'Body' in get_object_results:
