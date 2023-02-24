@@ -71,7 +71,7 @@ class HavocCMD(Cmd):
                 secret = havoc_profiles.get('default', 'SECRET')
                 api_region = havoc_profiles.get('default', 'API_REGION')
                 api_domain_name = havoc_profiles.get('default', 'API_DOMAIN_NAME')
-            self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret)
+            self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret, api_version=1)
         return self.__havoc_client
 
     def emptyline(self):
