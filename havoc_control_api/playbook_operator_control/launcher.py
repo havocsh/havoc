@@ -184,7 +184,8 @@ class Playbook:
         config_pointer = playbook_entry['Item']['config_pointer']['S']
         created_by = playbook_entry['Item']['created_by']['S']
         current_time = datetime.datetime.now()
-        end_time = current_time + datetime.timedelta(playbook_timeout)
+        end_time_object = current_time + datetime.timedelta(playbook_timeout)
+        end_time = end_time_object.strftime('%m-%d-%Y %H:%M:%S')
         timestamp = current_time.strftime('%s')
 
         deployment_details = self.get_deployment_details()
