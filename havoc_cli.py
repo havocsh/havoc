@@ -6,6 +6,7 @@ import json
 from configparser import ConfigParser
 from cmd2 import Cmd
 import havoc
+import time as t
 
 
 # Load the ./HAVOC profiles
@@ -371,6 +372,7 @@ class HavocCMD(Cmd):
                     get_playbook_results_response['queue'].sort(key=sortFunc)
                     command_args['start_time'] = get_playbook_results_response['queue'][-1]['run_time']
                     format_output('get_task_results', get_playbook_results_response)
+                    t.sleep(5)
         except KeyboardInterrupt:
             print('tail_playbook_results stopped.')
 

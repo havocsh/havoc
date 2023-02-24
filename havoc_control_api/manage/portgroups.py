@@ -80,7 +80,7 @@ class Portgroup:
 
     def create_portgroup_entry(self, description, timestamp):
         get_portgroup_entry_response = self.get_portgroup_entry()
-        if get_portgroup_entry_response:
+        if 'Item' in get_portgroup_entry_response:
             return 'portgroup_exists'
         try:
             ec2_response = self.aws_ec2_client.create_security_group(

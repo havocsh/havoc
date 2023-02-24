@@ -175,7 +175,7 @@ class Tasks:
 
     def terminate_task(self):
         task_entry = self.get_task_entry()
-        if not task_entry:
+        if 'Item' not in task_entry:
             return 'task_not_found'
         ecs_task_id = task_entry['Item']['ecs_task_id']['S']
         if ecs_task_id == 'remote_task':
