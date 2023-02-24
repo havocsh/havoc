@@ -261,7 +261,7 @@ resource "aws_dynamodb_table_item" "conti_ransomware_playbook_type" {
     "S": "${var.deployment_version}"
   },
   "template_pointer": {
-    "S": "${aws_s3_bucket.playbook_types.bucket}/conti_ransomware.template"
+    "S": "conti_ransomware.template"
   },
   "created_by": {
     "S": "${var.deployment_admin_email}"
