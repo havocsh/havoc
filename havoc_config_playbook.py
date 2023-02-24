@@ -47,7 +47,7 @@ class ConfigPlaybook:
         # Determine the playbook type to be used as the source for the playbook configuration
         playbook_types = self.havoc_client.list_playbook_types()
         n = 1
-        for playbook_type in playbook_types:
+        for playbook_type in playbook_types['playbook_types']:
             print(f'{n}) {playbook_type}')
             n += 1
         playbook_number = input('\nEnter the number associated with the playbook type you would like to configure: ')
