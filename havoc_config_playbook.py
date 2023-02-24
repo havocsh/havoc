@@ -104,7 +104,7 @@ class ConfigPlaybook:
             print('Creating a playbook with the configured properties. To run the configured playbook, use the following command in the ./HAVOC CLI:')
             print(f'  run_playbook --playbook_name={playbook_name}')
             create_playbook_response = self.havoc_client.create_playbook(playbook_name, playbook_selection, playbook_schedule, playbook_timeout, playbook_config)
-            if 'success' in create_playbook_response:
+            if create_playbook_response:
                 return 'completed'
             else:
                 return 'failed'

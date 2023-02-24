@@ -183,6 +183,7 @@ class Playbook:
         existing_playbook = self.get_playbook_entry()
         if not existing_playbook:
             return 'playbook_not_found'
+        self.config_pointer = existing_playbook['Item']['config_pointer']['S']
         remove_playbook_entry_response = self.remove_playbook_entry()
         if remove_playbook_entry_response != 'playbook_entry_removed':
             return remove_playbook_entry_response
