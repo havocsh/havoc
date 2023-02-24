@@ -201,7 +201,7 @@ class Playbook:
             return format_response(500, 'failed', f'playbook launch failed with error {run_ecs_task_response}', self.log)
         # Log task execution details
         ecs_task_id = self.run_ecs_task_response['tasks'][0]['taskArn']
-        t.sleep(15)
+        t.sleep(10)
         ecs_task_details = self.get_ecstask_details(ecs_task_id)
         recorded_info = {
             'playbook_executed': {
@@ -221,7 +221,7 @@ class Playbook:
         upload_object_response = self.upload_object(payload, file_name)
         if upload_object_response != 'object_uploaded':
             return format_response(500, 'failed', f'initialize playbook operator failed with error {upload_object_response}', self.log)
-        
+        t.sleep(20)
         # Send execute_playbook command to the playbook operator
         operator_command = 'execute_playbook'
         command_args = {'api_region': api_region, 'api_domain_name': api_domain_name, 'api_key': api_key, 'secret': secret_key, 'config_pointer': config_pointer}
