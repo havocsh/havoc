@@ -367,7 +367,7 @@ class HavocCMD(Cmd):
         try:
             while True:
                 get_playbook_results_response = self.havoc_client.get_playbook_results(**command_args)
-                if get_playbook_results_response['queue']:
+                if 'queue' in get_playbook_results_response:
                     get_playbook_results_response['queue'].sort(key=sortFunc)
                     command_args['start_time'] = get_playbook_results_response['queue'][-1]['run_time']
                     format_output('get_task_results', get_playbook_results_response)
