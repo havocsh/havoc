@@ -113,7 +113,7 @@ class Registration:
         try:
             get_object_response = self.aws_s3_client.get_object(
                 Bucket=f'{self.deployment_name}-playbook-types',
-                Key=self.config_pointer
+                Key=self.template_pointer
             )
         except botocore.exceptions.ClientError as error:
             return error
