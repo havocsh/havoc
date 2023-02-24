@@ -254,12 +254,17 @@ class ManageDeployment:
             print(tf_apply_output)
             print('\nRolling back changes...\n')
             tf_destroy_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'destroy', '-no-color', '-auto-approve']
-            subprocess.Popen(tf_destroy_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
-                os.remove('havoc_deploy/aws/terraform/terraform.tfvars') 
-            if os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
-                os.remove('havoc_deploy/aws/terraform/terraform.tfstate')
-            print('\nRollback complete.')
+            tf_destroy = subprocess.Popen(tf_destroy_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            tf_destroy_output = tf_destroy.communicate()[1].decode('ascii')
+            if not tf_destroy_output:
+                if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
+                    os.remove('havoc_deploy/aws/terraform/terraform.tfvars') 
+                if os.path.exists('havoc_deploy/aws/terraform/terraform.tfstate'):
+                    os.remove('havoc_deploy/aws/terraform/terraform.tfstate')
+                print('\nRollback complete.')
+            else:
+                print('Terraform destroy encountered errors during rollback:')
+                print(tf_destroy_output)
             print('Review errors above, correct the reported issues and try the deployment again.')
             return 'failed'
         print(' - Terraform deployment tasks completed.')
