@@ -146,7 +146,6 @@ class Deliver:
                 command_args_fixup[k] = {'BOOL': v}
             if isinstance(v, bytes):
                 command_args_fixup[k] = {'B': v}
-        completed_instruction = None
         if operator_command == 'terminate':
             completed_instruction = self.update_playbook_entry(None, 'terminated')
             if completed_instruction != 'playbook_entry_updated':
@@ -156,9 +155,8 @@ class Deliver:
             if completed_instruction != 'playbook_entry_updated':
                 print(f'Error updating playbook entry: {completed_instruction}')
 
-        if completed_instruction:
-            add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, operator_command, command_args_fixup, json_payload)
-            if add_queue_attribute_response != 'queue_attribute_added':
-                print(f'Error adding queue attribute: {add_queue_attribute_response}')
+        add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, operator_command, command_args_fixup, json_payload)
+        if add_queue_attribute_response != 'queue_attribute_added':
+            print(f'Error adding queue attribute: {add_queue_attribute_response}')
 
         return True
