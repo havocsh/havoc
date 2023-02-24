@@ -126,7 +126,6 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy_attachment"
     policy_arn = data.aws_iam_policy.ecs_task_execution_policy.arn
 }
 
----------
 data "template_file" "ecs_playbook_operator_policy" {
   template = file("templates/ecs_playbook_operator_policy.template")
 
@@ -197,8 +196,6 @@ resource "aws_iam_role_policy_attachment" "ecs_playbook_operator_execution_polic
     role = aws_iam_role.ecs_playbook_operator_execution_role.name
     policy_arn = data.aws_iam_policy.ecs_playbook_operator_execution_policy.arn
 }
-
-------
 
 data "template_file" "api_gateway_policy" {
   template = file("templates/api_gateway_policy.template")
