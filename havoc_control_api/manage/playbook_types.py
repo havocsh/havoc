@@ -215,7 +215,8 @@ class Registration:
         get_object_results = self.get_object()
         playbook_template = None
         if 'Body' in get_object_results:
-                playbook_template = get_object_results['Body'].read()
+            body = get_object_results['Body'].read()
+            playbook_template = body.decode()
         created_by = playbook_type_entry['Item']['created_by']['S']
         return format_response(
             200, 'success', 'get playbook_type succeeded', None, playbook_type=self.playbook_type,
