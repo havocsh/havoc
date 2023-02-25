@@ -319,12 +319,26 @@ class Playbook:
             return format_response(500, 'failed', f'kill playbook operator failed with error {terminate_playbook_operator_response}', self.log)
     
     def list(self):
+        if 'playbook_name_contains' in self.detail:
+            pnf = self.detail['playbook_name_contains']
+        else:
+            pnf = ''
+        if 'playbook_status' in self.detail:
+            psf = self.detail['playbook_status'].lower()
+        else:
+            psf = 'running'
         playbooks_list = []
+        playbooks_list_final = []
         playbooks = self.query_playbooks()
-        for item in playbooks['Items']:
-            playbook_name = item['playbook_name']['S']
-            playbooks_list.append(playbook_name)
-        return format_response(200, 'success', 'list playbooks succeeded', None, playbooks=playbooks_list)
+        if 'Items' in playbooks:
+            for item in playbooks['Items']:
+                playbook_name = item['playbook_name']['S']
+                playbook_status = item['playbook_status']['S']
+                playbook_dict = {'playbook_name': playbook_name, 'playbook_status': playbook_status}
+                playbooks_list.append(playbook_dict)
+            pn_filtered = [x for x in playbooks_list if pnf in x['playbook_name']]
+            playbooks_list_final = [x for x in pn_filtered if psf == x['playbook_status'] or psf == 'all']
+        return format_response(200, 'success', 'list playbooks succeeded', None, playbooks=playbooks_list_final)
     
     def update(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)

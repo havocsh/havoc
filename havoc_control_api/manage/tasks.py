@@ -303,14 +303,16 @@ class Tasks:
         else:
             tsf = 'running'
         tasks_list = []
+        tasks_list_final = []
         tasks = self.query_tasks()
-        for item in tasks['Items']:
-            task_name = item['task_name']['S']
-            task_status = item['task_status']['S']
-            task_dict = {'task_name': task_name, 'task_status': task_status}
-            tasks_list.append(task_dict)
-        tn_filtered = [x for x in tasks_list if tnf in x['task_name']]
-        tasks_list_final = [x for x in tn_filtered if tsf == x['task_status'] or tsf == 'all' or (tsf == 'running' and (x['task_status'] == 'starting' or x['task_status'] == 'idle' or x['task_status'] == 'busy'))]
+        if 'Items' in tasks:
+            for item in tasks['Items']:
+                task_name = item['task_name']['S']
+                task_status = item['task_status']['S']
+                task_dict = {'task_name': task_name, 'task_status': task_status}
+                tasks_list.append(task_dict)
+            tn_filtered = [x for x in tasks_list if tnf in x['task_name']]
+            tasks_list_final = [x for x in tn_filtered if tsf == x['task_status'] or tsf == 'all' or (tsf == 'running' and (x['task_status'] == 'starting' or x['task_status'] == 'idle' or x['task_status'] == 'busy'))]
         return format_response(200, 'success', 'list tasks succeeded', None, tasks=tasks_list_final)
 
     def create(self):

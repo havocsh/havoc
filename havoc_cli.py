@@ -286,7 +286,9 @@ class HavocCMD(Cmd):
         print('\n--file_name=<string> - (required) the name of the file to be deleted.')
 
     def do_list_playbooks(self, inp):
-        list_playbooks_response = self.havoc_client.list_playbooks()
+        args = {'playbook_status': '', 'playbook_name_contains': ''}
+        command_args = convert_input(args, inp)
+        list_playbooks_response = self.havoc_client.list_playbooks(**command_args)
         format_output('list_playbooks', list_playbooks_response)
 
     def help_list_playbooks(self):
