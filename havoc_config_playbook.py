@@ -1,7 +1,6 @@
 import re
 import json
 import hcl2
-import dpath
 import havoc
 from configparser import ConfigParser
 
