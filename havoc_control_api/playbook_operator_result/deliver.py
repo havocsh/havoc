@@ -70,10 +70,11 @@ class Deliver:
 
     def update_playbook_entry(self, stime, playbook_status):
         if stime:
-            update_expression = 'set playbook_status=:playbook_status, last_execution_time=:last_execution_time'
+            update_expression = 'set playbook_status=:playbook_status, last_execution_time=:last_execution_time, ecs_task_id=:ecs_task_id'
             expression_attribute_values = {
                     ':playbook_status': {'S': playbook_status},
-                    ':last_execution_time': {'S': stime}
+                    ':last_execution_time': {'S': stime},
+                    ':ecs_task_id': {'S': 'None'}
                 }
         else:
             update_expression = 'set playbook_status=:playbook_status'
@@ -147,7 +148,7 @@ class Deliver:
             if isinstance(v, bytes):
                 command_args_fixup[k] = {'B': v}
         if operator_command == 'terminate':
-            completed_instruction = self.update_playbook_entry(None, 'terminated')
+            completed_instruction = self.update_playbook_entry(None, 'not_running')
             if completed_instruction != 'playbook_entry_updated':
                 print(f'Error updating playbook entry: {completed_instruction}')
         if operator_command == 'execute_playbook':

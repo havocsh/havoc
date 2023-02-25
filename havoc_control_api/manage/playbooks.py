@@ -212,7 +212,7 @@ class Playbook:
                 UpdateExpression='set playbook_status=:playbook_status, '
                                  'ecs_task_id=:ecs_task_id',
                 ExpressionAttributeValues={
-                    ':playbook_status': {'S': 'terminated'},
+                    ':playbook_status': {'S': 'not_running'},
                     ':ecs_task_id': {'S': 'None'}
                 }
             )
