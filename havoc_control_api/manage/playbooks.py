@@ -191,7 +191,7 @@ class Playbook:
     
     def delete_playbook_configuration(self):
         existing_playbook = self.get_playbook_entry()
-        if not existing_playbook:
+        if 'Item' not in existing_playbook:
             return 'playbook_not_found'
         self.config_pointer = existing_playbook['Item']['config_pointer']['S']
         remove_playbook_entry_response = self.remove_playbook_entry()
@@ -224,7 +224,7 @@ class Playbook:
     
     def terminate_playbook_operator(self):
         playbook_entry = self.get_playbook_entry()
-        if not playbook_entry:
+        if 'Item' not in playbook_entry:
             return 'playbook_not_found'
         ecs_task_id = playbook_entry['Item']['ecs_task_id']['S']
         try:
