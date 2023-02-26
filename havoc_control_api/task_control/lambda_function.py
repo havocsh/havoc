@@ -24,6 +24,7 @@ def lambda_handler(event, context):
     region = re.search('arn:aws:lambda:([^:]+):.*', context.invoked_function_arn).group(1)
     deployment_name = os.environ['DEPLOYMENT_NAME']
     subnet = os.environ['SUBNET']
+    default_security_group = os.environ['SECURITY_GROUP']
     log = {'event': event}
 
     user_id = event['requestContext']['authorizer']['user_id']
@@ -43,7 +44,7 @@ def lambda_handler(event, context):
 
     if action == 'execute':
         # Execute container task
-        new_task = execute.Task(deployment_name, task_name, subnet, region, detail, user_id, log)
+        new_task = execute.Task(deployment_name, task_name, subnet, default_security_group, region, detail, user_id, log)
         response = new_task.run_task()
         return response
 

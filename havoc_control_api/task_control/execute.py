@@ -22,7 +22,7 @@ def format_response(status_code, result, message, log, **kwargs):
 
 class Task:
 
-    def __init__(self, deployment_name, task_name, subnet, region, detail: dict, user_id, log):
+    def __init__(self, deployment_name, task_name, subnet, default_security_group, region, detail: dict, user_id, log):
         """
         Instantiate a Task instance
         """
@@ -30,6 +30,7 @@ class Task:
         self.task_name = task_name
         self.task_context = f'{self.deployment_name}-{region}'
         self.subnet = subnet
+        self.default_security_group = default_security_group
         self.region = region
         self.detail = detail
         self.user_id = user_id
@@ -390,6 +391,7 @@ class Task:
                         return format_response(500, 'failed', f'run_task failed with error {update_portgroup_entry_response}', self.log)
                 else:
                     return format_response(404, 'failed', f'portgroup_name: {portgroup} does not exist', self.log)
+        securitygroups.append(self.default_security_group)
         run_ecs_task_response = self.run_ecs_task(securitygroups, end_time)
         if run_ecs_task_response != 'ecs_task_ran':
             return format_response(500, 'failed', f'run_task failed with error {run_ecs_task_response}', self.log)

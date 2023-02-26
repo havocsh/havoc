@@ -17,6 +17,44 @@ resource "aws_subnet" "deployment_subnet" {
   }
 }
 
+resource "aws_security_group" "listener_lb_default" {
+  name        = "${var.deployment_name}-listener-lb-default"
+  description = "Allow traffic from LB to ECS"
+  vpc_id      = aws_vpc.deployment_vpc.id
+
+  tags = {
+    Name = var.deployment_name
+  }
+}
+
+resource "aws_security_group" "tasks_default" {
+  name        = "${var.deployment_name}-tasks-default"
+  description = "Allow traffic from LB to ECS"
+  vpc_id      = aws_vpc.deployment_vpc.id
+
+  tags = {
+    Name = var.deployment_name
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "tasks_ingress" {
+  security_group_id = aws_security_group.tasks_default.id
+
+  referenced_security_group_id = aws_security_group.listener_lb_default.id
+  from_port                    = 0
+  ip_protocol                  = "-1"
+  to_port                      = 0
+}
+
+resource "aws_vpc_security_group_egress_rule" "tasks_egress" {
+  security_group_id = aws_security_group.tasks_default.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 0
+  ip_protocol = "-1"
+  to_port     = 0
+}
+
 # Internet Gateway
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.deployment_vpc.id
