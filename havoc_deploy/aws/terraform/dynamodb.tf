@@ -248,6 +248,37 @@ resource "aws_dynamodb_table_item" "exfilkit_task_type" {
 ITEM
 }
 
+resource "aws_dynamodb_table_item" "remote_operator_task_type" {
+  table_name = aws_dynamodb_table.task_types.name
+  hash_key   = aws_dynamodb_table.task_types.hash_key
+
+  item = <<ITEM
+{
+  "task_type": {
+    "S": "remote_operator"
+  },
+  "task_version": {
+    "S": "${var.deployment_version}"
+  },
+  "capabilities": {
+    "SS": ${jsonencode(["task_execute_command","task_get_command_output","task_kill_command","task_download_file","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
+  },
+  "source_image": {
+    "S": "None"
+  },
+  "cpu": {
+    "N": "0"
+  },
+  "memory": {
+    "N": "0"
+  },
+  "created_by": {
+    "S": "${var.deployment_admin_email}"
+  }
+}
+ITEM
+}
+
 resource "aws_dynamodb_table_item" "conti_ransomware_playbook_type" {
   table_name = aws_dynamodb_table.playbook_types.name
   hash_key   = aws_dynamodb_table.playbook_types.hash_key
@@ -366,6 +397,17 @@ resource "aws_dynamodb_table" "tasks" {
   attribute {
   name = "task_name"
   type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "listeners" {
+  name           = "${var.deployment_name}-listeners"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "listener_name"
+
+  attribute {
+    name = "listener_name"
+    type = "S"
   }
 }
 

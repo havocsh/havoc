@@ -94,6 +94,7 @@ class Portgroup:
             return error
         securitygroup_id = ec2_response['GroupId']
         tasks = 'None'
+        listeners = 'None'
         try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-portgroups',
@@ -101,11 +102,12 @@ class Portgroup:
                     'portgroup_name': {'S': self.portgroup_name}
                 },
                 UpdateExpression='set securitygroup_id=:securitygroup_id, portgroup_description=:portgroup_description, '
-                                'tasks=:tasks, create_time=:create_time, user_id=:user_id',
+                                'tasks=:tasks, listeners=:listeners, create_time=:create_time, user_id=:user_id',
                 ExpressionAttributeValues={
                     ':securitygroup_id': {'S': securitygroup_id},
                     ':portgroup_description': {'S': description},
                     ':tasks': {'SS': [tasks]},
+                    ':listeners': {'SS': [listeners]},
                     ':create_time': {'S': timestamp},
                     ':user_id': {'S': self.user_id}
                 }
@@ -251,6 +253,7 @@ class Portgroup:
         securitygroup_id = portgroup_entry['Item']['securitygroup_id']['S']
         portgroup_description = portgroup_entry['Item']['portgroup_description']['S']
         associated_tasks = portgroup_entry['Item']['tasks']['SS']
+        associated_listeners = portgroup_entry['Item']['listeners']['SS']
         portgroup_creator_id = portgroup_entry['Item']['user_id']['S']
         create_time = portgroup_entry['Item']['create_time']['S']
         portgroup_rules = []
@@ -263,8 +266,8 @@ class Portgroup:
             portgroup_rules.append({'port': from_port, 'ip_protocol': ip_protocol, 'ip_ranges': ip_ranges})
         return format_response(200, 'success', 'get portgroup succeeded', None, portgroup_name=self.portgroup_name,
                                portgroup_description=portgroup_description, associated_tasks=associated_tasks,
-                               portgroup_creator_id=portgroup_creator_id, create_time=create_time,
-                               portgroup=portgroup_rules)
+                               associated_listeners=associated_listeners, portgroup_creator_id=portgroup_creator_id,
+                               create_time=create_time, portgroup=portgroup_rules)
 
     def list(self):
         portgroups_list = []

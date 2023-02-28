@@ -511,6 +511,50 @@ class HavocCMD(Cmd):
     def help_delete_domain(self):
         print('\nDelete an existing domain.')
         print('\n--domain_name=<string> - (required) the name of the domain to be deleted')
+    
+    def do_list_listeners(self, inp):
+        list_listeners_response = self.havoc_client.list_listeners()
+        format_output('list_listeners', list_listeners_response)
+
+    def help_list_listeners(self):
+        print('\nList all existing listeners.')
+
+    def do_get_listener(self, inp):
+        args = {'listener_name': ''}
+        command_args = convert_input(args, inp)
+        get_listener_response = self.havoc_client.get_listener(**command_args)
+        format_output('get_listener', get_listener_response)
+
+    def help_get_listener(self):
+        print('\nGet details of a given listener.')
+        print('\n--listener_name=<string> - (required) the name of the listener to retrieve details for')
+
+    def do_create_listener(self, inp):
+        args = {'listener_name': '', 'listener_type': '', 'listener_port': '', 'task_name': '', 'portgroups': '',
+                'host_name': '', 'domain_name': ''}
+        command_args = convert_input(args, inp)
+        create_listener_response = self.havoc_client.create_listener(**command_args)
+        format_output('create_listener', create_listener_response)
+
+    def help_create_listener(self):
+        print('\nCreate a new listener with the given parameters.')
+        print('\n--listener_name=<string> - (required) the listener name associated with the listener to be created')
+        print('\n--listener_type=<string> - (required) the type of listener to create (can be HTTP or HTTPS)')
+        print('\n--listener_port=<integer> - (required) the port number to listen on')
+        print('\n--task_name=<string> - (required) the task to forward listener traffic to')
+        print('\n--portgroups=<string> - (required) the portgroups to assign to the listener')
+        print('\n--host_name=<string> - (optional) if using an FQDN, specify the host name to be set in DNS')
+        print('\n--domain_name=<string> - (optional) if using an FQDN, specify the domain name to be set in DNS')
+
+    def do_delete_listener(self, inp):
+        args = {'listener_name': ''}
+        command_args = convert_input(args, inp)
+        delete_listener_response = self.havoc_client.delete_listener(**command_args)
+        format_output('delete_listener', delete_listener_response)
+
+    def help_delete_listener(self):
+        print('\nDelete an existing listener.')
+        print('\n--listener_name=<string> - (required) the name of the listener to be deleted')
 
     def do_run_task(self, inp):
         args = {'task_name': '', 'task_type': '', 'task_host_name': '', 'task_domain_name': '', 'portgroups': '',

@@ -15,6 +15,7 @@ data "template_file" "lambda_policy" {
   tasks_table                 = aws_dynamodb_table.tasks.arn,
   task_queue_table            = aws_dynamodb_table.task_queue.arn,
   playbook_queue_table        = aws_dynamodb_table.playbook_queue.arn,
+  listeners_table             = aws_dynamodb_table.listeners.arn,
   playbooks_bucket            = "${var.deployment_name}-playbooks",
   playbook_types_bucket       = "${var.deployment_name}-playbook-types",
   workspace_bucket            = "${var.deployment_name}-workspace",

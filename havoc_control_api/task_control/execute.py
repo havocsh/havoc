@@ -252,6 +252,8 @@ class Task:
     def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, task_host_name,
                        task_domain_name, attack_ip, portgroups, ecs_task_id, timestamp, end_time):
         task_status = 'starting'
+        local_ip = ['None']
+        listeners = ['None']
         try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-tasks',
@@ -268,6 +270,7 @@ class Task:
                                 'attack_ip=:attack_ip,'
                                 'local_ip=:local_ip, '
                                 'portgroups=:portgroups, '
+                                'listeners=:listeners, '
                                 'instruct_instances=:instruct_instances, '
                                 'last_instruct_user_id=:last_instruct_user_id, '
                                 'last_instruct_instance=:last_instruct_instance, '
@@ -286,8 +289,9 @@ class Task:
                     ':task_host_name': {'S': task_host_name},
                     ':task_domain_name': {'S': task_domain_name},
                     ':attack_ip': {'S': attack_ip},
-                    ':local_ip': {'SS': ['None']},
+                    ':local_ip': {'SS': local_ip},
                     ':portgroups': {'SS': portgroups},
+                    ':listeners': {'SS': listeners},
                     ':instruct_instances': {'SS': [instruct_instance]},
                     ':last_instruct_user_id': {'S': instruct_user_id},
                     ':last_instruct_instance': {'S': instruct_instance},

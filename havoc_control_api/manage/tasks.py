@@ -248,6 +248,7 @@ class Tasks:
         attack_ip = task_item['attack_ip']['S']
         local_ip = task_item['local_ip']['SS']
         portgroups = task_item['portgroups']['SS']
+        listeners = task_item['listeners']['SS']
         instruct_instances = task_item['instruct_instances']['SS']
         last_instruct_user_id = task_item['last_instruct_user_id']['S']
         last_instruct_instance = task_item['last_instruct_instance']['S']
@@ -273,11 +274,12 @@ class Tasks:
         return format_response(
             200, 'success', 'get task succeeded', None, task_name=task_name, task_type=task_type, task_version=task_version,
             task_context=task_context, task_status=task_status, attack_ip=attack_ip, local_ip=local_ip,
-            portgroups=portgroups, instruct_instances=instruct_instances, last_instruct_user_id=last_instruct_user_id,
-            last_instruct_instance=last_instruct_instance, last_instruct_command=last_instruct_command,
-            last_instruct_args=last_instruct_args_fixup, last_instruct_time=last_instruct_time,
-            task_creator_user_id=task_creator_user_id, create_time=create_time, scheduled_end_time=scheduled_end_time,
-            ecs_task_id=ecs_task_id, task_host_name=task_host_name, task_domain_name=task_domain_name
+            portgroups=portgroups, listeners=listeners, instruct_instances=instruct_instances,
+            last_instruct_user_id=last_instruct_user_id, last_instruct_instance=last_instruct_instance,
+            last_instruct_command=last_instruct_command, last_instruct_args=last_instruct_args_fixup,
+            last_instruct_time=last_instruct_time, task_creator_user_id=task_creator_user_id, create_time=create_time,
+            scheduled_end_time=scheduled_end_time, ecs_task_id=ecs_task_id, task_host_name=task_host_name, 
+            task_domain_name=task_domain_name
         )
 
     def kill(self):

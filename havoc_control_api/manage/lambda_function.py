@@ -3,6 +3,7 @@ import re
 import json
 import deployment
 import domains
+import listeners
 import playbooks
 import playbook_types
 import portgroups
@@ -30,6 +31,7 @@ def action(resource, command, region, deployment_name, user_id, detail, log):
     resources = {
         'deployment': deployment.Deployment(deployment_name, region, user_id, detail, log),
         'domain': domains.Domain(deployment_name, region, user_id, detail, log),
+        'listener': listeners.Listener(deployment_name, region, user_id, detail, log),
         'playbook': playbooks.Playbook(deployment_name, region, user_id, detail, log),
         'playbook_type': playbook_types.Registration(deployment_name, region, user_id, detail, log),
         'portgroup': portgroups.Portgroup(deployment_name, region, user_id, detail, log),
@@ -70,7 +72,7 @@ def lambda_handler(event, context):
         return format_response(400, 'failed', 'missing resource', log)
     resource = data['resource']
 
-    allowed_resources = ['deployment', 'domain', 'playbook', 'playbook_type', 'portgroup', 'task_type', 'task', 'user', 'workspace']
+    allowed_resources = ['deployment', 'domain', 'listener', 'playbook', 'playbook_type', 'portgroup', 'task_type', 'task', 'user', 'workspace']
     if resource not in allowed_resources:
         return format_response(400, 'failed', 'invalid resource', log)
 

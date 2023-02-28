@@ -22,7 +22,8 @@
                 "${portgroups_table}",
                 "${tasks_table}",
                 "${task_queue_table}",
-                "${playbook_queue_table}"
+                "${playbook_queue_table}",
+                "${listeners_table}"
             ]
         },
         {
@@ -94,6 +95,32 @@
                 "route53:ChangeResourceRecordSets"
             ],
             "Resource": "*"
+        },
+        {
+        "Action": [
+            "elasticloadbalancing:CreateListener",
+            "elasticloadbalancing:CreateLoadBalancer",
+            "elasticloadbalancing:CreateTargetGroup",
+            "elasticloadbalancing:DeleteListener",
+            "elasticloadbalancing:DeleteLoadBalancer",
+            "elasticloadbalancing:DeleteTargetGroup",
+            "elasticloadbalancing:DeregisterTargets",
+            "elasticloadbalancing:DescribeListeners",
+            "elasticloadbalancing:RegisterTargets"
+        ],
+        "Effect": "Allow",
+        "Resource": "*"
+        },
+        {
+        "Action": [
+            "acm:DeleteCertificate",
+            "acm:DescribeCertificate",
+            "acm:ListCertificates",
+            "acm:RenewCertificate",
+            "acm:RequestCertificate"
+        ],
+        "Effect": "Allow",
+        "Resource": "*"
         },
         {
             "Effect": "Allow",
