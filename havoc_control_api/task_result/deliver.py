@@ -93,7 +93,7 @@ class Deliver:
         return 'resource_record_set_deleted'
 
     def add_queue_attribute(self, stime, expire_time, task_instruct_instance, task_instruct_command, task_instruct_args,
-                            task_host_name, task_domain_name, task_attack_ip, task_local_ip, json_payload):
+                            task_host_name, task_domain_name, task_public_ip, task_local_ip, json_payload):
         try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-task-queue',
@@ -112,7 +112,7 @@ class Deliver:
                                 'instruct_args=:instruct_args, '
                                 'task_host_name=:task_host_name, '
                                 'task_domain_name=:task_domain_name, '
-                                'attack_ip=:attack_ip, '
+                                'public_ip=:public_ip, '
                                 'local_ip=:local_ip, '
                                 'instruct_command_output=:payload',
                 ExpressionAttributeValues={
@@ -126,7 +126,7 @@ class Deliver:
                     ':instruct_args': {'M': task_instruct_args},
                     ':task_host_name': {'S': task_host_name},
                     ':task_domain_name': {'S': task_domain_name},
-                    ':attack_ip': {'S': task_attack_ip},
+                    ':public_ip': {'S': task_public_ip},
                     ':local_ip': {'SS': task_local_ip},
                     ':payload': {'S': json_payload}
                 }
@@ -214,7 +214,7 @@ class Deliver:
         task_instruct_instance = payload['instruct_instance']
         task_instruct_command = payload['instruct_command']
         task_instruct_args = payload['instruct_args']
-        task_attack_ip = payload['attack_ip']
+        task_public_ip = payload['public_ip']
         task_local_ip = payload['local_ip']
         if 'end_time' in payload:
             task_end_time = payload['end_time']
@@ -248,7 +248,7 @@ class Deliver:
         del db_payload['instruct_instance']
         del db_payload['instruct_command']
         del db_payload['instruct_args']
-        del db_payload['attack_ip']
+        del db_payload['public_ip']
         del db_payload['local_ip']
         del db_payload['timestamp']
         del db_payload['user_id']
@@ -291,7 +291,7 @@ class Deliver:
                 update_domain_entry_response = self.update_domain_entry(task_domain_name, domain_tasks, domain_host_names)
                 if update_domain_entry_response != 'domain_entry_updated':
                     print(f'Error updating domain entry: {update_domain_entry_response}')
-                delete_resource_record_set_response = self.delete_resource_record_set(hosted_zone, task_host_name, task_domain_name, task_attack_ip)
+                delete_resource_record_set_response = self.delete_resource_record_set(hosted_zone, task_host_name, task_domain_name, task_public_ip)
                 if delete_resource_record_set_response != 'resource_record_set_deleted':
                     print(f'Error deleting resource record set: {delete_resource_record_set_response}')
             completed_instruction = self.update_task_entry(stime, 'terminated', task_end_time)
@@ -305,7 +305,7 @@ class Deliver:
 
         if completed_instruction:
             add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, task_instruct_instance, task_instruct_command,
-                                 task_instruct_args_fixup, task_host_name, task_domain_name, task_attack_ip, task_local_ip, json_payload)
+                                 task_instruct_args_fixup, task_host_name, task_domain_name, task_public_ip, task_local_ip, json_payload)
             if add_queue_attribute_response != 'queue_attribute_added':
                 print(f'Error adding queue attribute: {add_queue_attribute_response}')
 

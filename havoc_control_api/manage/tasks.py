@@ -206,7 +206,7 @@ class Tasks:
         except botocore.exceptions.ParamValidationError as error:
             return error
         if task_entry['Item']['task_domain_name']['S'] != 'None':
-            task_attack_ip = task_entry['Item']['attack_ip']['S']
+            task_public_ip = task_entry['Item']['public_ip']['S']
             task_host_name = task_entry['Item']['task_host_name']['S']
             task_domain_name = task_entry['Item']['task_domain_name']['S']
             domain_entry = self.get_domain_entry(task_domain_name)
@@ -222,7 +222,7 @@ class Tasks:
             update_domain_entry_response = self.update_domain_entry(task_domain_name, tasks, domain_host_names)
             if update_domain_entry_response != 'domain_entry_updated':
                 return update_domain_entry_response
-            delete_resource_record_set_response = self.delete_resource_record_set(hosted_zone, task_host_name, task_domain_name, task_attack_ip)
+            delete_resource_record_set_response = self.delete_resource_record_set(hosted_zone, task_host_name, task_domain_name, task_public_ip)
             if delete_resource_record_set_response != 'resource_record_deleted':
                 return delete_resource_record_set_response
         update_task_entry_response = self.update_task_entry('terminated')
@@ -245,7 +245,7 @@ class Tasks:
         task_version = task_item['task_version']['S']
         task_context = task_item['task_context']['S']
         task_status = task_item['task_status']['S']
-        attack_ip = task_item['attack_ip']['S']
+        public_ip = task_item['public_ip']['S']
         local_ip = task_item['local_ip']['SS']
         portgroups = task_item['portgroups']['SS']
         listeners = task_item['listeners']['SS']
@@ -273,7 +273,7 @@ class Tasks:
         task_domain_name = task_item['task_domain_name']['S']
         return format_response(
             200, 'success', 'get task succeeded', None, task_name=task_name, task_type=task_type, task_version=task_version,
-            task_context=task_context, task_status=task_status, attack_ip=attack_ip, local_ip=local_ip,
+            task_context=task_context, task_status=task_status, public_ip=public_ip, local_ip=local_ip,
             portgroups=portgroups, listeners=listeners, instruct_instances=instruct_instances,
             last_instruct_user_id=last_instruct_user_id, last_instruct_instance=last_instruct_instance,
             last_instruct_command=last_instruct_command, last_instruct_args=last_instruct_args_fixup,

@@ -85,7 +85,7 @@ class Task:
             return error
         return 'object_uploaded'
 
-    def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, attack_ip, local_ip,
+    def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
                        portgroups, ecs_task_id, timestamp, end_time):
         task_status = 'starting'
         task_host_name = 'None'
@@ -101,7 +101,7 @@ class Task:
                                 'task_status=:task_status, '
                                 'task_host_name=:task_host_name, '
                                 'task_domain_name=:task_domain_name, '
-                                'attack_ip=:attack_ip, '
+                                'public_ip=:public_ip, '
                                 'local_ip=:local_ip, '
                                 'portgroups=:portgroups, '
                                 'task_type=:task_type, '
@@ -121,7 +121,7 @@ class Task:
                     ':task_status': {'S': task_status},
                     ':task_host_name': {'S': task_host_name},
                     ':task_domain_name': {'S': task_domain_name},
-                    ':attack_ip': {'S': attack_ip},
+                    ':public_ip': {'S': public_ip},
                     ':local_ip': {'SS': local_ip},
                     ':portgroups': {'SS': portgroups},
                     ':task_type': {'S': self.task_type},
@@ -156,7 +156,7 @@ class Task:
         else:
             end_time = 'None'
 
-        instruct_details = ['task_name', 'task_context', 'task_type', 'task_version', 'attack_ip']
+        instruct_details = ['task_name', 'task_context', 'task_type', 'task_version', 'public_ip']
         for i in instruct_details:
             if i not in self.detail:
                 return format_response(400, 'failed', 'invalid detail', self.log)
@@ -165,7 +165,7 @@ class Task:
         self.task_context = self.detail['task_context']
         self.task_type = self.detail['task_type']
         self.task_version = self.detail['task_version']
-        attack_ip = self.detail['attack_ip']
+        public_ip = self.detail['public_ip']
         local_ip = self.detail['local_ip']
         if not isinstance(local_ip, list):
             return format_response(400, 'failed', 'local_ip must be of type list', self.log)
@@ -200,7 +200,7 @@ class Task:
         instruct_args_fixup = {'no_args': {'S': 'True'}}
         # Add task entry to tasks table in DynamoDB
         add_task_entry_response = self.add_task_entry(
-            instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, attack_ip, local_ip, portgroups, 
+            instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, public_ip, local_ip, portgroups, 
             ecs_task_id, timestamp, end_time)
         if add_task_entry_response != 'task_entry_added':
             return format_response(500, 'failed', f'register_task failed with error {add_task_entry_response}', self.log)

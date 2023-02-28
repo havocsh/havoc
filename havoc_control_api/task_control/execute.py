@@ -250,7 +250,7 @@ class Task:
         )
 
     def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, task_host_name,
-                       task_domain_name, attack_ip, portgroups, ecs_task_id, timestamp, end_time):
+                       task_domain_name, public_ip, portgroups, ecs_task_id, timestamp, end_time):
         task_status = 'starting'
         local_ip = ['None']
         listeners = ['None']
@@ -267,7 +267,7 @@ class Task:
                                 'task_status=:task_status, '
                                 'task_host_name=:task_host_name, '
                                 'task_domain_name=:task_domain_name, '
-                                'attack_ip=:attack_ip,'
+                                'public_ip=:public_ip,'
                                 'local_ip=:local_ip, '
                                 'portgroups=:portgroups, '
                                 'listeners=:listeners, '
@@ -288,7 +288,7 @@ class Task:
                     ':task_status': {'S': task_status},
                     ':task_host_name': {'S': task_host_name},
                     ':task_domain_name': {'S': task_domain_name},
-                    ':attack_ip': {'S': attack_ip},
+                    ':public_ip': {'S': public_ip},
                     ':local_ip': {'SS': local_ip},
                     ':portgroups': {'SS': portgroups},
                     ':listeners': {'SS': listeners},
@@ -405,7 +405,7 @@ class Task:
         ecs_task_details = self.get_ecstask_details(ecs_task_id)
         interface_id = ecs_task_details['tasks'][0]['attachments'][0]['details'][1]['value']
         interface_details = self.get_interface_details(interface_id)
-        attack_ip = interface_details['NetworkInterfaces'][0]['Association']['PublicIp']
+        public_ip = interface_details['NetworkInterfaces'][0]['Association']['PublicIp']
         recorded_info = {
             'task_executed': {
                 'user_id': self.user_id,
@@ -417,7 +417,7 @@ class Task:
                 'task_host_name': task_host_name
             },
             'task_details': ecs_task_details,
-            'interface_details': attack_ip
+            'interface_details': public_ip
         }
         print(recorded_info)
 
@@ -438,7 +438,7 @@ class Task:
 
         # Create a Route53 resource record if a host_name/domain_name is requested for the task.
         if task_host_name != 'None' and task_domain_name != 'None':
-            create_rr_response = self.create_resource_record_set(task_hosted_zone, task_host_name, task_domain_name, attack_ip)
+            create_rr_response = self.create_resource_record_set(task_hosted_zone, task_host_name, task_domain_name, public_ip)
             if create_rr_response != 'resource_record_set_created':
                 return format_response(500, 'failed', f'run_task failed with error {create_rr_response}', self.log)
             if 'None' in domain_entry['Item']['tasks']['SS']:
@@ -458,9 +458,9 @@ class Task:
         # Add task entry to tasks table in DynamoDB
         instruct_args_fixup = {'no_args': {'S': 'True'}}
         add_task_entry_response = self.add_task_entry(instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, 
-            task_host_name, task_domain_name, attack_ip, portgroups, ecs_task_id, timestamp, end_time)
+            task_host_name, task_domain_name, public_ip, portgroups, ecs_task_id, timestamp, end_time)
         if add_task_entry_response != 'task_entry_added':
             return format_response(500, 'failed', f'run_task failed with error {add_task_entry_response}', self.log)
 
         # Send response
-        return format_response(200, 'success', 'execute task succeeded', None, attack_ip=attack_ip)
+        return format_response(200, 'success', 'execute task succeeded', None, public_ip=public_ip)

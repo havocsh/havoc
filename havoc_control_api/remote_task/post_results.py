@@ -42,7 +42,7 @@ class Deliver:
         return self.__aws_dynamodb_client
 
     def add_queue_attribute(self, stime, expire_time, task_instruct_instance, task_instruct_command,
-                            task_instruct_args, task_attack_ip, task_local_ip, json_payload):
+                            task_instruct_args, task_public_ip, task_local_ip, json_payload):
         task_host_name = 'None'
         task_domain_name = 'None'
         try:
@@ -63,7 +63,7 @@ class Deliver:
                                 'instruct_args=:instruct_args, '
                                 'task_host_name=:task_host_name, '
                                 'task_domain_name=:task_domain_name,'
-                                'attack_ip=:attack_ip, '
+                                'public_ip=:public_ip, '
                                 'local_ip=:local_ip, '
                                 'instruct_command_output=:payload',
                 ExpressionAttributeValues={
@@ -77,7 +77,7 @@ class Deliver:
                     ':instruct_args': {'M': task_instruct_args},
                     ':task_host_name': {'S': task_host_name},
                     ':task_domain_name': {'S': task_domain_name},
-                    ':attack_ip': {'S': task_attack_ip},
+                    ':public_ip': {'S': task_public_ip},
                     ':local_ip': {'SS': task_local_ip},
                     ':payload': {'S': json_payload}
                 }
@@ -121,7 +121,7 @@ class Deliver:
         # Set vars
         results_reqs = [
             'instruct_command_output', 'user_id', 'task_name', 'task_context', 'task_type', 'task_version',
-            'instruct_user_id', 'instruct_instance', 'instruct_command', 'instruct_args', 'attack_ip', 'local_ip',
+            'instruct_user_id', 'instruct_instance', 'instruct_command', 'instruct_args', 'public_ip', 'local_ip',
             'end_time', 'forward_log', 'timestamp'
         ]
         for i in results_reqs:
@@ -135,7 +135,7 @@ class Deliver:
         task_instruct_instance = self.results['instruct_instance']
         task_instruct_command = self.results['instruct_command']
         task_instruct_args = self.results['instruct_args']
-        task_attack_ip = self.results['attack_ip']
+        task_public_ip = self.results['public_ip']
         task_local_ip = self.results['local_ip']
         stime = self.results['timestamp']
         from_timestamp = datetime.utcfromtimestamp(int(stime))
@@ -168,7 +168,7 @@ class Deliver:
         del db_payload['instruct_instance']
         del db_payload['instruct_command']
         del db_payload['instruct_args']
-        del db_payload['attack_ip']
+        del db_payload['public_ip']
         del db_payload['local_ip']
         del db_payload['timestamp']
         del db_payload['user_id']
@@ -184,7 +184,7 @@ class Deliver:
             if isinstance(v, bytes):
                 task_instruct_args_fixup[k] = {'B': v}
         add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, task_instruct_instance, 
-                                            task_instruct_command, task_instruct_args_fixup, task_attack_ip, 
+                                            task_instruct_command, task_instruct_args_fixup, task_public_ip, 
                                             task_local_ip, json_payload)
         if add_queue_attribute_response != 'queue_attribute_added':
             return format_response(500, 'failed', f'post_results failed with error {add_queue_attribute_response}', self.log)
