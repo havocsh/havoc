@@ -46,6 +46,8 @@ class ManageDeployment:
             print('\nDeployment name must be DNS compliant (limited to letters, numbers and hyphens), minimum 3 characters and maximum 32 characters.\n') 
             name = None
         else:
+            if self.aws_profile:
+                boto3.setup_default_session(profile_name=self.aws_profile)
             s3 = boto3.client('s3')
             try:
                 response = s3.head_bucket(Bucket=name)
