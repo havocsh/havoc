@@ -344,8 +344,9 @@ class Task:
 
         # Verify that the task_name is unique.
         conflict = self.get_task_entry()
-        if 'Item' in conflict:
-            return format_response(409, 'failed', f'{self.task_name} already exists', self.log)
+        task_status = conflict['Item']['task_status']
+        if task_status != 'terminated':
+            return format_response(409, 'failed', f'{self.task_name} already exists as a running task', self.log)
 
         task_host_name = 'None'
         task_domain_name = 'None'
