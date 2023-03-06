@@ -110,8 +110,7 @@ class Domain:
                         'Key': 'Name',
                         'Value': f'{self.deployment_name}-{self.domain_name}-certificate'
                     },
-                ],
-                KeyAlgorithm='RSA_2048'
+                ]
             )
         except botocore.exceptions.ClientError as error:
             return error
