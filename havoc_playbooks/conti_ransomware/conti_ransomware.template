@@ -18,7 +18,7 @@ variable "private_cidr" {
 }
 
 variable "domain_name" {
-    description = "The domain name to be associated with the external facing listeners"
+    description = "The domain name to be associated with the external facing listeners."
 }
 
 variable "c2_port" {
