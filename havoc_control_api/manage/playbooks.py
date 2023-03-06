@@ -193,6 +193,9 @@ class Playbook:
         existing_playbook = self.get_playbook_entry()
         if 'Item' not in existing_playbook:
             return 'playbook_not_found'
+        playbook_status = existing_playbook['Item']['playbook_status']['S']
+        if playbook_status == 'running':
+            return 'playbook_running'
         self.config_pointer = existing_playbook['Item']['config_pointer']['S']
         remove_playbook_entry_response = self.remove_playbook_entry()
         if remove_playbook_entry_response != 'playbook_entry_removed':
@@ -274,6 +277,8 @@ class Playbook:
         delete_playbook_configuration_response = self.delete_playbook_configuration()
         if delete_playbook_configuration_response == 'playbook_not_found':
             return format_response(404, 'failed', f'playbook {self.playbook_name} does not exist', self.log)
+        elif delete_playbook_configuration_response == 'playbook_running':
+            return format_response(409, 'failed', f'playbook {self.playbook_name} is currently running', self.log)
         elif delete_playbook_configuration_response == 'playbook_configuration_deleted':
             return format_response(200, 'success', 'playbook deletion succeeded', None)
         else:
