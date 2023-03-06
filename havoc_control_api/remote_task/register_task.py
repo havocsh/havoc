@@ -86,10 +86,13 @@ class Task:
         return 'object_uploaded'
 
     def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
-                       portgroups, listeners, ecs_task_id, timestamp, end_time):
+                       timestamp, end_time):
         task_status = 'starting'
         task_host_name = 'None'
         task_domain_name = 'None'
+        portgroups = ['None']
+        listeners = ['None']
+        ecs_task_id = 'remote_task'
         try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-tasks',
@@ -147,9 +150,6 @@ class Task:
         return 'task_entry_added'
 
     def registration(self):
-        portgroups = ['None']
-        listeners = ['None']
-        ecs_task_id = 'remote_task'
         instruct_user_id = 'None'
         instruct_instance = 'None'
         instruct_command = 'Initialize'
@@ -198,15 +198,17 @@ class Task:
 
         timestamp = datetime.now().strftime('%s')
         upload_object_response = self.upload_object(
-            instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time)
+            instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time
+        )
         if upload_object_response != 'object_uploaded':
             return format_response(500, 'failed', f'register_task failed with error {upload_object_response}', self.log)
 
         instruct_args_fixup = {'no_args': {'S': 'True'}}
         # Add task entry to tasks table in DynamoDB
         add_task_entry_response = self.add_task_entry(
-            instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, public_ip, local_ip, portgroups, 
-            listeners, ecs_task_id, timestamp, end_time)
+            instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, public_ip, local_ip,
+            timestamp, end_time
+        )
         if add_task_entry_response != 'task_entry_added':
             return format_response(500, 'failed', f'register_task failed with error {add_task_entry_response}', self.log)
 
