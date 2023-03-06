@@ -46,6 +46,7 @@ resource "aws_s3_object" "conti_ransomware_playbook_template" {
   bucket = aws_s3_bucket.playbook_types.id
   key    = "conti_ransomware.template"
   source = "build/conti_ransomware.template"
+  etag = filemd5("build/conti_ransomware.template")
 }
 
 resource "aws_s3_bucket" "workspace" {
