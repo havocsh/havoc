@@ -30,7 +30,7 @@ resource "aws_lambda_function" "manage" {
     variables = {
       DEPLOYMENT_NAME = var.deployment_name
       VPC_ID          = aws_vpc.deployment_vpc.id
-      SUBNET          = aws_subnet.deployment_subnet.id
+      SUBNET          = aws_subnet.deployment_subnet_0.id
       SECURITY_GROUP  = aws_security_group.listener_lb_default.id
     }
   }
@@ -81,7 +81,7 @@ resource "aws_lambda_function" "task_control" {
   environment {
     variables = {
       DEPLOYMENT_NAME = var.deployment_name
-      SUBNET          = aws_subnet.deployment_subnet.id
+      SUBNET          = aws_subnet.deployment_subnet_0.id
       SECURITY_GROUP  = aws_security_group.tasks_default.id
     }
   }
@@ -107,7 +107,7 @@ resource "aws_lambda_function" "playbook_operator_control" {
   environment {
     variables = {
       DEPLOYMENT_NAME = var.deployment_name
-      SUBNET          = aws_subnet.deployment_subnet.id
+      SUBNET          = aws_subnet.deployment_subnet_0.id
     }
   }
 }

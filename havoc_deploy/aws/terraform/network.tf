@@ -1,4 +1,5 @@
 # network.tf
+data "aws_availability_zones" "available" {}
 
 resource "aws_vpc" "deployment_vpc" {
   cidr_block = "172.16.0.0/16"
@@ -8,12 +9,23 @@ resource "aws_vpc" "deployment_vpc" {
   }
 }
 
-resource "aws_subnet" "deployment_subnet" {
+resource "aws_subnet" "deployment_subnet_0" {
   vpc_id            = aws_vpc.deployment_vpc.id
-  cidr_block        = "172.16.10.0/24"
+  cidr_block        = "172.16.0.0/24"
+  availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
-    Name = var.deployment_name
+    Name = "${var.deployment_name}_subnet_0"
+  }
+}
+
+resource "aws_subnet" "deployment_subnet_1" {
+  vpc_id            = aws_vpc.deployment_vpc.id
+  cidr_block        = "172.16.1.0/24"
+  availability_zone = data.aws_availability_zones.available.names[1]
+
+  tags = {
+    Name = "${var.deployment_name}_subnet_1"
   }
 }
 
