@@ -118,6 +118,15 @@ resource "task" "c2_server" {
             StagingKey  = resource.random_string.random_32.result
             JA3_Evasion = "True"
         }
+        tls {
+            cert_type = "self-signed"
+            cert_country = "US"
+            cert_state = "California"
+            cert_locale = "San Francisco"
+            cert_org = "Havoc Inc."
+            cert_org_unit = "IT Security"
+            cert_host = "local_ip"
+        }
     }
 
     stager {
@@ -137,6 +146,15 @@ resource "task" "http_server" {
         http {
             Port = variable.http_port
         }
+        tls {
+            cert_type = "self-signed"
+            cert_country = "US"
+            cert_state = "California"
+            cert_locale = "San Francisco"
+            cert_org = "Havoc Inc."
+            cert_org_unit = "IT Security"
+            cert_host = "local_ip"
+        }
     }
 }
 
@@ -148,6 +166,15 @@ resource "task" "exfil_server" {
     listener {
         http {
             Port = variable.exfil_port
+        }
+        tls {
+            cert_type = "self-signed"
+            cert_country = "US"
+            cert_state = "California"
+            cert_locale = "San Francisco"
+            cert_org = "Havoc Inc."
+            cert_org_unit = "IT Security"
+            cert_host = "local_ip"
         }
     }
 }
