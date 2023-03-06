@@ -342,7 +342,7 @@ class Listener:
                 },
                 UpdateExpression='set listeners=:listeners',
                 ExpressionAttributeValues={
-                    ':listeners': {'SS': [listeners]}
+                    ':listeners': {'SS': listeners}
                 }
             )
         except botocore.exceptions.ClientError as error:
