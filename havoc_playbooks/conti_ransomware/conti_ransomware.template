@@ -147,7 +147,7 @@ resource "listener" "c2_listener" {
     listener_port = variable.c2_port
     task_name     = resource.task.c2_server.task_name
     portgroups    = [resource.portgroup.c2_portgroup.portgroup_name]
-    host_name     = "c2_${resource.random_string.random_6.result}
+    host_name     = "c2_${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
@@ -178,7 +178,7 @@ resource "listener" "http_listener" {
     listener_port = variable.http_port
     task_name     = resource.task.http_server.task_name
     portgroups    = [resource.portgroup.http_portgroup.portgroup_name]
-    host_name     = "downloads_${resource.random_string.random_6.result}
+    host_name     = "downloads_${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
@@ -209,7 +209,7 @@ resource "listener" "exfil_listener" {
     listener_port = variable.exfil_port
     task_name     = resource.task.exfil_server.task_name
     portgroups    = [resource.portgroup.exfil_portgroup.portgroup_name]
-    host_name     = "uploads_${resource.random_string.random_6.result}
+    host_name     = "uploads_${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
