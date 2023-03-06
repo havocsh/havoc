@@ -86,7 +86,7 @@ class Task:
         return 'object_uploaded'
 
     def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
-                       portgroups, ecs_task_id, timestamp, end_time):
+                       portgroups, listeners, ecs_task_id, timestamp, end_time):
         task_status = 'starting'
         task_host_name = 'None'
         task_domain_name = 'None'
@@ -104,6 +104,7 @@ class Task:
                                 'public_ip=:public_ip, '
                                 'local_ip=:local_ip, '
                                 'portgroups=:portgroups, '
+                                'listeners=:listeners, '
                                 'task_type=:task_type, '
                                 'task_version=:task_version, '
                                 'instruct_instances=:instruct_instances, '
@@ -124,6 +125,7 @@ class Task:
                     ':public_ip': {'S': public_ip},
                     ':local_ip': {'SS': local_ip},
                     ':portgroups': {'SS': portgroups},
+                    ':listeners': {'SS': listeners},
                     ':task_type': {'S': self.task_type},
                     ':task_version': {'S': self.task_version},
                     ':instruct_instances': {'SS': [instruct_instance]},
@@ -146,6 +148,7 @@ class Task:
 
     def registration(self):
         portgroups = ['None']
+        listeners = ['None']
         ecs_task_id = 'remote_task'
         instruct_user_id = 'None'
         instruct_instance = 'None'
@@ -203,7 +206,7 @@ class Task:
         # Add task entry to tasks table in DynamoDB
         add_task_entry_response = self.add_task_entry(
             instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, public_ip, local_ip, portgroups, 
-            ecs_task_id, timestamp, end_time)
+            listeners, ecs_task_id, timestamp, end_time)
         if add_task_entry_response != 'task_entry_added':
             return format_response(500, 'failed', f'register_task failed with error {add_task_entry_response}', self.log)
 
