@@ -644,7 +644,7 @@ class Listener:
         delete_listener = self.delete_listener()
         if delete_listener == 'listener_deleted':
             return format_response(200, 'success', 'delete listener succeeded', None)
-        elif delete_listener == 'listener_not_found':
+        elif isinstance(delete_listener, str) and delete_listener == 'listener_not_found':
             return format_response(404, 'failed', f'listener {self.listener_name} does not exist', self.log)
         else:
             return format_response(500, 'failed', f'delete listener failed with error {delete_listener}', self.log)
