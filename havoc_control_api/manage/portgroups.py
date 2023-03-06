@@ -281,7 +281,7 @@ class Portgroup:
         portgroup_details = ['portgroup_name', 'portgroup_action', 'ip_ranges', 'port', 'ip_protocol']
         for i in portgroup_details:
             if i not in self.detail:
-                return format_response(400, 'failed', 'invalid detail', self.log)
+                return format_response(400, 'failed', f'invalid detail: missing {i}', self.log)
 
         self.portgroup_name = self.detail['portgroup_name']
         if not self.portgroup_name:
