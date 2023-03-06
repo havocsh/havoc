@@ -32,7 +32,8 @@ class Listener:
         self.detail = detail
         self.log = log
         self.vpc_id = os.environ['VPC_ID']
-        self.subnet = os.environ['SUBNET']
+        self.subnet_0 = os.environ['SUBNET_0']
+        self.subnet_1 = os.environ['SUBNET_1']
         self.default_security_group = os.environ['SECURITY_GROUP']
         self.portgroups = []
         self.security_groups = []
@@ -128,7 +129,7 @@ class Listener:
         try:
             response = self.aws_elbv2_client.create_load_balancer(
                 Name=f'{self.deployment_name}-listener-lb',
-                Subnets=[self.subnet],
+                Subnets=[self.subnet_0, self.subnet_1],
                 SecurityGroups=[self.default_security_group] + self.security_groups,
                 Type = 'application',
                 IpAddressType = 'ipv4'

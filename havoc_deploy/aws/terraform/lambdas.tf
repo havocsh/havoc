@@ -30,7 +30,8 @@ resource "aws_lambda_function" "manage" {
     variables = {
       DEPLOYMENT_NAME = var.deployment_name
       VPC_ID          = aws_vpc.deployment_vpc.id
-      SUBNET          = aws_subnet.deployment_subnet_0.id
+      SUBNET_0        = aws_subnet.deployment_subnet_0.id
+      SUBNET_1        = aws_subnet.deployment_subnet_1.id
       SECURITY_GROUP  = aws_security_group.listener_lb_default.id
     }
   }
