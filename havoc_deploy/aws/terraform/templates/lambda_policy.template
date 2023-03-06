@@ -117,7 +117,10 @@
             "acm:DescribeCertificate",
             "acm:ListCertificates",
             "acm:RenewCertificate",
-            "acm:RequestCertificate"
+            "acm:RequestCertificate",
+            "acm:AddTagsToCertificate",
+            "acm:ListTagsForCertificate",
+            "acm:RemoveTagsFromCertificate"
         ],
         "Effect": "Allow",
         "Resource": "*"
