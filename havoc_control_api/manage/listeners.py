@@ -629,7 +629,7 @@ class Listener:
                                    listener_type=self.listener_type, task_name=self.task_name, host_name=self.host_name,
                                    domain_name=self.domain_name, listener_port=self.listener_port,
                                    portgroups=self.portgroups)
-        elif 'failed_' in create_listener_response:
+        elif isinstance(create_listener_response, str) and 'failed_' in create_listener_response:
             return format_response(400, 'failed', f'create listener failed with error {create_listener_response}', self.log)
         else:
             return format_response(500, 'failed', f'create listener failed with error {create_listener_response}', self.log)
