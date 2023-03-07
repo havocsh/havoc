@@ -104,6 +104,7 @@ resource "task" "c2_task" {
             Profile     = "trevor.profile"
             Host        = "https://c2-${resource.random_string.random_6.result}.${variable.domain_name}:443"
             Port        = "443"
+            CertPath = "/opt/Empire/empire/server/data/"
             StagingKey  = resource.random_string.random_32.result
             JA3_Evasion = "True"
         }
