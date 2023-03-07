@@ -135,11 +135,13 @@ class Listener:
         )
     
     def create_load_balancer(self):
+        load_balancer_name = f'{self.deployment_name}-{self.listener_name}'
+        load_balancer_name = re.sub('_', '-', load_balancer_name)
         try:
             response = self.aws_elbv2_client.create_load_balancer(
-                Name=f'{self.deployment_name}-listener-lb',
-                Subnets=[self.subnet_0, self.subnet_1],
-                SecurityGroups=[self.default_security_group] + self.security_groups,
+                Name = load_balancer_name[0:31],
+                Subnets = [self.subnet_0, self.subnet_1],
+                SecurityGroups = [self.default_security_group] + self.security_groups,
                 Type = 'application',
                 IpAddressType = 'ipv4'
             )
