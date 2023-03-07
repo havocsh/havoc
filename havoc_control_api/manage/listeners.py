@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import botocore
 import boto3
@@ -155,6 +156,7 @@ class Listener:
     
     def create_target_group(self):
         target_group_name = f'{self.deployment_name}-{self.listener_name}'
+        target_group_name = re.sub('_', '-', target_group_name)
         try:
             response = self.aws_elbv2_client.create_target_group(
                 Name = target_group_name[0:31],
