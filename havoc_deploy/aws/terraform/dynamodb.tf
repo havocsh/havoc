@@ -230,7 +230,7 @@ resource "aws_dynamodb_table_item" "exfilkit_task_type" {
     "S": "${var.deployment_version}"
   },
   "capabilities": {
-    "SS": ${jsonencode(["start_http_exfil_server","stop_http_exfil_server","cert_gen","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
+    "SS": ${jsonencode(["create_listener","kill_listener","cert_gen","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
   },
   "source_image": {
     "S": "public.ecr.aws/havoc_sh/exfilkit:${var.deployment_version}"
