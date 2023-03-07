@@ -482,10 +482,10 @@ class Listener:
         
         # Create a target group
         create_target_group_response = self.create_target_group()
-        if 'TargetGroups' in create_target_group_response:
-            self.target_group_arn = create_target_group_response['TargetGroups'][0]['TargetGroupArn']
-        else:
+        if not isinstance(create_target_group_response, dict):
             return create_target_group_response
+        else:
+            self.target_group_arn = create_target_group_response['TargetGroups'][0]['TargetGroupArn']
         
         # Get details for the task that will be the target for the LB
         task_entry = self.get_task_entry()
