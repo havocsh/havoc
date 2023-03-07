@@ -158,10 +158,9 @@ class Listener:
             response = self.aws_elbv2_client.create_target_group(
                 Name = f'{self.deployment_name}-{self.listener_name}',
                 Protocol = self.listener_type,
-                Port = self.listener_port,
+                Port = int(self.listener_port),
                 VpcId = self.vpc_id,
                 HealthCheckProtocol = self.listener_type,
-                HealthCheckPort = self.listener_port,
                 TargetType = 'ip',
                 IpAddressType = 'ipv4',
             )
@@ -189,7 +188,7 @@ class Listener:
                 Targets=[
                     {
                         'Id': self.target_ip,
-                        'Port': self.listener_port
+                        'Port': int(self.listener_port)
                     },
                 ]
             )
@@ -214,7 +213,7 @@ class Listener:
             response = self.aws_elbv2_client.create_listener(
                 LoadBalancerArn = self.load_balancer_arn,
                 Protocol = self.listener_type,
-                Port = self.listener_port,
+                Port = int(self.listener_port),
                 DefaultActions = [
                     {
                         'TargetGroupArn': self.target_group_arn,
@@ -234,7 +233,7 @@ class Listener:
             response = self.aws_elbv2_client.create_listener(
                 LoadBalancerArn = self.load_balancer_arn,
                 Protocol = self.listener_type,
-                Port = self.listener_port,
+                Port = int(self.listener_port),
                 SslPolicy = 'ELBSecurityPolicy-2016-08',
                 Certificates = [
                     {
