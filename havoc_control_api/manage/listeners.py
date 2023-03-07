@@ -154,9 +154,10 @@ class Listener:
         return 'load_balancer_deleted'
     
     def create_target_group(self):
+        target_group_name = f'{self.deployment_name}-{self.listener_name}'
         try:
             response = self.aws_elbv2_client.create_target_group(
-                Name = f'{self.deployment_name}-{self.listener_name}',
+                Name = target_group_name[0:31],
                 Protocol = self.listener_type,
                 Port = int(self.listener_port),
                 VpcId = self.vpc_id,
