@@ -216,7 +216,7 @@ class Listener:
         if 'CertificateSummaryList' in response:
             certificate_summary_list = response['CertificateSummaryList']
             for certificate in certificate_summary_list:
-                if self.domain_name == certificate['DomainName']:
+                if self.domain_name in certificate['DomainName']:
                     self.certificate_arn = certificate['CertificateArn']
     
     def create_http_listener(self):
