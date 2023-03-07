@@ -56,7 +56,8 @@ data "tasks" "initial_access_task" {
 }
 
 data "tasks" "lateral_movement_task" {
-  task_name = variable.lateral_movement_task_name
+  task_name  = variable.lateral_movement_task_name
+  depends_on = data.wait_for_c2.c2_agent.agent_name
 }
 
 data "wait_for_c2" "c2_agent" {
