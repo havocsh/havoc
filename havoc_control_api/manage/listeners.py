@@ -433,7 +433,7 @@ class Listener:
                 Key={
                     'domain_name': {'S': self.domain_name}
                 },
-                UpdateExpression='set tasks=:tasks, host_names=:host_names',
+                UpdateExpression='set listeners=:listeners, host_names=:host_names',
                 ExpressionAttributeValues={
                     ':listeners': {'SS': domain_listeners},
                     ':host_names': {'SS': host_names}
