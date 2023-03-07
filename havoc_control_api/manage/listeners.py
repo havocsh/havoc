@@ -54,6 +54,7 @@ class Listener:
         self.__aws_dynamodb_client = None
         self.__aws_elbv2_client = None
         self.__aws_acm_client = None
+        self.__aws_ecs_client = None
         self.__aws_route53_client = None
 
     @property
@@ -76,6 +77,13 @@ class Listener:
         if self.__aws_acm_client is None:
             self.__aws_acm_client = boto3.client('acm', region_name=self.region)
         return self.__aws_acm_client
+    
+    @property
+    def aws_ecs_client(self):
+        """Returns the boto3 ECS session (establishes one automatically if one does not already exist)"""
+        if self.__aws_ecs_client is None:
+            self.__aws_ecs_client = boto3.client('ecs', region_name=self.region)
+        return self.__aws_ecs_client
     
     @property
     def aws_route53_client(self):
