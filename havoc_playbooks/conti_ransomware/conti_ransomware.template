@@ -168,7 +168,7 @@ resource "listener" "http_listener" {
 }
 
 resource "task" "exfil_task" {
-    task_type  = "exfil_server"
+    task_type  = "exfilkit"
     task_name  = "exfil_task_${local.function.date_stamp}"
 
     listener {
