@@ -5,8 +5,13 @@ local "function" "now" {
 }
 
 local "function" "date_stamp" {
-    function_name = "formatdate"
+    function_name       = "formatdate"
     function_parameters = ["%m_%d_%Y_%H_%M", local.function.now]
+}
+
+local "function" "stager_decode" {
+    function_name       = "base64decode"
+    function_parameters = [resource.task.c2_task.stager.Output]
 }
 
 variable "public_cidr" {
@@ -194,7 +199,7 @@ resource "listener" "exfil_listener" {
 
 resource "file" "stager_upload" {
     file_name     = resource.task.c2_task.stager.OutFile
-    file_contents = resource.task.c2_task.stager.Output
+    file_contents = local.function.stager_decode
 }
 
 action "download_from_workspace" "stager_download" {
