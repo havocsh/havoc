@@ -227,7 +227,7 @@ action "task_execute_command" "execute_stager" {
 
 action "execute_agent_module" "antivirusproduct" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/host/antivirusproduct"
     wait_for_results  = true
     completion_string = "completed"
