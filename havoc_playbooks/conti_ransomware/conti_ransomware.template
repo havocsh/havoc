@@ -276,8 +276,13 @@ action "execute_agent_module" "seatbelt_user" {
     depends_on        = action.execute_agent_module.get_uaclevel
 
     module_args = {
-        Group = "User"
-        Full  = "False"
+        Group        = "User"
+        Full         = "False"
+        Command      = ""
+        Computername = ""
+        Username     = ""
+        Password     = ""
+        Quiet        = ""
     }
 }
 
@@ -291,8 +296,13 @@ action "execute_agent_module" "seatbelt_system" {
     depends_on        = action.execute_agent_module.seatbelt_user
 
     module_args = {
-        Group = "System"
-        Full  = "False"
+        Group        = "System"
+        Full         = "False"
+        Command      = ""
+        Computername = ""
+        Username     = ""
+        Password     = ""
+        Quiet        = ""
     }
 }
 
