@@ -214,7 +214,7 @@ action "task_execute_command" "execute_stager" {
     command     = "powershell.exe arsenal\\${action.task_download_file.download_stager.file_name}"
 
     action_function {
-        function_name = wait_for_c2
+        function_name = "wait_for_c2"
         function_parameters {
             task_name  = resource.task.c2_task.task_name
         }
