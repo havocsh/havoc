@@ -21,9 +21,9 @@ def convert_input(args, inp):
     for l in line:
         arg = re.search('([^=]+)=(.*)', l)
         if arg:
-            if arg.group(1) in args and arg.group(1) != 'instruct_args' and arg.group(1) != 'portgroups':
+            if arg.group(1) in args and arg.group(1) != 'instruct_args' and arg.group(1) != 'module_args' and arg.group(1) != 'portgroups':
                 args[arg.group(1)] = arg.group(2).strip()
-            if arg.group(1) in args and arg.group(1) == 'instruct_args':
+            if arg.group(1) in args and (arg.group(1) == 'instruct_args' or arg.group(1) == 'module_args'):
                 args[arg.group(1)] = ast.literal_eval(arg.group(2))
             if arg.group(1) in args and arg.group(1) in ['portgroups', 'capabilities']:
                 args[arg.group(1)] = []
