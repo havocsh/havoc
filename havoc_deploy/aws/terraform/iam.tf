@@ -55,8 +55,8 @@ resource "aws_iam_policy" "lambda_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
-    role = aws_iam_role.lambda_role.name
-    policy_arn = aws_iam_policy.lambda_policy.arn
+  role = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_policy.arn
 }
 
 data "template_file" "ecs_task_policy" {
@@ -96,8 +96,8 @@ resource "aws_iam_policy" "ecs_task_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_policy_attachment" {
-    role = aws_iam_role.ecs_task_role.name
-    policy_arn = aws_iam_policy.ecs_task_policy.arn
+  role = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.ecs_task_policy.arn
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
@@ -126,8 +126,8 @@ data "aws_iam_policy" "ecs_task_execution_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy_attachment" {
-    role = aws_iam_role.ecs_task_execution_role.name
-    policy_arn = data.aws_iam_policy.ecs_task_execution_policy.arn
+  role = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = data.aws_iam_policy.ecs_task_execution_policy.arn
 }
 
 data "template_file" "ecs_playbook_operator_policy" {
@@ -167,8 +167,8 @@ resource "aws_iam_policy" "ecs_playbook_operator_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_playbook_operator_policy_attachment" {
-    role = aws_iam_role.ecs_playbook_operator_role.name
-    policy_arn = aws_iam_policy.ecs_playbook_operator_policy.arn
+  role = aws_iam_role.ecs_playbook_operator_role.name
+  policy_arn = aws_iam_policy.ecs_playbook_operator_policy.arn
 }
 
 resource "aws_iam_role" "ecs_playbook_operator_execution_role" {
@@ -197,8 +197,8 @@ data "aws_iam_policy" "ecs_playbook_operator_execution_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_playbook_operator_execution_policy_attachment" {
-    role = aws_iam_role.ecs_playbook_operator_execution_role.name
-    policy_arn = data.aws_iam_policy.ecs_playbook_operator_execution_policy.arn
+  role = aws_iam_role.ecs_playbook_operator_execution_role.name
+  policy_arn = data.aws_iam_policy.ecs_playbook_operator_execution_policy.arn
 }
 
 data "template_file" "api_gateway_policy" {
@@ -238,6 +238,6 @@ resource "aws_iam_policy" "api_gateway_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "api_gateway_policy_attachment" {
-    role = aws_iam_role.api_gateway_role.name
-    policy_arn = aws_iam_policy.api_gateway_policy.arn
+  role = aws_iam_role.api_gateway_role.name
+  policy_arn = aws_iam_policy.api_gateway_policy.arn
 }
