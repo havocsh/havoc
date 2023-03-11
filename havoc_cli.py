@@ -725,6 +725,17 @@ class HavocCMD(Cmd):
         print('\n--wait_for_results=<boolean> - (optional) indicate whether to wait for the module results. Defaults to True. If set to False, a task ID is returned instead of the module results.')
         print('\n--completion_string=<string> - (optional) a string that should be present in the results to indicate the module is done. If not specified results are returned as soon as any results data becomes available, which may lead to incomplete results being returned.')
 
+    def do_get_agent_task_ids(self, inp):
+        args = {'task_name': '', 'agent_name': ''}
+        command_args = convert_input(args, inp)
+        get_agent_task_ids_response = self.havoc_client.get_agent_task_ids(**command_args)
+        format_output('get_agent_task_ids', get_agent_task_ids_response)
+
+    def help_get_agent_task_ids(self):
+        print('\nGet a list of task IDs associated with executed agent shell commands and modules.')
+        print('\n--task_name=<string> - (required) the name of the task hosting the agent to get task IDs from.')
+        print('\n--agent_name=<string> - (required) the name of the agent to get task IDs from.')
+    
     def do_get_agent_results(self, inp):
         args = {'task_name': '', 'agent_name': '', 'task_id': ''}
         command_args = convert_input(args, inp)
