@@ -272,7 +272,8 @@ action "execute_agent_module" "seatbelt_user" {
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/host/seatbelt"
     wait_for_results  = "true"
-    completion_string = "Completed"
+    beginning_string  = "\n\n\r\n====== ChromePresence ======\n\r\n"
+    completion_string = "Completed collection"
     depends_on        = action.execute_agent_module.get_uaclevel
 
     module_args = {
@@ -292,7 +293,7 @@ action "execute_agent_module" "seatbelt_system" {
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
     module            = "powershell/situational_awareness/host/seatbelt"
     wait_for_results  = "true"
-    completion_string = "Completed"
+    completion_string = "Completed collection"
     depends_on        = action.execute_agent_module.seatbelt_user
 
     module_args = {
