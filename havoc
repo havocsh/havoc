@@ -72,7 +72,7 @@ if [[ ${@} =~ "--deployment update" ]]; then
         exec ./havoc $@
     fi
     echo " - Updating the ./HAVOC module."
-    ${pip_bin} --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}" --upgrade
+    ${pip_bin} --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}" --upgrade --force-reinstall
 fi
 
 ${python3_bin} ./havoc_handler.py $@
