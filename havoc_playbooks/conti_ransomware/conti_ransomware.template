@@ -355,6 +355,10 @@ action "execute_agent_module" "get_domain_policy" {
     wait_for_results  = "true"
     completion_string = "completed"
     depends_on        = action.execute_agent_module.get_domain_controller
+
+    module_args = {
+        Policy = "Domain"
+    }
 }
 
 action "execute_agent_module" "bloodhound" {
