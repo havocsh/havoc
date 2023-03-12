@@ -405,7 +405,7 @@ action "execute_agent_module" "invoke_wmi" {
     depends_on        = action.execute_agent_module.bloodhound
 
     module_args = {
-        ComputerName = data.tasks.lateral_movement_task.local_ip[0]
+        ComputerName = data.tasks.lateral_movement_task.local_ip.0
         Listener     = resource.task.c2_task.listener.listener_type
     }
 }
