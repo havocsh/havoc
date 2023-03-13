@@ -148,7 +148,7 @@ class Registration:
     
     def add_playbook_type(self):
         existing_playbook_type = self.get_playbook_type_entry()
-        if existing_playbook_type:
+        if 'Item' in existing_playbook_type:
             return 'playbook_type_exists'
         add_playbook_type_entry_response = self.add_playbook_type_entry()
         if add_playbook_type_entry_response != 'playbook_type_entry_created':
@@ -160,7 +160,7 @@ class Registration:
     
     def delete_playbook_type(self):
         existing_playbook_type = self.get_playbook_type_entry()
-        if not existing_playbook_type:
+        if 'Item' not in existing_playbook_type:
             return 'playbook_type_not_found'
         remove_playbook_type_entry_response = self.remove_playbook_type_entry()
         if remove_playbook_type_entry_response != 'playbook_type_entry_removed':
