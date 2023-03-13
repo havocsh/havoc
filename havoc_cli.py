@@ -263,8 +263,8 @@ class HavocCMD(Cmd):
         command_args = convert_input(args, inp)
         file_path = command_args['file_path']
         file_name = command_args['file_name']
-        f = open(f'{file_path}/{file_name}', 'rb')
-        raw_file = f.read()
+        with open(f'{file_path}/{file_name}', 'rb') as f:
+            raw_file = f.read()
         command_args['raw_file'] = raw_file
         del command_args['file_path']
         create_file_response = self.havoc_client.create_file(**command_args)
@@ -403,6 +403,10 @@ class HavocCMD(Cmd):
     def do_create_playbook_type(self, inp):
         args = {'playbook_type': '', 'playbook_version': '', 'playbook_template': ''}
         command_args = convert_input(args, inp)
+        playbook_template_file = command_args['playbook_template']
+        with open(f'{playbook_template_file}', 'rb') as f:
+            playbook_template = f.read()
+        command_args['playbook_template'] = playbook_template
         create_playbook_type_response = self.havoc_client.create_playbook_type(**command_args)
         format_output('create_playbook_type', create_playbook_type_response)
 
@@ -410,7 +414,7 @@ class HavocCMD(Cmd):
         print('\nCreate a new playbook type with the given parameters.')
         print('\n--playbook_type=<string> - (required) a unique identifier to associate with the playbook type')
         print('\n--playbook_version=<string> - (required) the version number for the playbook type')
-        print('\n--playbook_template=<string> - (required) the configuration template to use as the source when configuring a playbook of this type')
+        print('\n--playbook_template=<string> - (required) the path (including file name) to the local configuration template file to use as the source when configuring a playbook of this type')
 
     def do_delete_playbook_type(self, inp):
         args = {'playbook_type': ''}
