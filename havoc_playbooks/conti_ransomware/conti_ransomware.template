@@ -29,7 +29,7 @@ variable "exfil_file" {
 
 variable "exfil_path" {
     description = "Path where the exfil file will be generated and uploaded from."
-    default     = "%USERPROFILE%"
+    default     = "C:\Users\Public\Downloads"
 }
 
 variable "exfil_size" {
