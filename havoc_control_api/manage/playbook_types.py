@@ -162,6 +162,7 @@ class Registration:
         existing_playbook_type = self.get_playbook_type_entry()
         if 'Item' not in existing_playbook_type:
             return 'playbook_type_not_found'
+        self.template_pointer = existing_playbook_type['template_pointer']['S']
         remove_playbook_type_entry_response = self.remove_playbook_type_entry()
         if remove_playbook_type_entry_response != 'playbook_type_entry_removed':
             return remove_playbook_type_entry_response
