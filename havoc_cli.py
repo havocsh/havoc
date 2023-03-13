@@ -404,7 +404,7 @@ class HavocCMD(Cmd):
         args = {'playbook_type': '', 'playbook_version': '', 'playbook_template': ''}
         command_args = convert_input(args, inp)
         playbook_template_file = command_args['playbook_template']
-        with open(f'{playbook_template_file}', 'rb') as f:
+        with open(f'{playbook_template_file}', 'r') as f:
             playbook_template = f.read()
         command_args['playbook_template'] = playbook_template
         create_playbook_type_response = self.havoc_client.create_playbook_type(**command_args)
