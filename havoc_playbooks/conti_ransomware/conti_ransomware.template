@@ -52,6 +52,81 @@ variable "lateral_movement_task_name" {
     default     = "server_host"
 }
 
+variable "enable_antivirusproduct" {
+    description = "Enable (true) or disable (false) the antivirusproduct execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_dnsserver" {
+    description = "Enable (true) or disable (false) the dnsserver execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_get_proxy" {
+    description = "Enable (true) or disable (false) the get_proxy execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_get_uaclevel" {
+    description = "Enable (true) or disable (false) the get_uaclevel execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_seatbelt_user" {
+    description = "Enable (true) or disable (false) the seatbelt_user execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_seatbelt_system" {
+    description = "Enable (true) or disable (false) the seatbelt_system execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_reverse_dns" {
+    description = "Enable (true) or disable (false) the reverse_dns execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_portscan" {
+    description = "Enable (true) or disable (false) the portscan execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_get_domain_controller" {
+    description = "Enable (true) or disable (false) the get_domain_controller execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_get_domain_policy" {
+    description = "Enable (true) or disable (false) the get_domain_policy execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_bloodhound" {
+    description = "Enable (true) or disable (false) the bloodhound execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_invoke_wmi" {
+    description = "Enable (true) or disable (false) the invoke_wmi execute_agent_module block."
+    default     = "true"
+}
+
+variable "enable_create_exfil_file" {
+    description = "Enable (true) or disable (false) the create_exfil_file execute_agent_shell_command block."
+    default     = "true"
+}
+
+variable "enable_upload_exfil_file" {
+    description = "Enable (true) or disable (false) the upload_exfil_file execute_agent_shell_command block."
+    default     = "true"
+}
+
+variable "enable_delete_exfil_file" {
+    description = "Enable (true) or disable (false) the delete_exfil_file execute_agent_shell_command block."
+    default     = "true"
+}
+
 data "tasks" "initial_access_task" {
   task_name = variable.initial_access_task_name
 }
@@ -249,6 +324,7 @@ action "task_execute_command" "execute_stager" {
 }
 
 action "execute_agent_module" "antivirusproduct" {
+    enable_block      = variable.enable_antivirusproduct
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -258,6 +334,7 @@ action "execute_agent_module" "antivirusproduct" {
 }
 
 action "execute_agent_module" "dnsserver" {
+    enable_block      = variable.enable_dnsserver
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -268,6 +345,7 @@ action "execute_agent_module" "dnsserver" {
 }
 
 action "execute_agent_module" "get_proxy" {
+    enable_block      = variable.enable_get_proxy
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -278,6 +356,7 @@ action "execute_agent_module" "get_proxy" {
 }
 
 action "execute_agent_module" "get_uaclevel" {
+    enable_block      = variable.enable_get_uaclevel
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -288,6 +367,7 @@ action "execute_agent_module" "get_uaclevel" {
 }
 
 action "execute_agent_module" "seatbelt_user" {
+    enable_block      = variable.enable_seatbelt_user
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -308,6 +388,7 @@ action "execute_agent_module" "seatbelt_user" {
 }
 
 action "execute_agent_module" "seatbelt_system" {
+    enable_block      = variable.enable_seatbelt_system
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -328,6 +409,7 @@ action "execute_agent_module" "seatbelt_system" {
 }
 
 action "execute_agent_module" "reverse_dns" {
+    enable_block      = variable.enable_reverse_dns
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -342,6 +424,7 @@ action "execute_agent_module" "reverse_dns" {
 }
 
 action "execute_agent_module" "portscan" {
+    enable_block      = variable.enable_portscan
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -357,6 +440,7 @@ action "execute_agent_module" "portscan" {
 }
 
 action "execute_agent_module" "get_domain_controller" {
+    enable_block      = variable.enable_get_domain_controller
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -367,6 +451,7 @@ action "execute_agent_module" "get_domain_controller" {
 }
 
 action "execute_agent_module" "get_domain_policy" {
+    enable_block      = variable.enable_get_domain_policy
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -381,6 +466,7 @@ action "execute_agent_module" "get_domain_policy" {
 }
 
 action "execute_agent_module" "bloodhound" {
+    enable_block      = variable.enable_bloodhound
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -397,6 +483,7 @@ action "execute_agent_module" "bloodhound" {
 }
 
 action "execute_agent_module" "invoke_wmi" {
+    enable_block      = variable.enable_invoke_wmi
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -411,6 +498,7 @@ action "execute_agent_module" "invoke_wmi" {
 }
 
 action "execute_agent_shell_command" "create_exfil_file" {
+    enable_block      = variable.enable_create_exfil_file
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -420,6 +508,7 @@ action "execute_agent_shell_command" "create_exfil_file" {
 }
 
 action "execute_agent_shell_command" "upload_exfil_file" {
+    enable_block      = variable.enable_upload_exfil_file
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
@@ -429,6 +518,7 @@ action "execute_agent_shell_command" "upload_exfil_file" {
 }
 
 action "execute_agent_shell_command" "delete_exfil_file" {
+    enable_block      = variable.enable_delete_exfil_file
     delay             = "15"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
