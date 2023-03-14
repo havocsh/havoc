@@ -361,8 +361,6 @@ class HavocCMD(Cmd):
         print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
     
     def do_tail_playbook_results(self, inp):
-        def sortFunc(e):
-            return e['run_time']
         args = {'playbook_name': ''}
         command_args = convert_input(args, inp)
         get_playbook_response = self.havoc_client.get_playbook(**command_args)
@@ -373,8 +371,8 @@ class HavocCMD(Cmd):
             while True:
                 get_playbook_results_response = self.havoc_client.get_playbook_results(**command_args)
                 if 'queue' in get_playbook_results_response:
-                    get_playbook_results_response['queue'].sort(key=sortFunc)
-                    for result in get_playbook_results_response['queue']:
+                    queue = sorted(get_playbook_results_response['queue'], key=lambda d: d['run_time'])
+                    for result in queue:
                         operator_command = result['operator_command']
                         if operator_command not in playbook_results:
                             playbook_results.append(operator_command)
