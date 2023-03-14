@@ -379,7 +379,12 @@ class HavocCMD(Cmd):
                         if operator_command not in playbook_results:
                             playbook_results.append(operator_command)
                             command_output = json.loads(result['command_output'])
-                            outcome = command_output['outcome']
+                            if 'outcome' in command_output:
+                                outcome = command_output['outcome']
+                            elif 'status' in command_output:
+                                outcome = command_output['status']
+                            else:
+                                outcome = 'None'
                             print(f' - operator_command: {operator_command}, outcome: {outcome}')
                 t.sleep(5)
         except KeyboardInterrupt:
