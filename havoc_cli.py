@@ -375,10 +375,10 @@ class HavocCMD(Cmd):
                 if 'queue' in get_playbook_results_response:
                     get_playbook_results_response['queue'].sort(key=sortFunc)
                     for result in get_playbook_results_response['queue']:
-                        command_output = json.loads(result['command_output'])
-                        operator_command = command_output['operator_command']
+                        operator_command = result['operator_command']
                         if operator_command not in playbook_results:
                             playbook_results.append(operator_command)
+                            command_output = json.loads(result['command_output'])
                             outcome = command_output['outcome']
                             print(f' - operator_command: {operator_command}, outcome: {outcome}')
                 t.sleep(5)
