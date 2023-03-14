@@ -365,6 +365,9 @@ class HavocCMD(Cmd):
             return e['run_time']
         args = {'playbook_name': ''}
         command_args = convert_input(args, inp)
+        get_playbook_response = self.havoc_client.get_playbook(**command_args)
+        if get_playbook_response['last_execution_time'] != 'None':
+            command_args['start_time'] = get_playbook_response['last_execution_time']
         playbook_results = []
         try:
             while True:
@@ -372,10 +375,11 @@ class HavocCMD(Cmd):
                 if 'queue' in get_playbook_results_response:
                     get_playbook_results_response['queue'].sort(key=sortFunc)
                     for result in get_playbook_results_response['queue']:
-                        operator_command = result['command_output']['operator_command']
+                        command_output = json.loads(result['command_output'])
+                        operator_command = command_output['operator_command']
                         if operator_command not in playbook_results:
                             playbook_results.append(operator_command)
-                            outcome = result['command_output']['outcome']
+                            outcome = command_output['outcome']
                             print(f' - operator_command: {operator_command}, outcome: {outcome}')
                 t.sleep(5)
         except KeyboardInterrupt:
