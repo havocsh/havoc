@@ -167,7 +167,7 @@ class Users:
                 secret=secret, remote_task=remote_task, task_name=task_name
             )
         else:
-            return format_response(500, 'failed', f'user creation failed with error {add_user_attribute_response}', self.log)
+            return format_response(500, 'failed', f'create user failed with error {add_user_attribute_response}', self.log)
 
     def delete(self):
         calling_user = self.get_user_details(self.user_id)
@@ -181,9 +181,9 @@ class Users:
             return format_response(404, 'failed', f'user_id {self.manage_user_id} does not exist', self.log)
         delete_user_id_response = self.delete_user_id()
         if delete_user_id_response == 'user_id_deleted':
-            return format_response(200, 'success', 'user deletion succeeded', self.log)
+            return format_response(200, 'success', 'delete user succeeded', self.log)
         else:
-            return format_response(500, 'failed', f'user deletion failed with error {delete_user_id_response}', self.log)
+            return format_response(500, 'failed', f'delete user failed with error {delete_user_id_response}', self.log)
 
     def get(self):
         calling_user = self.get_user_details(self.user_id)

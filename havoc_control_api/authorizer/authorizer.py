@@ -118,7 +118,7 @@ class Login:
             return policy
 
         if self.authorized:
-            policy = gen_policy(self.authorized)
+            policy = gen_policy(self.authorized, self.remote_task)
             context = {'user_id': self.user_id, 'api_key': self.api_key}
             response = {
                 'principalId': self.api_key,
@@ -129,7 +129,7 @@ class Login:
             return response
 
         if not self.authorized:
-            policy = gen_policy(self.authorized)
+            policy = gen_policy(self.authorized, self.remote_task)
             context = {}
             response = {
                 'context': context,
