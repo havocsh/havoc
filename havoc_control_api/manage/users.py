@@ -156,10 +156,15 @@ class Users:
             task_name = '*'
         user_attributes = {'api_key': api_key, 'secret': secret, 'admin': admin, 'remote_task': remote_task, 'task_name': task_name}
         add_user_attribute_response = self.add_user_attribute(user_attributes)
-        if add_user_attribute_response == 'user_attributes_added':
+        if add_user_attribute_response == 'user_attributes_added' and admin == 'yes':
             return format_response(
-                200, 'success', 'user creation succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
+                200, 'success', 'create_user succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
                 secret=secret, admin=admin
+            )
+        elif add_user_attribute_response == 'user_attributes_added' and remote_task == 'yes':
+            return format_response(
+                200, 'success', 'create_user succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
+                secret=secret, remote_task=remote_task, task_name=task_name
             )
         else:
             return format_response(500, 'failed', f'user creation failed with error {add_user_attribute_response}', self.log)
