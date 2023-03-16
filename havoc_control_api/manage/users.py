@@ -152,8 +152,10 @@ class Users:
             return format_response(400, 'failed', 'user cannot be admin and remote_task', self.log)
         if remote_task == 'yes' and 'task_name' in self.detail:
             task_name = self.detail['task_name']
-        else:
+        elif remote_task == 'yes' and not task_name:
             task_name = '*'
+        else:
+            task_name = 'None'
         user_attributes = {'api_key': api_key, 'secret': secret, 'admin': admin, 'remote_task': remote_task, 'task_name': task_name}
         add_user_attribute_response = self.add_user_attribute(user_attributes)
         if add_user_attribute_response == 'user_attributes_added' and admin == 'yes':

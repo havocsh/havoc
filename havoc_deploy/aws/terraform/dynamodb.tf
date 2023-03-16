@@ -29,6 +29,12 @@ resource "aws_dynamodb_table_item" "deployment_admin" {
   "admin": {
     "S": "yes"
   }
+  "remote_task": {
+    "S": "no"
+  }
+  "task_name": {
+    "S": "None"
+  }
 }
 ITEM
 }
