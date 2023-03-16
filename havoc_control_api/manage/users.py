@@ -139,7 +139,7 @@ class Users:
             for item in existing_api_key['Items']:
                 if 'api_key' in item:
                     api_key = None
-        secret = generate_string(24, True)
+        secret_key = generate_string(24, True)
         if 'admin' in self.detail and self.detail['admin'].lower() == 'yes':
             admin = 'yes'
         else:
@@ -156,17 +156,17 @@ class Users:
             task_name = '*'
         else:
             task_name = 'None'
-        user_attributes = {'api_key': api_key, 'secret': secret, 'admin': admin, 'remote_task': remote_task, 'task_name': task_name}
+        user_attributes = {'api_key': api_key, 'secret_key': secret_key, 'admin': admin, 'remote_task': remote_task, 'task_name': task_name}
         add_user_attribute_response = self.add_user_attribute(user_attributes)
         if add_user_attribute_response == 'user_attributes_added' and admin == 'yes':
             return format_response(
                 200, 'success', 'create_user succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
-                secret=secret, admin=admin
+                secret_key=secret_key, admin=admin
             )
         elif add_user_attribute_response == 'user_attributes_added' and remote_task == 'yes':
             return format_response(
                 200, 'success', 'create_user succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
-                secret=secret, remote_task=remote_task, task_name=task_name
+                secret_key=secret_key, remote_task=remote_task, task_name=task_name
             )
         else:
             return format_response(500, 'failed', f'create user failed with error {add_user_attribute_response}', self.log)
@@ -236,14 +236,14 @@ class Users:
                     for item in existing_api_key['Items']:
                         if 'api_key' in item:
                             api_key = None
-                secret = generate_string(24, True)
+                secret_key = generate_string(24, True)
                 user_attributes['api_key'] = api_key
-                user_attributes['secret'] = secret
+                user_attributes['secret_key'] = secret_key
                 add_user_attribute_response = self.add_user_attribute(user_attributes)
                 if add_user_attribute_response == 'user_attributes_added':
                     return format_response(
                         200, 'success', 'update user succeeded', self.log, user_id=self.manage_user_id, api_key=api_key,
-                        secret=secret
+                        secret_key=secret_key
                     )
                 else:
                     return format_response(500, 'failed', f'user update failed with error {add_user_attribute_response}', self.log)
@@ -254,7 +254,7 @@ class Users:
             return format_response(404, 'failed', f'user_id {self.manage_user_id} does not exist', self.log)
         new_user_id = None
         api_key = None
-        secret = None
+        secret_key = None
         admin = None
         remote_task = None
         task_name = None
@@ -269,7 +269,7 @@ class Users:
                 for item in existing_api_key['Items']:
                     if 'api_key' in item:
                         api_key = None
-            secret = generate_string(24, True)
+            secret_key = generate_string(24, True)
         if 'admin' in self.detail:
             admin = self.detail['admin']
         if 'remote_task' in self.detail:
@@ -280,9 +280,9 @@ class Users:
             return format_response(400, 'failed', 'invalid detail', self.log)
         if new_user_id:
             user_attributes['user_id'] = new_user_id
-        if api_key and secret:
+        if api_key and secret_key:
             user_attributes['api_key'] = api_key
-            user_attributes['secret'] = secret
+            user_attributes['secret_key'] = secret_key
         if admin.lower() in ['yes', 'no']:
             user_attributes['admin'] = admin
         if remote_task.lower() in ['yes', 'no']:
@@ -294,7 +294,7 @@ class Users:
         add_user_attribute_response = self.add_user_attribute(user_attributes)
         if add_user_attribute_response == 'user_attributes_added':
             return format_response(
-                200, 'success', 'user update succeeded', self.log, user_id=new_user_id, api_key=api_key, secret=secret,
+                200, 'success', 'user update succeeded', self.log, user_id=new_user_id, api_key=api_key, secret_key=secret_key,
                 admin=admin
             )
         else:
