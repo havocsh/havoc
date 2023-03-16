@@ -197,7 +197,7 @@ class HavocCMD(Cmd):
         print('\n--user_id=<string> - (required) the ID of the user to get')
 
     def do_create_user(self, inp):
-        args = {'user_id': '', 'admin': ''}
+        args = {'user_id': '', 'admin': '', 'remote_task': '', 'task_name': ''}
         command_args = convert_input(args, inp)
         create_user_response = self.havoc_client.create_user(**command_args)
         format_output('create_user', create_user_response)
@@ -206,6 +206,8 @@ class HavocCMD(Cmd):
         print('\nCreate a new user with the given parameters.')
         print('\n--user_id=<string> - (required) a unique identifier to associate with the user')
         print('\n--admin=[yes|no] - (optional) specify whether or not the user has admin privileges (defaults to no)')
+        print('\n--remote_task=[yes|no] - (optional) specify whether or not the user is designated for a remote task (defaults to "*" which permits use for all tasks)')
+        print('\n--task_name=<string> - (optional) associate the user with a specific task name')
 
     def do_update_user(self, inp):
         args = {'user_id': '', 'new_user_id': '', 'admin': '', 'reset_keys': ''}
@@ -218,6 +220,8 @@ class HavocCMD(Cmd):
         print('\n--user_id=<string> - (required) the user_id associated with the user to make updates to')
         print('\n--new_user_id=<string> - (optional) a new unique identifier to associate with the user')
         print('\n--admin=[yes|no] - (optional) - add or remove admin privileges for the user (defaults to no change)')
+        print('\n--remote_task=[yes|no] - (optional) - add or remove remote task designation for the user (defaults to no change)')
+        print('\n--task_name=<string> - (optional) - change the task name associated with the user (defaults to no change)')
         print('\n--reset_keys=yes - (optional) - forces a reset of the user\'s API key and secret (if not present, '
               'keys are not changed)')
 
