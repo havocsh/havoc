@@ -50,6 +50,16 @@ class Task:
             self.__aws_s3_client = boto3.client('s3', region_name=self.region)
         return self.__aws_s3_client
 
+    def get_user_details(self):
+        """Returns details of a user"""
+        response = self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-authorizer',
+            Key={
+                'user_id': {'S': self.user_id}
+            }
+        )
+        return response
+    
     def get_task_type_entry(self):
         return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-task-types',
@@ -172,6 +182,11 @@ class Task:
         local_ip = self.detail['local_ip']
         if not isinstance(local_ip, list):
             return format_response(400, 'failed', 'local_ip must be of type list', self.log)
+
+        user_details = self.get_user_details()
+        user_associated_task_name = user_details['Item']['task_name']['S']
+        if self.task_name != user_associated_task_name and user_associated_task_name != '*':
+            return format_response(403, 'failed', f'not allowed', self.log)
 
         task_type_entry = self.get_task_type_entry()
         if not task_type_entry:

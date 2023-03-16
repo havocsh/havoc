@@ -144,7 +144,17 @@ class Users:
             admin = 'yes'
         else:
             admin = 'no'
-        user_attributes = {'api_key': api_key, 'secret': secret, 'admin': admin}
+        if 'remote_task' in self.detail and self.detail['remote_task'].lower() == 'yes':
+            remote_task = 'yes'
+        else:
+            remote_task = 'no'
+        if admin == 'yes' and remote_task == 'yes':
+            return format_response(400, 'failed', 'user cannot be admin and remote_task', self.log)
+        if remote_task == 'yes' and 'task_name' in self.detail:
+            task_name = self.detail['task_name']
+        else:
+            task_name = '*'
+        user_attributes = {'api_key': api_key, 'secret': secret, 'admin': admin, 'remote_task': remote_task, 'task_name': task_name}
         add_user_attribute_response = self.add_user_attribute(user_attributes)
         if add_user_attribute_response == 'user_attributes_added':
             return format_response(
@@ -184,9 +194,16 @@ class Users:
 
         user_id = user_id_entry['Item']['user_id']['S']
         admin = user_id_entry['Item']['admin']['S']
+        remote_task = user_id_entry['Item']['remote_task']['S']
+        task_name = user_id_entry['Item']['task_name']['S']
         api_key = user_id_entry['Item']['api_key']['S']
-        return format_response(
-            200, 'success', 'get user succeeded', None, user_id=user_id, admin=admin, api_key=api_key
+        if admin == 'yes':
+            return format_response(
+                200, 'success', 'get user succeeded', None, user_id=user_id, admin=admin, api_key=api_key
+            )
+        if remote_task == 'yes':
+            return format_response(
+            200, 'success', 'get user succeeded', None, user_id=user_id, remote_task=remote_task, task_name=task_name, api_key=api_key
         )
 
     def list(self):

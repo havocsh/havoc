@@ -11,11 +11,13 @@ class Login:
         self.deployment_name = deployment_name
         self.api_domain_name = api_domain_name
         self.api_arn = f'arn:aws:execute-api:{region}:{account_id}:{api_id}/havoc/*/*'
+        self.remote_task_api_arn = f'arn:aws:execute-api:{region}:{account_id}:{api_id}/havoc/POST/remote-task'
         self.api_key = event['headers']['x-api-key']
         self.sig_date = event['headers']['x-sig-date']
         self.signature = event['headers']['x-signature']
         self.authorized = None
         self.user_id = None
+        self.remote_task = None
 
     def sign(self, key, msg):
         return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
@@ -45,6 +47,7 @@ class Login:
             resp_api_key = response['Items'][0]['api_key']['S']
             resp_secret_key = response['Items'][0]['secret_key']['S']
             resp_user_id = response['Items'][0]['user_id']['S']
+            resp_remote_task = response['Items'][0]['remote_task']['S']
 
         if not self.api_key:
             self.authorized = False
@@ -84,6 +87,7 @@ class Login:
         if self.api_key == resp_api_key and self.signature == signature:
             self.authorized = True
             self.user_id = resp_user_id
+            self.remote_task = resp_remote_task
         else:
             self.authorized = False
             print('Authorization failed due to api_key, signature match failure')
@@ -91,16 +95,27 @@ class Login:
 
     def gen_response(self):
 
-        def gen_policy(authorized):
+        def gen_policy(authorized, remote_task):
             effect = "Allow" if authorized else "Deny"
-            return {
-                "Version": "2012-10-17",
-                "Statement": [{
-                    "Action": "execute-api:Invoke",
-                    "Effect": effect,
-                    "Resource": self.api_arn
-                }],
-            }
+            if remote_task == 'yes':
+                policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Action": "execute-api:Invoke",
+                        "Effect": effect,
+                        "Resource": self.remote_task_api_arn
+                    }],
+                }
+            else:
+                policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Action": "execute-api:Invoke",
+                        "Effect": effect,
+                        "Resource": self.api_arn
+                    }],
+                }
+            return policy
 
         if self.authorized:
             policy = gen_policy(self.authorized)

@@ -56,7 +56,7 @@ def lambda_handler(event, context):
         if not detail:
             return format_response(400, 'failed', 'missing detail', log)
         else:
-            r = Retrieve(region, deployment_name, detail, log)
+            r = Retrieve(region, deployment_name, user_id, detail, log)
             response = r.retrieve_commands()
             return response
 

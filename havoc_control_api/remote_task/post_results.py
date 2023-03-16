@@ -88,6 +88,16 @@ class Deliver:
             return error
         return 'queue_attribute_added'
 
+    def get_user_details(self):
+        """Returns details of a user"""
+        response = self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-authorizer',
+            Key={
+                'user_id': {'S': self.user_id}
+            }
+        )
+        return response
+    
     def get_task_entry(self):
         return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-tasks',
@@ -141,6 +151,11 @@ class Deliver:
         from_timestamp = datetime.utcfromtimestamp(int(stime))
         expiration_time = from_timestamp + timedelta(days=self.results_queue_expiration)
         expiration_stime = expiration_time.strftime('%s')
+
+        user_details = self.get_user_details()
+        user_associated_task_name = user_details['Item']['task_name']['S']
+        if self.task_name != user_associated_task_name and user_associated_task_name != '*':
+            return format_response(403, 'failed', f'not allowed', self.log)
 
         if self.results['instruct_user_id'] != 'None':
             self.user_id = self.results['instruct_user_id']

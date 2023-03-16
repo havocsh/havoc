@@ -20,9 +20,10 @@ def format_response(status_code, result, message, log, **kwargs):
 
 class Retrieve:
 
-    def __init__(self, region, deployment_name, detail: dict, log):
+    def __init__(self, region, deployment_name, user_id, detail: dict, log):
         self.region = region
         self.deployment_name = deployment_name
+        self.user_id = user_id
         self.detail = detail
         self.log = log
         self.task_name = None
@@ -43,6 +44,16 @@ class Retrieve:
             self.__aws_dynamodb_client = boto3.client('dynamodb', region_name=self.region)
         return self.__aws_dynamodb_client
 
+    def get_user_details(self):
+        """Returns details of a user"""
+        response = self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-authorizer',
+            Key={
+                'user_id': {'S': self.user_id}
+            }
+        )
+        return response
+    
     def get_task_entry(self):
         return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-tasks',
@@ -55,6 +66,11 @@ class Retrieve:
         if 'task_name' not in self.detail:
             return format_response(400, 'failed', 'invalid detail', self.log)
         self.task_name = self.detail['task_name']
+
+        user_details = self.get_user_details()
+        user_associated_task_name = user_details['Item']['task_name']['S']
+        if self.task_name != user_associated_task_name and user_associated_task_name != '*':
+            return format_response(403, 'failed', f'not allowed', self.log)
 
         command_list = []
         task_entry = self.get_task_entry()
