@@ -249,6 +249,8 @@ class Users:
         api_key = None
         secret = None
         admin = None
+        remote_task = None
+        task_name = None
         user_attributes = {}
         if 'new_user_id' in self.detail:
             new_user_id = self.detail['new_user_id']
@@ -263,6 +265,12 @@ class Users:
             secret = generate_string(24, True)
         if 'admin' in self.detail:
             admin = self.detail['admin']
+        if 'remote_task' in self.detail:
+            remote_task = self.detail['remote_task']
+        if 'task_name' in self.detail:
+            task_name = self.detail['task_name']
+        if remote_task and admin:
+            return format_response(400, 'failed', 'invalid detail', self.log)
         if new_user_id:
             user_attributes['user_id'] = new_user_id
         if api_key and secret:
@@ -270,6 +278,10 @@ class Users:
             user_attributes['secret'] = secret
         if admin.lower() in ['yes', 'no']:
             user_attributes['admin'] = admin
+        if remote_task.lower() in ['yes', 'no']:
+            user_attributes['remote_task'] = remote_task
+        if (remote_task or exists['Item']['remote_task']['S'] == 'yes') and task_name:
+            user_attributes['task_name'] = task_name
         if not user_attributes:
             return format_response(400, 'failed', 'invalid detail', self.log)
         add_user_attribute_response = self.add_user_attribute(user_attributes)

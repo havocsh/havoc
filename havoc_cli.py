@@ -210,7 +210,7 @@ class HavocCMD(Cmd):
         print('\n--task_name=<string> - (optional) associate the user with a specific task name')
 
     def do_update_user(self, inp):
-        args = {'user_id': '', 'new_user_id': '', 'admin': '', 'reset_keys': ''}
+        args = {'user_id': '', 'new_user_id': '', 'admin': '', 'remote_task': '', 'task_name': '', 'reset_keys': ''}
         command_args = convert_input(args, inp)
         update_user_response = self.havoc_client.update_user(**command_args)
         format_output('update_user', update_user_response)
