@@ -693,6 +693,16 @@ class HavocCMD(Cmd):
         print('\n--task_name=<string> - (required) the name of the task to wait on')
         print('Note - press Ctrl-C to cancel the wait_for_idle_task operation.')
     
+    def do_get_agents(self, inp):
+        args = {'task_name': ''}
+        command_args = convert_input(args, inp)
+        get_agents_response = self.havoc_client.get_agents(**command_args)
+        format_output('get_agents', get_agents_response)
+    
+    def help_get_agents(self):
+        print('\nGet a list of the C2 agents that are connected to the given task.')
+        print('\n--task_name=<string> - (required) the name of the task to query for connected agents.')
+    
     def do_verify_agent(self, inp):
         args = {'task_name': '', 'agent_name': ''}
         command_args = convert_input(args, inp)
@@ -701,7 +711,7 @@ class HavocCMD(Cmd):
             format_output('verify_agent', verify_agent_response)
         else:
             format_output('verify_agent', {command_args['agent_name']: 'agent not found'})
-    
+
     def help_verify_agent(self):
         print('\nVerify the existence of a C2 agent.')
         print('\n--task_name=<string> - (required) the name of the task to check for an agent.')
