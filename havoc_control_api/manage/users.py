@@ -140,12 +140,18 @@ class Users:
                 if 'api_key' in item:
                     api_key = None
         secret_key = generate_string(24, True)
-        if 'admin' in self.detail and self.detail['admin'].lower() == 'yes':
-            admin = 'yes'
+        if 'admin' in self.detail:
+            if self.detail['admin'].lower() == 'yes':
+                admin = 'yes'
+            else:
+                admin = 'no'
         else:
             admin = 'no'
-        if 'remote_task' in self.detail and self.detail['remote_task'].lower() == 'yes':
-            remote_task = 'yes'
+        if 'remote_task' in self.detail:
+            if self.detail['remote_task'].lower() == 'yes':
+                remote_task = 'yes'
+            else:
+                remote_task = 'no'
         else:
             remote_task = 'no'
         if admin == 'yes' and remote_task == 'yes':
