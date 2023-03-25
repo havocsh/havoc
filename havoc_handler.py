@@ -23,6 +23,7 @@ init_parser.add_argument('--list_profiles', help='List the profiles in your loca
 init_parser.add_argument('--profile', help='Specify a profile to use when launching the ./HAVOC CLI.')
 init_parser.add_argument('--deployment', help='Manage your ./HAVOC deployment (create|modify|update|remove|get_deployment|connect_tf_backend|disconnect_tf_backend).')
 init_parser.add_argument('--playbook', help='Configure a ./HAVOC playbook.')
+init_parser.add_argument('--run_script', help='Run a local ./HAVOC script.')
 init_args = init_parser.parse_args()
 
 
@@ -146,3 +147,24 @@ if __name__ == "__main__":
                 print('\nPlaybook configuration task completed successfully.\n')
             else:
                 print('\nPlaybook configuration task failed.')
+    
+    if init_args.run_script:
+        spath = 'havoc_scripts'
+        havoc_scripts = [name for name in os.listdir(spath) if os.path.isdir(os.path.join(spath, name))]
+        if init_args.run_script not in havoc_scripts:
+            print(f'Script {init_args.run_script} not found. Specify a script to run using "--run_script <script_name>" notation.')
+            print('<script_name> can be any of the following:')
+            for script_name in havoc_scripts:
+                print(f'\n {script_name}')
+            exit()
+        profiles_test = havoc_config_playbook.load_havoc_profiles()
+        if not profiles_test:
+            print('\nScript task failed. No ./HAVOC profiles found.')
+        else:
+            script = init_args.run_script
+            if init_args.profile:
+                profile = init_args.profile
+                subprocess.run(['python', script, f'--profile= {profile}'])
+            else:
+                subprocess.run(['python', script])
+            print('\nPlaybook configuration task failed.')

@@ -1,4 +1,4 @@
-import os, json, base64, zlib, datetime, argparse, pprint
+import json, base64, zlib, datetime, argparse, pprint
 from configparser import ConfigParser
 
 import havoc
@@ -10,22 +10,24 @@ init_args = init_parser.parse_args()
 
 profile = init_args.profile
 
-# Load the ./HAVOC configuration file
-havoc_config = ConfigParser()
-havoc_config_file = os.path.expanduser('~/.havoc/config')
-havoc_config.read(havoc_config_file)
+def load_havoc_profiles():
+    # Load the ./HAVOC profiles file
+    havoc_profiles = ConfigParser()
+    havoc_profiles.read('.havoc/profiles')
+    return havoc_profiles
 
 # Get api_key and secret_key
+havoc_profiles = load_havoc_profiles()
 if profile:
-    api_key = havoc_config.get(profile, 'API_KEY')
-    secret = havoc_config.get(profile, 'SECRET')
-    api_region = havoc_config.get(profile, 'API_REGION')
-    api_domain_name = havoc_config.get(profile, 'API_DOMAIN_NAME')
+    api_key = havoc_profiles.get(profile, 'API_KEY')
+    secret = havoc_profiles.get(profile, 'SECRET')
+    api_region = havoc_profiles.get(profile, 'API_REGION')
+    api_domain_name = havoc_profiles.get(profile, 'API_DOMAIN_NAME')
 else:
-    api_key = havoc_config.get('default', 'API_KEY')
-    secret = havoc_config.get('default', 'SECRET')
-    api_region = havoc_config.get('default', 'API_REGION')
-    api_domain_name = havoc_config.get('default', 'API_DOMAIN_NAME')
+    api_key = havoc_profiles.get('default', 'API_KEY')
+    secret = havoc_profiles.get('default', 'SECRET')
+    api_region = havoc_profiles.get('default', 'API_REGION')
+    api_domain_name = havoc_profiles.get('default', 'API_DOMAIN_NAME')
 
 h = havoc.Connect(api_region, api_domain_name, api_key, secret)
 
@@ -35,7 +37,7 @@ pp = pprint.PrettyPrinter(indent=4)
 # Create a config parser and setup config parameters
 config = ConfigParser(allow_no_value=True)
 config.optionxform = str
-config.read('havoc-playbooks/activity_report/activity_report.ini')
+config.read('havoc_scripts/activity_report/activity_report.ini')
 
 tasks = config.get('activity_report', 'tasks').split(',')
 start_time = config.get('activity_report', 'start_time')
