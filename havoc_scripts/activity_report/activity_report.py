@@ -44,7 +44,7 @@ playbook_start_time = config.get('playbook_report', 'start_time')
 playbook_end_time = config.get('playbook_report', 'end_time')
 
 
-tasks = config.get('task_report', 'tasks').split(',')
+tasks = config.get('task_report', 'task_names').split(',')
 task_start_time = config.get('task_report', 'start_time')
 task_end_time = config.get('task_report', 'end_time')
 
