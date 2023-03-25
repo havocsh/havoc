@@ -102,16 +102,16 @@ if playbooks:
                 command_output = json.loads(entry['command_output'])
                 print(f'\nOperator command run time: {run_time}')
                 print(f'Operator command: {operator_command}')
-                print(f'Operator command args: {command_args}')
+                pp.print(f'Operator command args: {command_args}')
                 if command_output:
                     if 'outcome' in command_output:
                         operator_command_outcome = command_output['outcome']
                         print(f'Operator command outcome: {operator_command_outcome}')
-                    if 'details' in command_output:
-                        if isinstance(command_output['details'], str):
+                    if 'details' in command_output and command_output['details'] is not None:
+                        try:
                             details = json.loads(command_output['details'])
                             print('Operator command output details:')
                             pp.pprint(details)
-                        else:
+                        except:
                             print('Operator command output details:')
                             pp.pprint(command_output['details'])
