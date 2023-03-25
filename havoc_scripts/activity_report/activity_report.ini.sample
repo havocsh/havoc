@@ -1,4 +1,9 @@
-[activity_report]
-tasks = 
-start_time = mm-dd-YYYY HH:MM:SS
-end_time = mm-dd-YYYY HH:MM:SS
+[playbook_report]
+playbook_names = 
+start_time = 
+end_time = 
+
+[task_report]
+task_names = 
+start_time = 
+end_time = 

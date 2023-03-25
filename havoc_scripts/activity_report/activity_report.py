@@ -39,42 +39,66 @@ config = ConfigParser(allow_no_value=True)
 config.optionxform = str
 config.read('havoc_scripts/activity_report/activity_report.ini')
 
-tasks = config.get('activity_report', 'tasks').split(',')
-start_time = config.get('activity_report', 'start_time')
-end_time = config.get('activity_report', 'end_time')
+playbooks = config.get('playbook_report', 'playbook_names').split(',')
+playbook_start_time = config.get('playbook_report', 'start_time')
+playbook_end_time = config.get('playbook_report', 'end_time')
 
-for task in tasks:
-    task = task.strip()
-    print(f'\nGetting results for task {task}\n')
-    print('+------------------------------------------------------------------+')
-    get_task_results = h.get_task_results(task, start_time=start_time, end_time=end_time)
-    task_id_records = []
-    for entry in get_task_results['queue']:
-        run_time = datetime.datetime.fromtimestamp(int(entry['run_time']))
-        instruct_command = entry['instruct_command']
-        instruct_command_args = entry['instruct_args']
-        instruct_command_results = json.loads(entry['instruct_command_output'])
-        if instruct_command != 'get_shell_command_results':
-            if 'message' in instruct_command_results and 'taskID' in instruct_command_results['message']:
-                task_id = instruct_command_results['message']['taskID']
-                task_id_records.append(task_id)
-            print(f'\n\nTask instruction: {instruct_command}')
-            print(f'Task instruction run time: {run_time}')
-            print('Task instruction arguments:')
-            for k,v in instruct_command_args.items():
-                print(f'\t{k}: {v}')
-        if instruct_command_results:
+
+tasks = config.get('task_report', 'tasks').split(',')
+task_start_time = config.get('task_report', 'start_time')
+task_end_time = config.get('task_report', 'end_time')
+
+if tasks:
+    for task in tasks:
+        task = task.strip()
+        print(f'\nGetting results for task {task}\n')
+        print('+------------------------------------------------------------------+')
+        get_task_results = h.get_task_results(task, start_time=task_start_time, end_time=task_end_time)
+        task_id_records = []
+        for entry in get_task_results['queue']:
+            run_time = datetime.datetime.fromtimestamp(int(entry['run_time']))
+            instruct_command = entry['instruct_command']
+            instruct_command_args = entry['instruct_args']
+            instruct_command_results = json.loads(entry['instruct_command_output'])
             if instruct_command != 'get_shell_command_results':
-                print('\nTask instruction results:')
-            for k,v in instruct_command_results.items():
-                if instruct_command == 'get_shell_command_results' and k == 'results':
-                    results_data = json.loads(zlib.decompress(base64.b64decode(v.encode())).decode())
-                    for r in results_data:
-                        if r['taskID'] in task_id_records:
-                            command_output = r['results']
-                            if command_output is not None and 'Job started:' not in command_output:
-                                print('\nAgent shell command results:')
-                                print(f'{command_output}')
-                                task_id_records.remove(r['taskID'])
+                if 'message' in instruct_command_results and 'taskID' in instruct_command_results['message']:
+                    task_id = instruct_command_results['message']['taskID']
+                    task_id_records.append(task_id)
+                print(f'\n\nTask instruction: {instruct_command}')
+                print(f'Task instruction run time: {run_time}')
+                print('Task instruction arguments:')
+                for k,v in instruct_command_args.items():
+                    print(f'\t{k}: {v}')
+            if instruct_command_results:
                 if instruct_command != 'get_shell_command_results':
-                    print(f'{k}: {v}')
+                    print('\nTask instruction results:')
+                for k,v in instruct_command_results.items():
+                    if instruct_command == 'get_shell_command_results' and k == 'results':
+                        results_data = json.loads(zlib.decompress(base64.b64decode(v.encode())).decode())
+                        for r in results_data:
+                            if r['taskID'] in task_id_records:
+                                command_output = r['results']
+                                if command_output is not None and 'Job started:' not in command_output:
+                                    print('\nAgent shell command results:')
+                                    print(f'{command_output}')
+                                    task_id_records.remove(r['taskID'])
+                    if instruct_command != 'get_shell_command_results':
+                        print(f'{k}: {v}')
+
+if playbooks:
+    for playbook in playbooks:
+        playbook = playbook.strip()
+        print(f'\nGetting results for playbook {playbook}\n')
+        print('+------------------------------------------------------------------+')
+        playbook_results = h.get_playbook_results(playbook, start_time=playbook_start_time, end_time=playbook_end_time)
+        if 'queue' in playbook_results:
+            for entry in playbook_results['queue']:
+                run_time = datetime.datetime.fromtimestamp(int(entry['run_time']))
+                operator_command = entry['operator_command']
+                command_args = entry['command_args']
+                command_output = json.loads(entry['command_output'])
+                print(f'Operator command run time: {run_time}')
+                print(f'Operator command: {operator_command}')
+                print(f'Operator command args: {command_args}')
+                if command_output:
+                    pp.pprint(command_output, indent=4)
