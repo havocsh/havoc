@@ -164,7 +164,7 @@ if __name__ == "__main__":
             script = init_args.run_script
             if init_args.profile:
                 profile = init_args.profile
-                subprocess.run(['.venv/bin/python3', script, f'--profile= {profile}'])
+                subprocess.run(['./venv/bin/python3', script, f'--profile= {profile}'])
             else:
-                subprocess.run(['.venv/bin/python3', script])
+                subprocess.run(['./venv/bin/python3', script])
             print('\nPlaybook configuration task failed.')
