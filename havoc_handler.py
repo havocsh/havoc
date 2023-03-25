@@ -161,10 +161,10 @@ if __name__ == "__main__":
         if not profiles_test:
             print('\nScript task failed. No ./HAVOC profiles found.')
         else:
-            script = f'{init_args.run_script}/{init_args.run_script}.py'
+            script = f'havoc_scripts/{init_args.run_script}/{init_args.run_script}.py'
             if init_args.profile:
                 profile = init_args.profile
                 subprocess.run(['./venv/bin/python3', script, f'--profile= {profile}'])
             else:
                 subprocess.run(['./venv/bin/python3', script])
-            print('\Script task completed.')
+            print('\nScript task completed.')
