@@ -29,7 +29,7 @@ else:
     api_region = havoc_profiles.get('default', 'API_REGION')
     api_domain_name = havoc_profiles.get('default', 'API_DOMAIN_NAME')
 
-h = havoc.Connect(api_region, api_domain_name, api_key, secret)
+h = havoc.Connect(api_region, api_domain_name, api_key, secret, api_version=1)
 
 # Configure pretty print for displaying output.
 pp = pprint.PrettyPrinter(indent=4)
@@ -39,14 +39,17 @@ config = ConfigParser(allow_no_value=True)
 config.optionxform = str
 config.read('havoc_scripts/activity_report/activity_report.ini')
 
-playbooks = config.get('playbook_report', 'playbook_names').split(',')
+playbooks = config.get('playbook_report', 'playbook_names', fallback=None)
 playbook_start_time = config.get('playbook_report', 'start_time')
 playbook_end_time = config.get('playbook_report', 'end_time')
+if playbooks:
+    playbooks = playbooks.split(',')
 
-
-tasks = config.get('task_report', 'task_names').split(',')
+tasks = config.get('task_report', 'task_names', fallback=None)
 task_start_time = config.get('task_report', 'start_time')
 task_end_time = config.get('task_report', 'end_time')
+if tasks:
+    tasks = tasks.split(',')
 
 if tasks:
     for task in tasks:
@@ -101,4 +104,10 @@ if playbooks:
                 print(f'Operator command: {operator_command}')
                 print(f'Operator command args: {command_args}')
                 if command_output:
-                    pp.pprint(command_output, indent=4)
+                    operator_command_outcome = command_output['outcome']
+                    print(f'Operator command outcome: {operator_command_outcome}')
+                    if isinstance(command_output['details'], str):
+                        details = json.loads(command_output['details'])
+                        pp.pprint(details)
+                    else:
+                        pp.pprint(command_output['details'])
