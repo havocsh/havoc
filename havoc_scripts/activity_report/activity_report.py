@@ -100,14 +100,18 @@ if playbooks:
                 operator_command = entry['operator_command']
                 command_args = entry['command_args']
                 command_output = json.loads(entry['command_output'])
-                print(f'Operator command run time: {run_time}')
+                print(f'\nOperator command run time: {run_time}')
                 print(f'Operator command: {operator_command}')
                 print(f'Operator command args: {command_args}')
                 if command_output:
-                    operator_command_outcome = command_output['outcome']
-                    print(f'Operator command outcome: {operator_command_outcome}')
-                    if isinstance(command_output['details'], str):
-                        details = json.loads(command_output['details'])
-                        pp.pprint(details)
-                    else:
-                        pp.pprint(command_output['details'])
+                    if 'outcome' in command_output:
+                        operator_command_outcome = command_output['outcome']
+                        print(f'Operator command outcome: {operator_command_outcome}')
+                    if 'details' in command_output:
+                        if isinstance(command_output['details'], str):
+                            details = json.loads(command_output['details'])
+                            print('Operator command output details:')
+                            pp.pprint(details)
+                        else:
+                            print('Operator command output details:')
+                            pp.pprint(command_output['details'])
