@@ -102,7 +102,7 @@ if playbooks:
                 command_output = json.loads(entry['command_output'])
                 print(f'\nOperator command run time: {run_time}')
                 print(f'Operator command: {operator_command}')
-                pp.print(f'Operator command args: {command_args}')
+                pp.pprint(f'Operator command args: {command_args}')
                 if command_output:
                     if 'outcome' in command_output:
                         operator_command_outcome = command_output['outcome']
