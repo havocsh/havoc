@@ -155,7 +155,7 @@ if __name__ == "__main__":
             print(f'Script {init_args.run_script} not found. Specify a script to run using "--run_script <script_name>" notation.')
             print('<script_name> can be any of the following:')
             for script_name in havoc_scripts:
-                print(f'\n {script_name}')
+                print(f' {script_name}\n')
             exit()
         profiles_test = havoc_config_playbook.load_havoc_profiles()
         if not profiles_test:
@@ -164,7 +164,7 @@ if __name__ == "__main__":
             script = init_args.run_script
             if init_args.profile:
                 profile = init_args.profile
-                subprocess.run(['python', script, f'--profile= {profile}'])
+                subprocess.run(['.venv/bin/python3', script, f'--profile= {profile}'])
             else:
                 subprocess.run(['python', script])
             print('\nPlaybook configuration task failed.')
