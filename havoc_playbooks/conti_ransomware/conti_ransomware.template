@@ -61,13 +61,18 @@ data "tasks" "lateral_movement_task" {
 }
 
 resource "random_string" "random_6" {
-  length           = 6
-  special          = false
+  length      = 6
+  letters     = true
+  digits      = false
+  punctuation = false
+  lower       = true
 }
 
 resource "random_string" "random_32" {
-  length           = 32
-  special          = false
+  length      = 32
+  letters     = true
+  digits      = true
+  punctuation = false
 }
 
 resource "portgroup" "c2_portgroup" {
