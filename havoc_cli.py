@@ -463,7 +463,7 @@ class HavocCMD(Cmd):
     def help_create_portgroup(self):
         print('\nCreate a new portgroup with the given parameters.')
         print('\n--portgroup_name=<string> - (required) a unique identifier to associate with the portgroup')
-        print('\n--porgroup_description=<string> - (required) a description containing the purpose of the portgroup')
+        print('\n--portgroup_description=<string> - (required) a description containing the purpose of the portgroup')
 
     def do_update_portgroup_rule(self, inp):
         args = {'portgroup_name': '', 'portgroup_action': '', 'ip_ranges': '', 'port': '', 'ip_protocol': ''}
