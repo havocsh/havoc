@@ -138,7 +138,7 @@ class Listener:
         load_balancer_name = f'{self.deployment_name}-{self.listener_name}'
         load_balancer_name = re.sub('_', '-', load_balancer_name)
         try:
-            response = self.aws_elbv2_client.create_load_balancer(
+            create_load_balancer_response = self.aws_elbv2_client.create_load_balancer(
                 Name = load_balancer_name[0:31],
                 Subnets = [self.subnet_0, self.subnet_1],
                 SecurityGroups = [self.default_security_group] + self.security_groups,
@@ -149,8 +149,22 @@ class Listener:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
-        self.load_balancer_arn = response['LoadBalancers'][0]['LoadBalancerArn']
-        self.load_balancer_dns_name = response['LoadBalancers'][0]['DNSName']
+        self.load_balancer_arn = create_load_balancer_response['LoadBalancers'][0]['LoadBalancerArn']
+        self.load_balancer_dns_name = create_load_balancer_response['LoadBalancers'][0]['DNSName']
+        try:
+            self.aws_elbv2_client.modify_load_balancer_attributes(
+                LoadBalancerArn = self.load_balancer_arn,
+                Attributes = [
+                    {
+                        'Key': 'idle_timeout.timeout_seconds',
+                        'Value': '5'
+                    },
+                ]
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
         return 'load_balancer_created'
 
     def delete_load_balancer(self):
