@@ -106,6 +106,7 @@
             "elasticloadbalancing:DeleteTargetGroup",
             "elasticloadbalancing:DeregisterTargets",
             "elasticloadbalancing:DescribeListeners",
+            "elasticloadbalancing:ModifyLoadBalancerAttributes",
             "elasticloadbalancing:RegisterTargets"
         ],
         "Effect": "Allow",
