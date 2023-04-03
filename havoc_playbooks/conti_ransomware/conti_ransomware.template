@@ -81,17 +81,19 @@ resource "portgroup" "c2_portgroup" {
 }
 
 resource "portgroup_rule" "c2_portgroup_initial_access_task" {
-    portgroup_name = resource.portgroup.c2_portgroup.portgroup_name
-    ip_ranges      = "${data.tasks.initial_access_task.public_ip}/32"
-    port           = "443"
-    ip_protocol    = "tcp"
+    portgroup_name   = resource.portgroup.c2_portgroup.portgroup_name
+    portgroup_action = "add"
+    ip_ranges        = "${data.tasks.initial_access_task.public_ip}/32"
+    port             = "443"
+    ip_protocol      = "tcp"
 }
 
 resource "portgroup_rule" "c2_portgroup_lateral_movement_task" {
-    portgroup_name = resource.portgroup.c2_portgroup.portgroup_name
-    ip_ranges      = "${data.tasks.lateral_movement_task.public_ip}/32"
-    port           = "443"
-    ip_protocol    = "tcp"
+    portgroup_name   = resource.portgroup.c2_portgroup.portgroup_name
+    portgroup_action = "add"
+    ip_ranges        = "${data.tasks.lateral_movement_task.public_ip}/32"
+    port             = "443"
+    ip_protocol      = "tcp"
 }
 
 resource "portgroup" "http_portgroup" {
@@ -100,10 +102,11 @@ resource "portgroup" "http_portgroup" {
 }
 
 resource "portgroup_rule" "http_portgroup_initial_access_task" {
-    portgroup_name = resource.portgroup.http_portgroup.portgroup_name
-    ip_ranges      = "${data.tasks.initial_access_task.public_ip}/32"
-    port           = "443"
-    ip_protocol    = "tcp"
+    portgroup_name   = resource.portgroup.http_portgroup.portgroup_name
+    portgroup_action = "add"
+    ip_ranges        = "${data.tasks.initial_access_task.public_ip}/32"
+    port             = "443"
+    ip_protocol      = "tcp"
 }
 
 resource "task" "c2_task" {
