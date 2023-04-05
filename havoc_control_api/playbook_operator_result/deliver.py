@@ -68,20 +68,13 @@ class Deliver:
             }
         )
 
-    def update_playbook_entry(self, stime, playbook_status):
-        if stime:
-            update_expression = 'set playbook_status=:playbook_status, last_execution_time=:last_execution_time, ecs_task_id=:ecs_task_id'
+    def update_playbook_entry(self):
+        try:
+            update_expression = 'set playbook_status=:playbook_status, ecs_task_id=:ecs_task_id'
             expression_attribute_values = {
-                    ':playbook_status': {'S': playbook_status},
-                    ':last_execution_time': {'S': stime},
+                    ':playbook_status': {'S': 'not_running'},
                     ':ecs_task_id': {'S': 'None'}
                 }
-        else:
-            update_expression = 'set playbook_status=:playbook_status'
-            expression_attribute_values = {
-                    ':playbook_status': {'S': playbook_status}
-                }
-        try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-playbooks',
                 Key={
@@ -148,11 +141,7 @@ class Deliver:
             if isinstance(v, bytes):
                 command_args_fixup[k] = {'B': v}
         if operator_command == 'terminate':
-            completed_instruction = self.update_playbook_entry(None, 'not_running')
-            if completed_instruction != 'playbook_entry_updated':
-                print(f'Error updating playbook entry: {completed_instruction}')
-        if operator_command == 'execute_playbook':
-            completed_instruction = self.update_playbook_entry(stime, 'running')
+            completed_instruction = self.update_playbook_entry()
             if completed_instruction != 'playbook_entry_updated':
                 print(f'Error updating playbook entry: {completed_instruction}')
 

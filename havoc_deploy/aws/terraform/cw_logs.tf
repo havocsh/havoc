@@ -16,6 +16,6 @@ resource "aws_cloudwatch_log_subscription_filter" "task_result_lambdafunction_lo
 resource "aws_cloudwatch_log_subscription_filter" "playbook_operator_result_lambdafunction_logfilter" {
   name            = "playbook_operator_result_lambdafunction_logfilter"
   log_group_name  = aws_cloudwatch_log_group.ecs_playbook_operator_logs.name
-  filter_pattern  = "command_output user_id"
+  filter_pattern  = "user_id"
   destination_arn = aws_lambda_function.playbook_operator_result.arn
 }

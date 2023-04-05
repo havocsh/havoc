@@ -229,6 +229,9 @@ class Playbook:
         playbook_entry = self.get_playbook_entry()
         if 'Item' not in playbook_entry:
             return 'playbook_not_found'
+        playbook_status = playbook_entry['Item']['playbook_status']['S']
+        if playbook_status != 'running' and playbook_status != 'starting':
+            return 'playbook_not_running'
         ecs_task_id = playbook_entry['Item']['ecs_task_id']['S']
         try:
             self.aws_ecs_client.stop_task(
@@ -318,6 +321,8 @@ class Playbook:
         terminate_playbook_operator_response = self.terminate_playbook_operator()
         if terminate_playbook_operator_response == 'playbook_not_found':
             return format_response(404, 'failed', f'playbook {self.playbook_name} does not exist', self.log)
+        elif terminate_playbook_operator_response == 'playbook_not_running':
+            return format_response(409, 'failed', f'playbook {self.playbook_name} is not running or starting', self.log)
         elif terminate_playbook_operator_response == 'playbook_operator_terminated':
             return format_response(200, 'success', 'kill playbook operator succeeded', None)
         else:
