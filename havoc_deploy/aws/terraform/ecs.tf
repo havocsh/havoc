@@ -103,8 +103,8 @@ resource "aws_ecs_task_definition" "http_server" {
   network_mode             = "awsvpc"
   container_definitions    = data.template_file.http_server_task_definition.rendered
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 512
-  memory                   = 1024
+  cpu                      = 1024
+  memory                   = 4096
   tags                     = {
     deployment_name    = var.deployment_name
     name               = "http_server"
