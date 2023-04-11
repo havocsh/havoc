@@ -11,7 +11,7 @@ local "function" "date_stamp" {
 
 local "function" "stager_decode" {
     function_name       = "base64decode"
-    function_parameters = [resource.task.c2_task.listener.Output]
+    function_parameters = [resource.task.c2_task.listener.stager.Output]
 }
 
 variable "private_cidr" {
@@ -121,10 +121,12 @@ resource "task" "c2_task" {
         CertPath      = "/opt/Empire/empire/server/data/"
         StagingKey    = resource.random_string.random_32.result
         JA3_Evasion   = "True"
-        StagerName    = "multi/launcher"
-        Language      = "powershell"
-        StagerRetries = "60"
-        OutFile       = "launcher.ps1"
+        stager = {
+            StagerName    = "multi/launcher"
+            Language      = "powershell"
+            StagerRetries = "60"
+            OutFile       = "launcher.ps1"
+        }
         tls = {
             cert_type     = "self-signed"
             cert_country  = "US"
@@ -179,7 +181,7 @@ resource "listener" "http_listener" {
 }
 
 resource "file" "stager_upload" {
-    file_name     = resource.task.c2_task.listener.OutFile
+    file_name     = resource.task.c2_task.listener.stager.OutFile
     file_contents = local.function.stager_decode
 }
 
