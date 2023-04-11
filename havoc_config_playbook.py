@@ -37,7 +37,7 @@ class ConfigPlaybook:
     
     def configure(self):
         print('\nConfiguring a playbook creates a new playbook entity in your ./HAVOC deployment with a corresponding playbook configuration')
-        print('that is based on a source template of a specific playbook type. The available playbook types will be displayed now. To proceed,')
+        print('that is based on a source template of a specific playbook type. The available playbook types will be displayed now.\n')
         
         # Determine the playbook type to be used as the source for the playbook configuration
         list_playbook_types_response = self.havoc_client.list_playbook_types()
