@@ -208,11 +208,11 @@ class Portgroup:
         timestamp = datetime.now().strftime('%s')
         create_portgroup_entry_response = self.create_portgroup_entry(portgroup_description, timestamp)
         if create_portgroup_entry_response == 'portgroup_created':
-            return format_response(200, 'success', 'create portgroup succeeded', None)
+            return format_response(200, 'success', 'create_portgroup succeeded', None)
         elif create_portgroup_entry_response == 'portgroup_exists':
             return format_response(409, 'failed', f'{self.portgroup_name} already exists', self.log)
         else:
-            return format_response(500, 'failed', f'portgroup creation failed with error {create_portgroup_entry_response}', self.log)
+            return format_response(500, 'failed', f'create_portgroup failed with error {create_portgroup_entry_response}', self.log)
 
     def delete(self):
         if 'portgroup_name' not in self.detail:
@@ -235,9 +235,9 @@ class Portgroup:
         # Delete security group
         delete_portgroup = self.delete_portgroup_entry(securitygroup_id)
         if delete_portgroup == 'portgroup_deleted':
-            return format_response(200, 'success', 'delete portgroup succeeded', None)
+            return format_response(200, 'success', 'delete_portgroup succeeded', None)
         else:
-            return format_response(409, 'failed', f'portgroup deletion failed with error {delete_portgroup}', self.log)
+            return format_response(409, 'failed', f'delete_portgroup failed with error {delete_portgroup}', self.log)
 
     def get(self):
         if 'portgroup_name' not in self.detail:

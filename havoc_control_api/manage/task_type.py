@@ -216,9 +216,9 @@ class Registration:
         if add_ecs_task_definition_response == 'task_type_exists':
             return format_response(409, 'failed', f'task_type {self.task_type} already exists', self.log)
         elif add_ecs_task_definition_response == 'task_type_created':
-            return format_response(200, 'success', 'task_type creation succeeded', None)
+            return format_response(200, 'success', 'create_task_type succeeded', None)
         else:
-            return format_response(500, 'failed', f'task_type creation failed with error {add_ecs_task_definition_response}', self.log)
+            return format_response(500, 'failed', f'create_task_type failed with error {add_ecs_task_definition_response}', self.log)
 
     def delete(self):
         if 'task_type' not in self.detail:
@@ -230,9 +230,9 @@ class Registration:
         if remove_ecs_task_definition_response == 'task_type_not_found':
             return format_response(404, 'failed', f'task_type {self.task_type} does not exist', self.log)
         elif remove_ecs_task_definition_response == 'task_definition_removed':
-            return format_response(200, 'success', 'delete task_type succeeded', None)
+            return format_response(200, 'success', 'delete_task_type succeeded', None)
         else:
-            return format_response(500, 'failed', f'task_type deletion failed with error {remove_ecs_task_definition_response}', self.log)
+            return format_response(500, 'failed', f'delete_task_type failed with error {remove_ecs_task_definition_response}', self.log)
 
     def get(self):
         if 'task_type' not in self.detail:

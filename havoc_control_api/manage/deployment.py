@@ -142,9 +142,9 @@ class Deployment:
         if create_deployment_entry_response == 'deployment_exists':
             return format_response(400, 'failed', 'deployment already exists - use update method to modify deployment parameters', self.log)
         elif create_deployment_entry_response == 'deployment_created':
-            return format_response(200, 'success', 'create deployment succeeded', None)
+            return format_response(200, 'success', 'create_deployment succeeded', None)
         else:
-            return format_response(500, 'failed', f'deployment creation failed with error: {create_deployment_entry_response}', self.log)
+            return format_response(500, 'failed', f'create_deployment failed with error: {create_deployment_entry_response}', self.log)
 
     def delete(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)

@@ -157,9 +157,9 @@ class Workspace:
         self.file_contents = decoded_file
         upload_object_response = self.upload_object()
         if upload_object_response == 'object_uploaded':
-            return format_response(200, 'success', 'create file succeeded', None)
+            return format_response(200, 'success', 'create_file succeeded', None)
         else:
-            return format_response(500, 'failed', f'file creation failed with error {upload_object_response}', self.log)
+            return format_response(500, 'failed', f'create_file failed with error {upload_object_response}', self.log)
 
     def delete(self):
         if 'filename' not in self.detail:
@@ -182,9 +182,9 @@ class Workspace:
         if self.filename in file_name_list:
             delete_object_response = self.delete_object()
             if delete_object_response == 'object_deleted':
-                return format_response(200, 'success', 'delete file succeeded', None)
+                return format_response(200, 'success', 'delete_file succeeded', None)
             else:
-                return format_response(500, 'failed', f'file deletion failed with error {delete_object_response}', self.log)
+                return format_response(500, 'failed', f'delete_file failed with error {delete_object_response}', self.log)
         else:
             return format_response(404, 'failed', 'file not found', self.log)
 

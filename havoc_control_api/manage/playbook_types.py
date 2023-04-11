@@ -186,9 +186,9 @@ class Registration:
         if add_playbook_type_response == 'playbook_type_exists':
             return format_response(409, 'failed', f'playbook_type {self.playbook_type} already exists', self.log)
         elif add_playbook_type_response == 'playbook_type_created':
-            return format_response(200, 'success', 'playbook_type creation succeeded', None)
+            return format_response(200, 'success', 'create_playbook_type succeeded', None)
         else:
-            return format_response(500, 'failed', f'playbook_type creation failed with error {add_playbook_type_response}', self.log)
+            return format_response(500, 'failed', f'create_playbook_type failed with error {add_playbook_type_response}', self.log)
     
     def delete(self):
         if 'playbook_type' not in self.detail:
@@ -200,9 +200,9 @@ class Registration:
         if delete_playbook_type_response == 'playbook_type_not_found':
             return format_response(404, 'failed', f'playbook {self.playbook_type} does not exist', self.log)
         elif delete_playbook_type_response == 'playbook_type_deleted':
-            return format_response(200, 'success', 'playbook_type deletion succeeded', None)
+            return format_response(200, 'success', 'delete_playbook_type succeeded', None)
         else:
-            return format_response(500, 'failed', f'playbook_type deletion failed with error {delete_playbook_type_response}', self.log)
+            return format_response(500, 'failed', f'delete_playbook_type failed with error {delete_playbook_type_response}', self.log)
         
     def get(self):
         if 'playbook_type' not in self.detail:

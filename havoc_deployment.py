@@ -133,7 +133,7 @@ class ManageDeployment:
                 if error['Error']['Code'] == 403:
                     print(f'Writing tfstate file to {tfstate_s3_bucket} failed with access denied.')
                 else:
-                    print(f'Terraform state file creation failed with error {error["Error"]}')
+                    print(f'Creating terraform state file failed with error {error["Error"]}')
                 return 'failed'
         else:
             try:

@@ -267,9 +267,9 @@ class Playbook:
         elif add_playbook_configuration_response == 'playbook_type_not_found':
             return format_response(404, 'failed', f'playbook_type {self.playbook_type} does not exist', self.log)
         elif add_playbook_configuration_response == 'playbook_configuration_created':
-            return format_response(200, 'success', 'playbook creation succeeded', None)
+            return format_response(200, 'success', 'create_playbook succeeded', None)
         else:
-            return format_response(500, 'failed', f'playbook creation failed with error {add_playbook_configuration_response}', self.log)
+            return format_response(500, 'failed', f'create_playbook failed with error {add_playbook_configuration_response}', self.log)
     
     def delete(self):
         if 'playbook_name' not in self.detail:
@@ -283,9 +283,9 @@ class Playbook:
         elif delete_playbook_configuration_response == 'playbook_running':
             return format_response(409, 'failed', f'playbook {self.playbook_name} is currently running', self.log)
         elif delete_playbook_configuration_response == 'playbook_configuration_deleted':
-            return format_response(200, 'success', 'playbook deletion succeeded', None)
+            return format_response(200, 'success', 'delete_playbook succeeded', None)
         else:
-            return format_response(500, 'failed', f'playbook deletion failed with error {delete_playbook_configuration_response}', self.log)
+            return format_response(500, 'failed', f'delete_playbook failed with error {delete_playbook_configuration_response}', self.log)
         
     def get(self):
         if 'playbook_name' not in self.detail:
