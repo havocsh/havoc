@@ -114,7 +114,7 @@ resource "task" "c2_task" {
     task_name  = "c2_task_${local.function.date_stamp}"
 
     listener = {
-        listener_type = http_malleable
+        listener_type = "http_malleable"
         Profile       = "trevor.profile"
         Host          = "https://c2-${resource.random_string.random_6.result}.${variable.domain_name}:443"
         Port          = "443"
@@ -155,7 +155,7 @@ resource "task" "http_task" {
     task_name  = "http_task_${local.function.date_stamp}"
 
     listener = {
-        listener_type = https
+        listener_type = "https"
         Port = "443"
         tls = {
             cert_type = "self-signed"
