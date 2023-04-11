@@ -112,7 +112,7 @@ resource "aws_dynamodb_table_item" "metasploit_task_type" {
     "S": "${var.deployment_version}"
   },
   "capabilities": {
-    "SS": ${jsonencode(["list_exploits","list_payloads","list_jobs","list_sessions","set_exploit_module","set_exploit_options","set_exploit_target","set_payload_module","set_payload_options","show_exploit","show_exploit_options","show_exploit_option_info","show_exploit_targets","show_exploit_evasion","show_exploit_payloads","show_configured_exploit_options","show_exploit_requirements","show_missing_exploit_requirements","show_last_exploit_results","show_payload","show_payload_options","show_payload_option_info","show_configured_payload_options","show_payload_requirements","show_missing_payload_requirements","show_job_info","show_session_info","execute_exploit","generate_payload","run_session_command","run_session_shell_command","session_tabs","load_session_plugin","session_import_psh","session_run_psh_cmd","run_session_script","get_session_writeable_dir","session_read","detach_session","kill_session","kill_job","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
+    "SS": ${jsonencode(["list_exploits","list_payloads","list_jobs","list_sessions","setup_handler","set_exploit_module","set_exploit_options","set_exploit_target","set_payload_module","set_payload_options","show_exploit","show_exploit_options","show_exploit_option_info","show_exploit_targets","show_exploit_evasion","show_exploit_payloads","show_configured_exploit_options","show_exploit_requirements","show_missing_exploit_requirements","show_last_exploit_results","show_payload","show_payload_options","show_payload_option_info","show_configured_payload_options","show_payload_requirements","show_missing_payload_requirements","show_job_info","show_session_info","execute_exploit","generate_payload","run_session_command","run_session_shell_command","session_tabs","load_session_plugin","session_import_psh","session_run_psh_cmd","run_session_script","get_session_writeable_dir","session_read","detach_session","kill_session","kill_job","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
   },
   "source_image": {
     "S": "public.ecr.aws/havoc_sh/metasploit:${var.deployment_version}"
@@ -143,7 +143,7 @@ resource "aws_dynamodb_table_item" "powershell_empire_task_type" {
     "S": "${var.deployment_version}"
   },
   "capabilities": {
-    "SS": ${jsonencode(["get_listeners","get_listener_options","create_listener","kill_listener","kill_all_listeners","get_stagers","create_stager","get_agents","get_stale_agents","remove_agent","remove_stale_agents","agent_shell_command","get_task_id_list","get_shell_command_results","delete_shell_command_results","clear_queued_shell_commands","rename_agent","kill_agent","kill_all_agents","get_modules","search_modules","execute_module","get_stored_credentials","get_logged_events","cert_gen","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
+    "SS": ${jsonencode(["get_listeners","get_listener_options","setup_listener","create_listener","kill_listener","kill_all_listeners","get_stagers","create_stager","get_agents","get_stale_agents","remove_agent","remove_stale_agents","agent_shell_command","get_task_id_list","get_shell_command_results","delete_shell_command_results","clear_queued_shell_commands","rename_agent","kill_agent","kill_all_agents","get_modules","search_modules","execute_module","get_stored_credentials","get_logged_events","cert_gen","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
   },
   "source_image": {
     "S": "public.ecr.aws/havoc_sh/powershell_empire:${var.deployment_version}"
@@ -174,7 +174,7 @@ resource "aws_dynamodb_table_item" "http_server_task_type" {
     "S": "${var.deployment_version}"
   },
   "capabilities": {
-    "SS": ${jsonencode(["create_listener","kill_listener","cert_gen","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
+    "SS": ${jsonencode(["setup_listener","create_listener","kill_listener","cert_gen","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
   },
   "source_image": {
     "S": "public.ecr.aws/havoc_sh/http_server:${var.deployment_version}"
