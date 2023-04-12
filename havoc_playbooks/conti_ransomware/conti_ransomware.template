@@ -11,7 +11,7 @@ local "function" "date_stamp" {
 
 local "function" "stager_decode" {
     function_name       = "base64decode"
-    function_parameters = [resource.task.c2_task.listener.stager.Output]
+    function_parameters = [resource.task.c2_task.stager.Output]
 }
 
 variable "private_cidr" {
@@ -114,27 +114,29 @@ resource "task" "c2_task" {
     task_name  = "c2_task_${local.function.date_stamp}"
 
     listener = {
-        listener_type = "http_malleable"
-        Profile       = "trevor.profile"
-        Host          = "https://c2-${resource.random_string.random_6.result}.${variable.domain_name}:443"
-        Port          = "443"
-        CertPath      = "/opt/Empire/empire/server/data/"
-        StagingKey    = resource.random_string.random_32.result
-        JA3_Evasion   = "True"
+        http_malleable = {
+            Profile     = "trevor.profile"
+            Host        = "https://c2-${resource.random_string.random_6.result}.${variable.domain_name}:443"
+            Port        = "443"
+            CertPath    = "/opt/Empire/empire/server/data/"
+            StagingKey  = resource.random_string.random_32.result
+            JA3_Evasion = "True"
+        }
+        tls = {
+            cert_type = "self-signed"
+            cert_country = "US"
+            cert_state = "California"
+            cert_locale = "San Francisco"
+            cert_org = "Havoc Inc."
+            cert_org_unit = "IT Security"
+            cert_host = "local_ip"
+        }
         stager = {
+            Listener      = "http_malleable"
             StagerName    = "multi/launcher"
             Language      = "powershell"
             StagerRetries = "60"
             OutFile       = "launcher.ps1"
-        }
-        tls = {
-            cert_type     = "self-signed"
-            cert_country  = "US"
-            cert_state    = "California"
-            cert_locale   = "San Francisco"
-            cert_org      = "Havoc Inc."
-            cert_org_unit = "IT Security"
-            cert_host     = "local_ip"
         }
     }
 }
@@ -155,8 +157,9 @@ resource "task" "http_task" {
     task_name  = "http_task_${local.function.date_stamp}"
 
     listener = {
-        listener_type = "https"
-        Port = "443"
+        https = {
+            Port = "443"
+        }
         tls = {
             cert_type = "self-signed"
             cert_country = "US"
@@ -181,7 +184,7 @@ resource "listener" "http_listener" {
 }
 
 resource "file" "stager_upload" {
-    file_name     = resource.task.c2_task.listener.stager.OutFile
+    file_name     = resource.task.c2_task.stager.OutFile
     file_contents = local.function.stager_decode
 }
 
