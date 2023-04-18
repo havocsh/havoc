@@ -222,7 +222,7 @@ class Domain:
             return create_domain_cert_response
         
         # Wait a few seconds and then get the domain validation resource records from the certificate
-        t.sleep(5)
+        t.sleep(15)
         get_domain_validation_records_response = self.get_domain_validation_records()
         if get_domain_validation_records_response != 'domain_validation_records_requested':
             return get_domain_validation_records_response
