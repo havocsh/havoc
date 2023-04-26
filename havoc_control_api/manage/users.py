@@ -21,7 +21,7 @@ def format_response(status_code, result, message, log, **kwargs):
 def generate_string(length, punctuation=False):
     assert type(length) is int and length > 0, "length must be an int greater than zero"
     if punctuation:
-        id_characters = string.ascii_letters + string.digits + '~@#%^&*_-+=,.<>;:'
+        id_characters = string.ascii_letters + string.digits + '~@#^&*_-+=,.<>;:'
     else:
         id_characters = string.ascii_letters + string.digits
     rand_string = ''.join(random.choice(id_characters) for i in range(length))
