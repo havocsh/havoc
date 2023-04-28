@@ -1,5 +1,7 @@
 import re
 import json
+import random
+import string
 import botocore
 import boto3
 from datetime import datetime
@@ -176,9 +178,9 @@ class Task:
             return error
         return 'portgroup_entry_updated'
 
-    def upload_object(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time):
+    def upload_object(self, user_id, instruct_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time):
         payload = {
-            'instruct_user_id': instruct_user_id, 'instruct_instance': instruct_instance,
+            'instruct_user_id': user_id, 'instruct_id': instruct_id, 'instruct_instance': instruct_instance,
             'instruct_command': instruct_command, 'instruct_args': instruct_args, 'timestamp': timestamp,
             'end_time': end_time
         }
@@ -249,7 +251,7 @@ class Task:
             NetworkInterfaceIds=[interface_id],
         )
 
-    def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, task_host_name,
+    def add_task_entry(self, user_id, instruct_id, instruct_instance, instruct_command, instruct_args, task_host_name,
                        task_domain_name, public_ip, portgroups, ecs_task_id, timestamp, end_time):
         task_status = 'starting'
         local_ip = ['None']
@@ -271,8 +273,10 @@ class Task:
                                 'local_ip=:local_ip, '
                                 'portgroups=:portgroups, '
                                 'listeners=:listeners, '
+                                'instruct_ids=:instruct_ids, '
                                 'instruct_instances=:instruct_instances, '
                                 'last_instruct_user_id=:last_instruct_user_id, '
+                                'last_instruct_id=:last_instruct_id, '
                                 'last_instruct_instance=:last_instruct_instance, '
                                 'last_instruct_command=:last_instruct_command, '
                                 'last_instruct_args=:last_instruct_args, '
@@ -292,8 +296,10 @@ class Task:
                     ':local_ip': {'SS': local_ip},
                     ':portgroups': {'SS': portgroups},
                     ':listeners': {'SS': listeners},
+                    ':instruct_ids': {'SS': [instruct_id]},
                     ':instruct_instances': {'SS': [instruct_instance]},
-                    ':last_instruct_user_id': {'S': instruct_user_id},
+                    ':last_instruct_user_id': {'S': user_id},
+                    ':last_instruct_id': {'S': instruct_id},
                     ':last_instruct_instance': {'S': instruct_instance},
                     ':last_instruct_command': {'S': instruct_command},
                     ':last_instruct_args': {'M': instruct_args},
@@ -423,6 +429,7 @@ class Task:
 
         # Send Initialize command to the task
         instruct_user_id = 'None'
+        instruct_id = ''.join(random.choice(string.ascii_letters) for i in range(6))
         instruct_instance = 'None'
         instruct_command = 'Initialize'
         instruct_args = {'no_args': 'True'}
@@ -432,7 +439,7 @@ class Task:
             end_time = 'None'
         timestamp = datetime.now().strftime('%s')
         upload_object_response = self.upload_object(
-            instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time)
+            instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time)
         if upload_object_response != 'object_uploaded':
             return format_response(500, 'failed', f'run_task failed with error {upload_object_response}', self.log)
 
@@ -457,10 +464,11 @@ class Task:
 
         # Add task entry to tasks table in DynamoDB
         instruct_args_fixup = {'no_args': {'S': 'True'}}
-        add_task_entry_response = self.add_task_entry(instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, 
-            task_host_name, task_domain_name, public_ip, portgroups, ecs_task_id, timestamp, end_time)
+        add_task_entry_response = self.add_task_entry(instruct_user_id, instruct_id, instruct_instance, instruct_command,
+                                                      instruct_args_fixup, task_host_name, task_domain_name, public_ip, portgroups,
+                                                      ecs_task_id, timestamp, end_time)
         if add_task_entry_response != 'task_entry_added':
             return format_response(500, 'failed', f'run_task failed with error {add_task_entry_response}', self.log)
 
         # Send response
-        return format_response(200, 'success', 'execute task succeeded', None, public_ip=public_ip)
+        return format_response(200, 'success', 'execute task succeeded', None, public_ip=public_ip, instruct_id=instruct_id)

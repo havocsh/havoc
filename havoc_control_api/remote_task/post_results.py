@@ -41,7 +41,7 @@ class Deliver:
             self.__aws_dynamodb_client = boto3.client('dynamodb', region_name=self.region)
         return self.__aws_dynamodb_client
 
-    def add_queue_attribute(self, stime, expire_time, task_instruct_instance, task_instruct_command,
+    def add_queue_attribute(self, stime, expire_time, task_instruct_id, task_instruct_instance, task_instruct_command,
                             task_instruct_args, task_public_ip, task_local_ip, json_payload):
         task_host_name = 'None'
         task_domain_name = 'None'
@@ -58,6 +58,7 @@ class Deliver:
                                 'task_context=:task_context, '
                                 'task_type=:task_type, '
                                 'task_version=:task_version, '
+                                'instruct_id=:instruct_id, '
                                 'instruct_instance=:instruct_instance, '
                                 'instruct_command=:instruct_command, '
                                 'instruct_args=:instruct_args, '
@@ -72,6 +73,7 @@ class Deliver:
                     ':task_context': {'S': self.task_context},
                     ':task_type': {'S': self.task_type},
                     ':task_version': {'S': self.task_version},
+                    ':instruct_id': {'S': task_instruct_id},
                     ':instruct_instance': {'S': task_instruct_instance},
                     ':instruct_command': {'S': task_instruct_command},
                     ':instruct_args': {'M': task_instruct_args},
@@ -131,8 +133,8 @@ class Deliver:
         # Set vars
         results_reqs = [
             'instruct_command_output', 'user_id', 'task_name', 'task_context', 'task_type', 'task_version',
-            'instruct_user_id', 'instruct_instance', 'instruct_command', 'instruct_args', 'public_ip', 'local_ip',
-            'end_time', 'forward_log', 'timestamp'
+            'instruct_user_id', 'instruct_id', 'instruct_instance', 'instruct_command', 'instruct_args', 'public_ip',
+            'local_ip', 'end_time', 'forward_log', 'timestamp'
         ]
         for i in results_reqs:
             if i not in self.results:
@@ -142,6 +144,7 @@ class Deliver:
         self.task_context = self.results['task_context']
         self.task_type = self.results['task_type']
         self.task_version = self.results['task_version']
+        task_instruct_id = self.results['instruct_id']
         task_instruct_instance = self.results['instruct_instance']
         task_instruct_command = self.results['instruct_command']
         task_instruct_args = self.results['instruct_args']
@@ -180,6 +183,7 @@ class Deliver:
         del db_payload['task_type']
         del db_payload['task_version']
         del db_payload['task_context']
+        del db_payload['instruct_id']
         del db_payload['instruct_instance']
         del db_payload['instruct_command']
         del db_payload['instruct_args']
@@ -198,9 +202,10 @@ class Deliver:
                 task_instruct_args_fixup[k] = {'BOOL': v}
             if isinstance(v, bytes):
                 task_instruct_args_fixup[k] = {'B': v}
-        add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, task_instruct_instance, 
-                                            task_instruct_command, task_instruct_args_fixup, task_public_ip, 
-                                            task_local_ip, json_payload)
+        add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, task_instruct_id,
+                                                                task_instruct_instance, task_instruct_command,
+                                                                task_instruct_args_fixup, task_public_ip, 
+                                                                task_local_ip, json_payload)
         if add_queue_attribute_response != 'queue_attribute_added':
             return format_response(500, 'failed', f'post_results failed with error {add_queue_attribute_response}', self.log)
         if task_instruct_command == 'terminate':

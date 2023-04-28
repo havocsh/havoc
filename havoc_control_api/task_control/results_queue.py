@@ -102,6 +102,7 @@ class Queue:
                 public_ip = item['public_ip']['S']
                 local_ip = item['local_ip']['SS']
                 instruct_user_id = item['user_id']['S']
+                instruct_id = item['instruct_id']['S']
                 instruct_instance = item['instruct_instance']['S']
                 instruct_command = item['instruct_command']['S']
                 instruct_args = item['instruct_args']['M']
@@ -127,6 +128,7 @@ class Queue:
                     'task_public_ip': public_ip,
                     'task_local_ip': local_ip,
                     'instruct_user_id': instruct_user_id,
+                    'instruct_id': instruct_id,
                     'instruct_instance': instruct_instance,
                     'instruct_command': instruct_command,
                     'instruct_args': instruct_args_fixup,

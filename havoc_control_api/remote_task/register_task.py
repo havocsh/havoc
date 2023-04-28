@@ -1,4 +1,6 @@
 import json
+import random
+import string
 import botocore
 import boto3
 from datetime import datetime
@@ -76,9 +78,9 @@ class Task:
             }
         )
 
-    def upload_object(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time):
+    def upload_object(self, user_id, instruct_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time):
         payload = {
-            'instruct_user_id': instruct_user_id, 'instruct_instance': instruct_instance,
+            'instruct_user_id': user_id, 'instruct_id': instruct_id, 'instruct_instance': instruct_instance,
             'instruct_command': instruct_command, 'instruct_args': instruct_args, 'timestamp': timestamp,
             'end_time': end_time
         }
@@ -95,7 +97,7 @@ class Task:
             return error
         return 'object_uploaded'
 
-    def add_task_entry(self, instruct_user_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
+    def add_task_entry(self, user_id, instruct_id, instruct_instance, instruct_command, instruct_args, public_ip, local_ip,
                        timestamp, end_time):
         task_status = 'starting'
         task_host_name = 'None'
@@ -120,8 +122,10 @@ class Task:
                                 'listeners=:listeners, '
                                 'task_type=:task_type, '
                                 'task_version=:task_version, '
+                                'instruct_ids=:instruct_ids, '
                                 'instruct_instances=:instruct_instances, '
                                 'last_instruct_user_id=:last_instruct_user_id, '
+                                'last_instruct_id=:last_instruct_id, '
                                 'last_instruct_instance=:last_instruct_instance, '
                                 'last_instruct_command=:last_instruct_command, '
                                 'last_instruct_args=:last_instruct_args, '
@@ -141,8 +145,10 @@ class Task:
                     ':listeners': {'SS': listeners},
                     ':task_type': {'S': self.task_type},
                     ':task_version': {'S': self.task_version},
+                    ':instruct_ids': {'SS': [instruct_id]},
                     ':instruct_instances': {'SS': [instruct_instance]},
-                    ':last_instruct_user_id': {'S': instruct_user_id},
+                    ':last_instruct_user_id': {'S': user_id},
+                    ':last_instruct_id': {'S': instruct_id},
                     ':last_instruct_instance': {'S': instruct_instance},
                     ':last_instruct_command': {'S': instruct_command},
                     ':last_instruct_args': {'M': instruct_args},
@@ -161,6 +167,7 @@ class Task:
 
     def registration(self):
         instruct_user_id = 'None'
+        instruct_id = ''.join(random.choice(string.ascii_letters) for i in range(6))
         instruct_instance = 'None'
         instruct_command = 'Initialize'
         instruct_args = {'no_args': 'True'}
@@ -213,7 +220,7 @@ class Task:
 
         timestamp = datetime.now().strftime('%s')
         upload_object_response = self.upload_object(
-            instruct_user_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time
+            instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args, timestamp, end_time
         )
         if upload_object_response != 'object_uploaded':
             return format_response(500, 'failed', f'register_task failed with error {upload_object_response}', self.log)
@@ -221,11 +228,11 @@ class Task:
         instruct_args_fixup = {'no_args': {'S': 'True'}}
         # Add task entry to tasks table in DynamoDB
         add_task_entry_response = self.add_task_entry(
-            instruct_user_id, instruct_instance, instruct_command, instruct_args_fixup, public_ip, local_ip,
+            instruct_user_id, instruct_id, instruct_instance, instruct_command, instruct_args_fixup, public_ip, local_ip, 
             timestamp, end_time
         )
         if add_task_entry_response != 'task_entry_added':
             return format_response(500, 'failed', f'register_task failed with error {add_task_entry_response}', self.log)
 
         # Send response
-        return format_response(200, 'success', 'register_task succeeded', None)
+        return format_response(200, 'success', 'register_task succeeded', None, instruct_id=instruct_id)

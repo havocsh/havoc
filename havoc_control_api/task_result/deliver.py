@@ -92,8 +92,8 @@ class Deliver:
             return error
         return 'resource_record_set_deleted'
 
-    def add_queue_attribute(self, stime, expire_time, task_instruct_instance, task_instruct_command, task_instruct_args,
-                            task_host_name, task_domain_name, task_public_ip, task_local_ip, json_payload):
+    def add_queue_attribute(self, stime, expire_time, task_instruct_id, task_instruct_instance, task_instruct_command,
+                            task_instruct_args, task_host_name, task_domain_name, task_public_ip, task_local_ip, json_payload):
         try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-task-queue',
@@ -107,6 +107,7 @@ class Deliver:
                                 'task_context=:task_context, '
                                 'task_type=:task_type, '
                                 'task_version=:task_version, '
+                                'instruct_id=:instruct_id, '
                                 'instruct_instance=:instruct_instance, '
                                 'instruct_command=:instruct_command, '
                                 'instruct_args=:instruct_args, '
@@ -121,6 +122,7 @@ class Deliver:
                     ':task_context': {'S': self.task_context},
                     ':task_type': {'S': self.task_type},
                     ':task_version': {'S': self.task_version},
+                    ':instruct_id': {'S': task_instruct_id},
                     ':instruct_instance': {'S': task_instruct_instance},
                     ':instruct_command': {'S': task_instruct_command},
                     ':instruct_args': {'M': task_instruct_args},
@@ -211,6 +213,7 @@ class Deliver:
         self.task_context = payload['task_context']
         self.task_type = payload['task_type']
         self.task_version = payload['task_version']
+        task_instruct_id = payload['instruct_id']
         task_instruct_instance = payload['instruct_instance']
         task_instruct_command = payload['instruct_command']
         task_instruct_args = payload['instruct_args']
@@ -245,6 +248,7 @@ class Deliver:
         del db_payload['task_type']
         del db_payload['task_version']
         del db_payload['task_context']
+        del db_payload['instruct_id']
         del db_payload['instruct_instance']
         del db_payload['instruct_command']
         del db_payload['instruct_args']
@@ -304,8 +308,9 @@ class Deliver:
                 print(f'Error updating task entry: {completed_instruction}')
 
         if completed_instruction:
-            add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, task_instruct_instance, task_instruct_command,
-                                 task_instruct_args_fixup, task_host_name, task_domain_name, task_public_ip, task_local_ip, json_payload)
+            add_queue_attribute_response = self.add_queue_attribute(stime, expiration_stime, task_instruct_id, task_instruct_instance,
+                                                                    task_instruct_command, task_instruct_args_fixup, task_host_name,
+                                                                    task_domain_name, task_public_ip, task_local_ip, json_payload)
             if add_queue_attribute_response != 'queue_attribute_added':
                 print(f'Error adding queue attribute: {add_queue_attribute_response}')
 

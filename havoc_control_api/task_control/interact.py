@@ -1,4 +1,6 @@
 import json
+import random
+import string
 import botocore
 import boto3
 
@@ -61,7 +63,7 @@ class Task:
             }
         )
 
-    def set_task_busy(self, instruct_instances, instruct_instance, instruct_command, instruct_args, timestamp):
+    def set_task_busy(self, i_ids, i_id, instances, instance, command, args, timestamp):
         task_status = 'busy'
         try:
             self.aws_dynamodb_client.update_item(
@@ -69,18 +71,24 @@ class Task:
                 Key={
                     'task_name': {'S': self.task_name}
                 },
-                UpdateExpression='set task_status=:task_status, instruct_instances=:instruct_instances, '
+                UpdateExpression='set task_status=:task_status, '
+                                'instruct_ids="instruct_ids, '
+                                'instruct_instances=:instruct_instances, '
                                 'last_instruct_user_id=:last_instruct_user_id, '
+                                'last_instruct_id=:last_instruct_id, '
                                 'last_instruct_instance=:last_instruct_instance, '
-                                'last_instruct_command=:last_instruct_command, last_instruct_args=:last_instruct_args, '
+                                'last_instruct_command=:last_instruct_command, '
+                                'last_instruct_args=:last_instruct_args, '
                                 'last_instruct_time=:last_instruct_time',
                 ExpressionAttributeValues={
                     ':task_status': {'S': task_status},
-                    ':instruct_instances': {'SS': instruct_instances},
+                    ':instruct_ids': {'SS': i_ids},
+                    ':instruct_instances': {'SS': instances},
                     ':last_instruct_user_id': {'S': self.user_id},
-                    ':last_instruct_instance': {'S': instruct_instance},
-                    ':last_instruct_command': {'S': instruct_command},
-                    ':last_instruct_args': {'M': instruct_args},
+                    ':last_instruct_id': {'S': i_id},
+                    ':last_instruct_instance': {'S': instance},
+                    ':last_instruct_command': {'S': command},
+                    ':last_instruct_args': {'M': args},
                     ':last_instruct_time': {'S': timestamp}
                 }
             )
@@ -90,9 +98,9 @@ class Task:
             return error
         return 'task_set_as_busy'
 
-    def upload_object(self, instruct_instance, instruct_command, instruct_args, end_time, timestamp):
+    def upload_object(self, instruct_id, instruct_instance, instruct_command, instruct_args, end_time, timestamp):
         payload = {
-            'instruct_user_id': self.user_id, 'instruct_instance': instruct_instance,
+            'instruct_user_id': self.user_id, 'instruct_id': instruct_id, 'instruct_instance': instruct_instance,
             'instruct_command': instruct_command, 'instruct_args': instruct_args, 'timestamp': timestamp,
             'end_time': end_time
         }
@@ -150,6 +158,13 @@ class Task:
         if task_entry['Item']['task_status']['S'] == 'terminated':
             return format_response(409, 'failed', f'task {self.task_name} no longer running', self.log)
 
+        # Add new instruct_id to instruct_ids list
+        instruct_id = ''.join(random.choice(string.ascii_letters) for i in range(6))
+        instruct_ids = task_entry['Item']['instruct_ids']['SS']
+        if instruct_ids[0] == 'None':
+            instruct_ids.clear()
+        instruct_ids.append(instruct_id)
+        
         # Add new instruct_instance to instruct_instances list
         instruct_instances = task_entry['Item']['instruct_instances']['SS']
         if instruct_instances[0] == 'None':
@@ -170,12 +185,14 @@ class Task:
                 instruct_args_fixup[k] = {'B': f'{v}'}
 
         # Set task to busy and send instructions to the task
-        set_task_busy_response = self.set_task_busy(instruct_instances, instruct_instance, instruct_command, instruct_args_fixup, timestamp)
+        set_task_busy_response = self.set_task_busy(
+            instruct_ids, instruct_id, instruct_instances, instruct_instance, instruct_command, instruct_args_fixup, timestamp
+        )
         if set_task_busy_response != 'task_set_as_busy':
             return format_response(500, 'failed', f'interact failed with error {set_task_busy_response}', self.log)
-        upload_object_response = self.upload_object(instruct_instance, instruct_command, instruct_args, end_time, timestamp)
+        upload_object_response = self.upload_object(instruct_id, instruct_instance, instruct_command, instruct_args, end_time, timestamp)
         if upload_object_response != 'object_uploaded':
             return format_response(500, 'failed', f'interact failed with error {upload_object_response}', self.log)
 
         # Send response
-        return format_response(200, 'success', f'interact with {self.task_name} succeeded', None)
+        return format_response(200, 'success', f'interact with {self.task_name} succeeded', None, instruct_id=instruct_id)
