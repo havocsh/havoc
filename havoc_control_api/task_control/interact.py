@@ -72,7 +72,7 @@ class Task:
                     'task_name': {'S': self.task_name}
                 },
                 UpdateExpression='set task_status=:task_status, '
-                                'instruct_ids="instruct_ids, '
+                                'instruct_ids=:instruct_ids, '
                                 'instruct_instances=:instruct_instances, '
                                 'last_instruct_user_id=:last_instruct_user_id, '
                                 'last_instruct_id=:last_instruct_id, '
