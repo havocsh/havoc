@@ -68,7 +68,7 @@ if __name__ == "__main__":
         havoc_cmd = havoc_cli.HavocCMD()
         havoc_cmd.cmdloop()
     
-    if init_args.profile and not init_args.deployment and not init_args.playbook_config:
+    if init_args.profile and not init_args.deployment and not init_args.playbook:
         if init_args.profile not in ['add', 'remove', 'list']:
             import havoc_cli
             havoc_cmd = havoc_cli.HavocCMD()
