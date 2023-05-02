@@ -11,7 +11,7 @@ def list_profiles():
     print('\nProfiles:')
     for section in havoc_profiles.sections():
         deployment_name = havoc_profiles[section]['DEPLOYMENT_NAME']
-        api_key = havoc_profiles[section['API_KEY']]
+        api_key = havoc_profiles[section]['API_KEY']
         print(f'  {section}\n')
         print(f'  - Deployment name: {deployment_name}\n')
         print(f'  - API key: {api_key}\n')
