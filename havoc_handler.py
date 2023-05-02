@@ -17,10 +17,7 @@ tf_version = config.get('version', 'tf_version')
 
 init_parser = argparse.ArgumentParser(description='./HAVOC deployment script')
 
-init_parser.add_argument('--add_profile', help='Add a profile to your local .havoc/profiles file.')
-init_parser.add_argument('--remove_profile', help='Remove a profile from your local .havoc/profiles file.')
-init_parser.add_argument('--list_profiles', help='List the profiles in your local .havoc/profiles file.')
-init_parser.add_argument('--profile', help='Specify a profile to use when launching the ./HAVOC CLI.')
+init_parser.add_argument('--profile', help='Manage profiles for the ./HAVOC CLI and other utilities.')
 init_parser.add_argument('--deployment', help='Manage your ./HAVOC deployment (create|modify|update|remove|get_deployment|connect_tf_backend|disconnect_tf_backend).')
 init_parser.add_argument('--playbook', help='Configure a ./HAVOC playbook.')
 init_parser.add_argument('--run_script', help='Run a local ./HAVOC script.')
@@ -72,26 +69,27 @@ if __name__ == "__main__":
         havoc_cmd.cmdloop()
     
     if init_args.profile and not init_args.deployment and not init_args.playbook_config:
-        import havoc_cli
-        havoc_cmd = havoc_cli.HavocCMD()
-        havoc_cmd.profile = init_args.profile
-        havoc_cmd.cmdloop()
+        if init_args.profile not in ['add', 'remove', 'list']:
+            import havoc_cli
+            havoc_cmd = havoc_cli.HavocCMD()
+            havoc_cmd.profile = init_args.profile
+            havoc_cmd.cmdloop()
     
-    if init_args.add_profile:
+    if init_args.profile == 'add':
         profile_task = havoc_profile.add_profile('add')
         if profile_task == 'completed':
             print('\nProfile task completed successfully.\n')
         else:
             print('\nProfile task failed.\n')
     
-    if init_args.remove_profile:
+    if init_args.profile == 'remove':
         profile_task = havoc_profile.remove_profile('remove')
         if profile_task == 'completed':
             print('\nProfile task completed successfully.\n')
         else:
             print('\nProfile task failed.\n')
     
-    if init_args.list_profiles:
+    if init_args.profile == 'list':
         profile_task = havoc_profile.list_profiles()
         if profile_task == 'completed':
             print('\nProfile task completed successfully.\n')
@@ -164,7 +162,7 @@ if __name__ == "__main__":
             script = f'havoc_scripts/{init_args.run_script}/{init_args.run_script}.py'
             if init_args.profile:
                 profile = init_args.profile
-                subprocess.run(['./venv/bin/python3', script, f'--profile= {profile}'])
+                subprocess.run(['./venv/bin/python3', script, f'--profile {profile}'])
             else:
                 subprocess.run(['./venv/bin/python3', script])
             print('\nScript task completed.')
