@@ -11,21 +11,38 @@ if [ ${SUDO_USER} ]; then
     exit 1
 fi
 
-if [ ! -d ./venv ]; then
-    echo "Creating Python virtual environment."
-    python3 -m venv ./venv
-fi
-python3_bin=./venv/bin/python3
-pip_bin=./venv/bin/pip3
-
 git_bin=$(which git)
 if [ ! "${git_bin}" ]; then
     echo "Could not find git. Please install git before continuing."
     exit
 fi
 
-# Check for install or update request and pull latest version info
-if [[ ${@} =~ "--deployment create" ]] || [[ ${@} =~ "--deployment update" ]]; then
+if [ ! -d ./venv ]; then
+    echo "Creating Python virtual environment."
+    python3 -m venv ./venv
+    echo " - Installing requirements."
+    ./venv/bin/pip3 --disable-pip-version-check install -q -r requirements.txt
+    echo " - Getting ./HAVOC version info."
+    requested_version=$(grep "requested_version = " .havoc/havoc.cfg | awk '{ print $NF }')
+    deployment_version=$(curl -s http://releases.havoc.sh/${requested_version}.html)
+    if [ -z "${deployment_version}" ]; then
+        echo "Reqested version not found."
+        exit
+    fi
+    perl -pi -e "s/deployment_version = .*/deployment_version = ${deployment_version}/g" .havoc/havoc.cfg
+    echo " - Installing the ./HAVOC module."
+    ./venv/bin/pip3 --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}"
+    current_git_branch=$(${git_bin} status | awk 'FNR == 1 { print $3 }')
+    target_git_branch=$(${git_bin} branch --contains tags/${deployment_version} | awk '{ print $NF }')
+    if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
+        ${git_bin} checkout ${target_git_branch}
+    fi  
+fi
+python3_bin=./venv/bin/python3
+pip_bin=./venv/bin/pip3
+
+# Check for update request and pull latest version info
+if [[ ${@} =~ "--deployment update" ]]; then
     echo "Deployment operation:"
     echo " - Getting ./HAVOC version info."
     requested_version=$(grep "requested_version = " .havoc/havoc.cfg | awk '{ print $NF }')
@@ -37,30 +54,16 @@ if [[ ${@} =~ "--deployment create" ]] || [[ ${@} =~ "--deployment update" ]]; t
     perl -pi -e "s/deployment_version = .*/deployment_version = ${deployment_version}/g" .havoc/havoc.cfg
 fi
 
-# Check for install request and if so, install requirements and pull ./HAVOC module
-if [[ ${@} =~ "--deployment create" ]]; then
-    echo " - Deploying version ${deployment_version}."
-    echo " - Installing requirements."
-    ${pip_bin} --disable-pip-version-check install -q -r requirements.txt
-    echo " - Installing the ./HAVOC module."
-    ${pip_bin} --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}"
-    current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
-    target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
-    if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
-        git checkout ${target_git_branch}
-    fi  
-fi
-
 # Check for update request and pull latest commits plus attempt to upgrade ./HAVOC module
 if [[ ${@} =~ "--deployment update" ]]; then
     echo " - Applying updates for version ${deployment_version}."
     echo " - Updating local files."
     havoc_orig_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
-    git pull > /dev/null 2>&1
-    current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
-    target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
+    ${git_bin} pull > /dev/null 2>&1
+    current_git_branch=$(${git_bin} status | awk 'FNR == 1 { print $3 }')
+    target_git_branch=$(${git_bin} branch --contains tags/${deployment_version} | awk '{ print $NF }')
     if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
-        git checkout ${target_git_branch}
+        ${git_bin} checkout ${target_git_branch}
     fi
     havoc_new_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
     if [[ ! ${havoc_orig_hash} == ${havoc_new_hash} ]]; then
