@@ -198,11 +198,11 @@ class Deliver:
         # Set vars
         payload = None
         try:
-            payload = json.loads(self.results[0]['message'])
+            payload = json.loads(self.results['message'])
         except:
             pass
         if not payload:
-            raw = re.search('\d+-\d+-\d+ \d+:\d+:\d+\+\d+ \[-\] ({.+})', self.results[0]['message']).group(1)
+            raw = re.search('\d+-\d+-\d+ \d+:\d+:\d+\+\d+ \[-\] ({.+})', self.results['message']).group(1)
             payload = ast.literal_eval(raw)
 
         if payload['instruct_user_id'] == 'None':

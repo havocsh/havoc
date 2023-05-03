@@ -15,5 +15,6 @@ def lambda_handler(event, context):
     data = json.loads(raw.decode('utf-8'))
     log_events = data['logEvents']
 
-    d = Deliver(region, deployment_name, results_queue_expiration, log_events)
-    d.deliver_result()
+    for event in log_events:
+        d = Deliver(region, deployment_name, results_queue_expiration, event)
+        d.deliver_result()
