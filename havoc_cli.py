@@ -664,7 +664,7 @@ class HavocCMD(Cmd):
         print('\n--instruct_command=<string> - (optional) the command to retrieve results for')
 
     def do_wait_for_c2(self, inp):
-        args = {'task_name': ''}
+        args = {'task_name': '', 'time_skew': ''}
         command_args = convert_input(args, inp)
         try:
             wait_for_c2_response = self.havoc_client.wait_for_c2(**command_args)
@@ -675,6 +675,7 @@ class HavocCMD(Cmd):
     def help_wait_for_c2(self):
         print('\nWait for a task to receive a C2 agent or session connection.')
         print('\n--task_name=<string> - (required) the name of the task that the C2 agent or session will to connect to')
+        print('\n--time_skew=<string> - (optional) the number of minutes to skew the time window by - defaults to 2')
         print('Note - press Ctrl-C to cancel the wait_for_c2 operation.')
 
     def do_wait_for_idle_task(self, inp):
