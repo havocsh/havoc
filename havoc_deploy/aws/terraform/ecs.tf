@@ -51,8 +51,8 @@ resource "aws_ecs_task_definition" "metasploit" {
   network_mode             = "awsvpc"
   container_definitions    = data.template_file.metasploit_task_definition.rendered
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 1024
-  memory                   = 4096
+  cpu                      = 2048
+  memory                   = 8192
   tags                     = {
     deployment_name    = var.deployment_name
     name               = "metasploit"
