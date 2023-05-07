@@ -1,5 +1,5 @@
 cmd2
 boto3
 botocore
-requests
+requests==2.25.0
 python-hcl2
