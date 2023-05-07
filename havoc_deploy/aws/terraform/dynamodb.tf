@@ -267,7 +267,7 @@ resource "aws_dynamodb_table_item" "remote_operator_task_type" {
     "S": "${var.deployment_version}"
   },
   "capabilities": {
-    "SS": ${jsonencode(["task_execute_command","task_get_command_output","task_kill_command","task_download_file","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
+    "SS": ${jsonencode(["task_execute_command","task_get_command_output","task_kill_command","task_download_file","task_create_file","task_delete_file","echo","sync_from_workspace","sync_to_workspace","upload_to_workspace","download_from_workspace","ls","del","terminate"])}
   },
   "source_image": {
     "S": "None"
