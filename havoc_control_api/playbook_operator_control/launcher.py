@@ -176,9 +176,12 @@ class Playbook:
     def launch(self):
 
         playbook_entry = self.get_playbook_entry()
-        if not playbook_entry:
+        if 'Item' not in playbook_entry:
             return format_response(404, 'failed', f'playbook {self.playbook_name} does not exist', self.log)
 
+        if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
+            return format_response(404, 'failed', f'playbook {self.playbook_name} is already running', self.log)
+        
         self.playbook_type = playbook_entry['Item']['playbook_type']['S']
         playbook_timeout = int(playbook_entry['Item']['playbook_timeout']['N'])
         config_pointer = playbook_entry['Item']['config_pointer']['S']
