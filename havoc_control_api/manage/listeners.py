@@ -432,7 +432,8 @@ class Listener:
     def create_listener(self, listener_config):
         # Validate inputs
         https_listener = None
-        for listener_port, listener_type in listener_config.items():
+        for listener_port in listener_config:
+            listener_type = listener_config[listener_port]['listener_type']
             if listener_type not in ['HTTP', 'HTTPS']:
                 return 'failed_listener_type_not_supported'
             if listener_type == 'HTTPS' and (self.domain_name is None or self.host_name is None):
