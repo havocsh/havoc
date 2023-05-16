@@ -75,36 +75,23 @@ resource "random_string" "random_32" {
   punctuation = false
 }
 
-resource "portgroup" "c2_portgroup" {
-    portgroup_name        = "c2_portgroup_${local.function.date_stamp}"
-    portgroup_description = "c2_portgroup_${local.function.date_stamp}"
+resource "portgroup" "portgroup" {
+    portgroup_name        = "portgroup_${local.function.date_stamp}"
+    portgroup_description = "portgroup_${local.function.date_stamp}"
 }
 
-resource "portgroup_rule" "c2_portgroup_initial_access_task" {
-    portgroup_name   = resource.portgroup.c2_portgroup.portgroup_name
+resource "portgroup_rule" "initial_access_task" {
+    portgroup_name   = resource.portgroup.portgroup.portgroup_name
     portgroup_action = "add"
     ip_ranges        = "${data.tasks.initial_access_task.public_ip}/32"
     port             = "443"
     ip_protocol      = "tcp"
 }
 
-resource "portgroup_rule" "c2_portgroup_lateral_movement_task" {
-    portgroup_name   = resource.portgroup.c2_portgroup.portgroup_name
+resource "portgroup_rule" "lateral_movement_task" {
+    portgroup_name   = resource.portgroup.portgroup.portgroup_name
     portgroup_action = "add"
     ip_ranges        = "${data.tasks.lateral_movement_task.public_ip}/32"
-    port             = "443"
-    ip_protocol      = "tcp"
-}
-
-resource "portgroup" "http_portgroup" {
-    portgroup_name        = "http_portgroup_${local.function.date_stamp}"
-    portgroup_description = "http_portgroup_${local.function.date_stamp}"
-}
-
-resource "portgroup_rule" "http_portgroup_initial_access_task" {
-    portgroup_name   = resource.portgroup.http_portgroup.portgroup_name
-    portgroup_action = "add"
-    ip_ranges        = "${data.tasks.initial_access_task.public_ip}/32"
     port             = "443"
     ip_protocol      = "tcp"
 }
@@ -146,13 +133,17 @@ resource "task" "c2_task" {
 
 resource "listener" "c2_listener" {
     listener_name = "c2_listener_${local.function.date_stamp}"
-    listener_type = "HTTPS"
-    listener_port = "443"
     task_name     = resource.task.c2_task.task_name
-    portgroups    = [resource.portgroup.c2_portgroup.portgroup_name]
+    portgroups    = [resource.portgroup.portgroup.portgroup_name]
     host_name     = "c2-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
-    depends_on    = [resource.portgroup_rule.c2_portgroup_initial_access_task.portgroup_name,resource.portgroup_rule.c2_portgroup_lateral_movement_task.portgroup_name]
+    depends_on    = [resource.portgroup_rule.initial_access_task.portgroup_name,resource.portgroup_rule.lateral_movement_task.portgroup_name]
+
+    listener_config = {
+        443 = {
+            listener_type = "HTTPS"
+        }
+    }
 }
 
 resource "task" "http_task" {
@@ -178,13 +169,17 @@ resource "task" "http_task" {
 
 resource "listener" "http_listener" {
     listener_name = "http_listener_${local.function.date_stamp}"
-    listener_type = "HTTPS"
-    listener_port = "443"
     task_name     = resource.task.http_task.task_name
-    portgroups    = [resource.portgroup.http_portgroup.portgroup_name]
+    portgroups    = [resource.portgroup.portgroup.portgroup_name]
     host_name     = "downloads-${resource.random_string.random_6.result}"
     domain_name   = variable.domain_name
-    depends_on    = resource.portgroup_rule.http_portgroup_initial_access_task.portgroup_name
+    depends_on    = [resource.portgroup_rule.initial_access_task.portgroup_name,resource.portgroup_rule.lateral_movement_task.portgroup_name]
+
+    listener_config = {
+        443 = {
+            listener_type = "HTTPS"
+        }
+    }
 }
 
 resource "file" "stager_upload" {
