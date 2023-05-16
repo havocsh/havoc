@@ -545,8 +545,8 @@ class HavocCMD(Cmd):
         print('\n--listener_name=<string> - (required) the name of the listener to retrieve details for')
 
     def do_create_listener(self, inp):
-        args = {'listener_name': '', 'listener_type': '', 'listener_port': '', 'task_name': '', 'portgroups': '',
-                'host_name': '', 'domain_name': ''}
+        args = {'listener_name': '', 'listener_config': '', 'task_name': '', 'portgroups': '', 'host_name': '',
+                'domain_name': ''}
         command_args = convert_input(args, inp)
         create_listener_response = self.havoc_client.create_listener(**command_args)
         format_output('create_listener', create_listener_response)
@@ -554,8 +554,8 @@ class HavocCMD(Cmd):
     def help_create_listener(self):
         print('\nCreate a new listener with the given parameters.')
         print('\n--listener_name=<string> - (required) the listener name associated with the listener to be created')
-        print('\n--listener_type=<string> - (required) the type of listener to create (can be HTTP or HTTPS)')
-        print('\n--listener_port=<integer> - (required) the port number to listen on')
+        print('\n--listener_config=<dict> - (required) a nested dictionary containing port numbers as primary keys and listener_type key/value (value can be HTTP or HTTPS) nested under each primary key')
+        print('\n  Example: --listener_config={80: {"listener_type": "HTTP"}, 443: {"listener_type": "HTTPS"}}')
         print('\n--task_name=<string> - (required) the task to forward listener traffic to')
         print('\n--portgroups=<string> - (required) the portgroups to assign to the listener')
         print('\n--host_name=<string> - (optional) if using an FQDN, specify the host name to be set in DNS')
