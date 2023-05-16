@@ -241,10 +241,10 @@ class Listener:
         listener_type = self.listener_config[port]['listener_type']
         target_group_arn = self.listener_config[port]['target_group_arn']
         lb_listener_args = {'LoadBalancerArn': self.load_balancer_arn, 'Protocol': listener_type, 'Port': int(port)}
+        lb_listener_args['DefaultActions'] = [{'TargetGroupArn': target_group_arn, 'Type': 'forward'}]
         if listener_type == 'HTTPS':
             lb_listener_args['SslPolicy'] = 'ELBSecurityPolicy-2016-08'
             lb_listener_args['Certificates'] = [{'CertificateArn': self.certificate_arn}]
-            lb_listener_args['DefaultActions'] = [{'TargetGroupArn': target_group_arn, 'Type': 'forward'}]
         try:
             response = self.aws_elbv2_client.create_listener(**lb_listener_args)
         except botocore.exceptions.ClientError as error:
