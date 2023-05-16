@@ -188,8 +188,7 @@ class Listener:
                 VpcId = self.vpc_id,
                 HealthCheckProtocol = listener_type,
                 TargetType = 'ip',
-                IpAddressType = 'ipv4',
-                Tags = [{'deployment': self.deployment_name, 'listener_name': self.listener_name, 'port': port}]
+                IpAddressType = 'ipv4'
             )
         except botocore.exceptions.ClientError as error:
             return error
