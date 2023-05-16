@@ -1,5 +1,6 @@
 import os
 import re
+import ast
 import json
 import botocore
 import boto3
@@ -600,8 +601,8 @@ class Listener:
                 return format_response(400, 'failed', f'invalid detail: {i} cannot be null', self.log)
         self.listener_name = self.detail['listener_name']
         self.task_name = self.detail['task_name']
-        self.portgroups = self.detail['portgroups']
-        listener_config = self.detail['listener_config']
+        self.portgroups = ast.literal_eval(self.detail['portgroups'])
+        listener_config = ast.literal_eval(self.detail['listener_config'])
         if 'domain_name' in self.detail:
             self.domain_name = self.detail['domain_name']
         if 'host_name' in self.detail:
