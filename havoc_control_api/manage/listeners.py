@@ -601,7 +601,7 @@ class Listener:
                 return format_response(400, 'failed', f'invalid detail: {i} cannot be null', self.log)
         self.listener_name = self.detail['listener_name']
         self.task_name = self.detail['task_name']
-        self.portgroups = ast.literal_eval(self.detail['portgroups'])
+        self.portgroups = self.detail['portgroups']
         listener_config = ast.literal_eval(self.detail['listener_config'])
         if 'domain_name' in self.detail:
             self.domain_name = self.detail['domain_name']
