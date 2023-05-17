@@ -268,6 +268,7 @@ class Listener:
     
     def create_listener_entry(self):
         timestamp = datetime.now().strftime('%s')
+        listener_config = json.dumps(self.listener_config)
         try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-listeners',
@@ -287,7 +288,7 @@ class Listener:
                                  'user_id=:user_id, '
                                  'create_time=:create_time',
                 ExpressionAttributeValues={
-                    ':listener_config': {'M': self.listener_config},
+                    ':listener_config': {'S': listener_config},
                     ':task_name': {'S': self.task_name},
                     ':target_ip': {'S': self.target_ip},
                     ':portgroups': {'SS': self.portgroups},
@@ -536,7 +537,7 @@ class Listener:
         self.domain_name = listener_entry['Item']['domain_name']['S']
         self.load_balancer_dns_name = listener_entry['Item']['load_balancer_dns_name']['S']
         self.portgroups = listener_entry['Item']['portgroups']['SS']
-        self.listener_config = listener_entry['Item']['listener_config']['M']
+        self.listener_config = json.loads(listener_entry['Item']['listener_config']['S'])
 
         # Delete Route53 entry if a domain name is present
         if self.domain_name:
@@ -652,10 +653,13 @@ class Listener:
         task_name = listener_entry['Item']['task_name']['S']
         host_name = listener_entry['Item']['host_name']['S']
         domain_name = listener_entry['Item']['domain_name']['S']
-        listener_config = listener_entry['Item']['listener_config']['S']
         portgroups = listener_entry['Item']['portgroups']['SS']
         listener_creator_id = listener_entry['Item']['user_id']['S']
         create_time = listener_entry['Item']['create_time']['S']
+        listener_config = {}
+        self.listener_config = json.loads(listener_entry['Item']['listener_config']['S'])
+        for port in self.listener_config:
+            listener_config[port] = {'listener_type': self.listener_config[port]['listener_type']}
         
         return format_response(200, 'success', 'get listener succeeded', None, listener_name=self.listener_name,
                                listener_config=listener_config, host_name=host_name, task_name=task_name,
