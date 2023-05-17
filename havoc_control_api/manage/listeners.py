@@ -602,7 +602,10 @@ class Listener:
         self.listener_name = self.detail['listener_name']
         self.task_name = self.detail['task_name']
         self.portgroups = self.detail['portgroups']
-        listener_config = ast.literal_eval(self.detail['listener_config'])
+        if isinstance(self.detail['listener_config'], dict):
+            listener_config = self.detail['listener_config']
+        else:
+            listener_config = ast.literal_eval(self.detail['listener_config'])
         if 'domain_name' in self.detail:
             self.domain_name = self.detail['domain_name']
         if 'host_name' in self.detail:
