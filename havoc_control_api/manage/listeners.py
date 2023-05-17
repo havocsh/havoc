@@ -527,7 +527,7 @@ class Listener:
     def delete_listener(self):
         # Get listener details
         listener_entry = self.get_listener_entry()
-        if not listener_entry:
+        if 'Item' not in listener_entry:
             return 'listener_not_found'
         self.load_balancer_arn = listener_entry['Item']['load_balancer_arn']['S']
         self.load_balancer_dns_name = listener_entry['Item']['load_balancer_dns_name']['S']
@@ -647,7 +647,7 @@ class Listener:
             return format_response(400, 'failed', 'invalid detail: listener_name cannot be null', self.log)
 
         listener_entry = self.get_listener_entry()
-        if not listener_entry:
+        if 'Item' not in listener_entry:
             return format_response(404, 'failed', f'listener {self.listener_name} does not exist', self.log)
 
         task_name = listener_entry['Item']['task_name']['S']
