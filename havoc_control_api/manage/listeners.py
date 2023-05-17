@@ -134,7 +134,7 @@ class Listener:
     
     def create_load_balancer(self):
         load_balancer_name = f'{self.deployment_name}-{self.listener_name}'
-        load_balancer_name = re.sub('_', '-', load_balancer_name)
+        load_balancer_name = re.sub('_', '', load_balancer_name)
         try:
             create_load_balancer_response = self.aws_elbv2_client.create_load_balancer(
                 Name = load_balancer_name[0:31],
@@ -178,7 +178,7 @@ class Listener:
     
     def create_target_group(self, port):
         target_group_name = f'{self.listener_name}-{port}'
-        target_group_name = re.sub('_', '-', target_group_name)
+        target_group_name = re.sub('_', '', target_group_name)
         listener_type = self.listener_config[port]['listener_type']
         try:
             response = self.aws_elbv2_client.create_target_group(
