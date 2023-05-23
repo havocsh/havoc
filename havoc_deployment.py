@@ -1,7 +1,9 @@
 import os
 import re
+import time
 import boto3
 import botocore
+import requests
 import subprocess
 import havoc_profile
 import havoc
@@ -280,6 +282,17 @@ class ManageDeployment:
         tfstate_s3_bucket = profile_output['tfstate_s3_bucket']
         tfstate_s3_key = 'havoc_terraform/terraform.tfstate'
         tfstate_dynamodb_table = profile_output['tfstate_dynamodb_table']
+
+        # Validate API certificate has been issued
+        valid_cert = None
+        cert_check_url = f'https://{api_domain_name}'
+        while not valid_cert:
+            try:
+                valid_cert = requests.get(cert_check_url)
+            except:
+                time.sleep(5)
+
+        # Add configuration details to deployment table
         self.havoc_client.create_deployment(
             self.deployment_version,
             deployment_admin_email,
@@ -290,7 +303,7 @@ class ManageDeployment:
             tfstate_s3_key, 
             tfstate_s3_region, 
             tfstate_dynamodb_table
-            )
+        )
         tf_connection = self.connect_tf_backend(deployment=True)
         if tf_connection == 'failed':
             print('\nThe ./HAVOC deployment succeeded but the Terraform backend could not be connected to S3 for backing up Terraform state.\n')
