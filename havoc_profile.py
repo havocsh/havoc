@@ -20,7 +20,7 @@ def list_profiles():
 
 def add_profile(mode):
     # Create ./HAVOC profile (used by ./havoc -a, -d and -s options)
-    print('Adding a ./HAVOC profile to .havoc/profiles. Please provide the requested details below.')
+    print('Adding a ./HAVOC profile.')
 
     if mode == 'deploy_add':
         deploy_profile = 'default'
@@ -39,6 +39,7 @@ def add_profile(mode):
         tfstate_dynamodb_table = tf_state_data['outputs']['TERRAFORM_STATE_DYNAMODB_TABLE']['value']
     else:
         # Get the profile name and make sure it is unique
+        print('\nPlease provide the requested details below.')
         deploy_profile = None
         while not deploy_profile:
             deploy_profile = input('\n./HAVOC credential profile name [default]: ')

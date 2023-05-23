@@ -203,7 +203,7 @@ class ManageDeployment:
         subprocess.run('./havoc_build_packages.sh', shell=True)
 
         # Write out terraform.tfvars file
-        print('\n - Setting up Terraform variables. Please provide the requested details.')
+        print('\nSetting up Terraform variables. Please provide the requested details.')
         aws_region = input('\nAWS region: ')
         self.aws_profile = input('AWS profile: ')
         deployment_name = None
@@ -238,7 +238,7 @@ class ManageDeployment:
                 f.write(f'enable_domain_name = {enable_domain_name}\n')
 
         # Run Terraform and check for errors:
-        print(' - Initializing Terraform.\n')
+        print('\nInitializing Terraform.\n')
         tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
         tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_init_output = tf_init.communicate()[1].decode('ascii')
@@ -249,7 +249,7 @@ class ManageDeployment:
             if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
                 os.remove('havoc_deploy/aws/terraform/terraform.tfvars')
             return 'failed'
-        print(' - Starting Terraform tasks.\n')
+        print('Starting Terraform tasks.\n')
         tf_apply_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'apply', '-no-color', '-auto-approve']
         tf_apply = subprocess.Popen(tf_apply_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_apply_output = tf_apply.communicate()[1].decode('ascii')
@@ -271,7 +271,7 @@ class ManageDeployment:
                 print(tf_destroy_output)
             print('Review errors above, correct the reported issues and try the deployment again.')
             return 'failed'
-        print(' - Terraform deployment tasks completed.\n')
+        print('Terraform deployment tasks completed.\n')
 
         # Create ./HAVOC profile
         profile_output = havoc_profile.add_profile('deploy_add')
@@ -285,7 +285,7 @@ class ManageDeployment:
 
         # Validate API certificate has been issued for custom domain name
         if enable_domain_name == 'true':
-            print(f' - Waiting for certificate to be issued for {api_domain_name}.\n')
+            print(f'\nWaiting for certificate to be issued for {api_domain_name}.\n')
             valid_cert = None
             cert_check_url = f'https://{api_domain_name}'
             while not valid_cert:
@@ -296,7 +296,7 @@ class ManageDeployment:
                     time.sleep(5)
 
         # Add configuration details to deployment table
-        print(' - Writing configuration details to the deployment table.\n')
+        print('Writing configuration details to the deployment table.\n')
         self.havoc_client.create_deployment(
             self.deployment_version,
             deployment_admin_email,
@@ -309,7 +309,6 @@ class ManageDeployment:
             tfstate_dynamodb_table
         )
 
-        print(' - Connecting the Terraform backend to S3 for tf state file backup.')
         tf_connection = self.connect_tf_backend(deployment=True)
         if tf_connection == 'failed':
             print('\nThe ./HAVOC deployment succeeded but the Terraform backend could not be connected to S3 for backing up Terraform state.\n')
