@@ -288,9 +288,10 @@ class ManageDeployment:
         cert_check_url = f'https://{api_domain_name}'
         while not valid_cert:
             try:
-                valid_cert = requests.get(cert_check_url)
-            except:
+                cert_check = requests.get(cert_check_url)
+            except requests.exceptions.SSLError:
                 time.sleep(5)
+            valid_cert = cert_check.text
 
         # Add configuration details to deployment table
         self.havoc_client.create_deployment(
