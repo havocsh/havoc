@@ -114,7 +114,7 @@ class ManageDeployment:
             print('\nMake sure to specify a valid ./HAVOC profile with the --profile parameter.')
             return 'failed'
 
-        print('Verifying the S3 bucket and key...\n')
+        print('Verifying the S3 bucket and key.\n')
         if self.aws_profile:
             boto3.setup_default_session(profile_name=self.aws_profile)
         s3 = boto3.client('s3')
@@ -159,14 +159,14 @@ class ManageDeployment:
             '}\n'
         with open('./havoc_deploy/aws/terraform/terraform_backend.tf', 'w+') as f:
             f.write(terraform_backend)
-        print('Initializing Terraform...\n')
+        print('Initializing Terraform.\n')
         tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
         tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_init_output = tf_init.communicate()[1].decode('ascii')
         if tf_init_output:
             print('\nInitializing Terraform backend configuration encountered errors:\n')
             print(tf_init_output)
-            print('\nRolling back changes...\n')
+            print('\nRolling back changes.\n')
             if os.path.exists('havoc_deploy/aws/terraform/terraform_backend.tf'):
                 os.remove('havoc_deploy/aws/terraform/terraform_backend.tf')
             return 'failed'
@@ -195,7 +195,7 @@ class ManageDeployment:
             print('If you intend to re-create this ./HAVOC deployment, remove the existing deployment first by running "./havoc --deployment remove".')
             print('If you would like to create another deployment without destroying this one,')
             print('clone the https://github.com/havocsh/havoc-framework.git repo to a different directory and deploy from there.')
-            print('Exiting...')
+            print('Exiting.')
             return 'failed'
         print(' - Deployment dependencies met. Proceeding with deployment.\n')
 
@@ -238,14 +238,14 @@ class ManageDeployment:
                 f.write(f'enable_domain_name = {enable_domain_name}\n')
 
         # Run Terraform and check for errors:
-        print(' - Initializing Terraform...\n')
+        print(' - Initializing Terraform.\n')
         tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
         tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_init_output = tf_init.communicate()[1].decode('ascii')
         if tf_init_output:
             print('\nInitializing Terraform encountered errors:\n')
             print(tf_init_output)
-            print('\nRolling back changes...\n')
+            print('\nRolling back changes.\n')
             if os.path.exists('havoc_deploy/aws/terraform/terraform.tfvars'):
                 os.remove('havoc_deploy/aws/terraform/terraform.tfvars')
             return 'failed'
@@ -256,7 +256,7 @@ class ManageDeployment:
         if tf_apply_output:
             print('\nTerraform deployment encountered errors:\n')
             print(tf_apply_output)
-            print('\nRolling back changes...\n')
+            print('\nRolling back changes.\n')
             tf_destroy_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'destroy', '-no-color', '-auto-approve']
             tf_destroy = subprocess.Popen(tf_destroy_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             tf_destroy_output = tf_destroy.communicate()[1].decode('ascii')
@@ -271,7 +271,7 @@ class ManageDeployment:
                 print(tf_destroy_output)
             print('Review errors above, correct the reported issues and try the deployment again.')
             return 'failed'
-        print(' - Terraform deployment tasks completed.')
+        print(' - Terraform deployment tasks completed.\n')
 
         # Create ./HAVOC profile
         profile_output = havoc_profile.add_profile('deploy_add')
@@ -283,17 +283,20 @@ class ManageDeployment:
         tfstate_s3_key = 'havoc_terraform/terraform.tfstate'
         tfstate_dynamodb_table = profile_output['tfstate_dynamodb_table']
 
-        # Validate API certificate has been issued
-        valid_cert = None
-        cert_check_url = f'https://{api_domain_name}'
-        while not valid_cert:
-            try:
-                cert_check = requests.get(cert_check_url)
-            except requests.exceptions.SSLError:
-                time.sleep(5)
-            valid_cert = cert_check.text
+        # Validate API certificate has been issued for custom domain name
+        if enable_domain_name == 'true':
+            print(f' - Waiting for certificate to be issued for {api_domain_name}.\n')
+            valid_cert = None
+            cert_check_url = f'https://{api_domain_name}'
+            while not valid_cert:
+                try:
+                    cert_check = requests.get(cert_check_url)
+                except requests.exceptions.SSLError:
+                    time.sleep(5)
+                valid_cert = cert_check.text
 
         # Add configuration details to deployment table
+        print(' - Writing configuration details to the deployment table.\n')
         self.havoc_client.create_deployment(
             self.deployment_version,
             deployment_admin_email,
@@ -305,6 +308,8 @@ class ManageDeployment:
             tfstate_s3_region, 
             tfstate_dynamodb_table
         )
+
+        print(' - Connecting the Terraform backend to S3 for tf state file backup.')
         tf_connection = self.connect_tf_backend(deployment=True)
         if tf_connection == 'failed':
             print('\nThe ./HAVOC deployment succeeded but the Terraform backend could not be connected to S3 for backing up Terraform state.\n')
@@ -355,7 +360,7 @@ class ManageDeployment:
             
 
         # Run Terraform and check for errors:
-        print('Initializing Terraform...\n')
+        print('Initializing Terraform.\n')
         tf_init_cmd = [self.tf_bin, '-chdir=havoc_deploy/aws/terraform', 'init', '-no-color']
         tf_init = subprocess.Popen(tf_init_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         tf_init_output = tf_init.communicate()[1].decode('ascii')
