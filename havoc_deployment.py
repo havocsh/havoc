@@ -291,9 +291,9 @@ class ManageDeployment:
             while not valid_cert:
                 try:
                     cert_check = requests.get(cert_check_url)
+                    valid_cert = cert_check.text
                 except requests.exceptions.SSLError:
                     time.sleep(5)
-                valid_cert = cert_check.text
 
         # Add configuration details to deployment table
         print(' - Writing configuration details to the deployment table.\n')
