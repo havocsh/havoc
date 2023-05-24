@@ -3,3 +3,4 @@ boto3
 botocore
 requests==2.25.0
 python-hcl2
+gnureadline
