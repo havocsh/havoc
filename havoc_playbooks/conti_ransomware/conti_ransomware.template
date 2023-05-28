@@ -444,7 +444,7 @@ action "agent_action" "invoke_wmi" {
 
         module_args = {
             ComputerName     = data.tasks.lateral_movement_task.local_ip.0
-            Listener         = resource.task.c2_task.listener.name
+            Listener         = resource.task.c2_task.create_listener.Name
             Command          = ""
             CredID           = ""
             Obfuscate        = ""
