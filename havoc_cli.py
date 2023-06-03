@@ -652,7 +652,7 @@ class HavocCMD(Cmd):
         print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
 
     def do_get_filtered_task_results(self, inp):
-        args = {'task_name': '', 'instruct_command': '', 'instruct_instance': ''}
+        args = {'task_name': '', 'instruct_command': '', 'instruct_instance': '', 'start_time': '', 'end_time': ''}
         command_args = convert_input(args, inp)
         get_filtered_task_results_response = self.havoc_client.get_filtered_task_results(**command_args)
         format_output('get_filtered_task_results', get_filtered_task_results_response)
@@ -662,6 +662,8 @@ class HavocCMD(Cmd):
         print('\n--task_name=<string> - (required) the name of the task to retrieve results from')
         print('\n--instruct_instance=<string> - (optional) the instruct_instance to retrieve results for')
         print('\n--instruct_command=<string> - (optional) the command to retrieve results for')
+        print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
+        print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
 
     def do_wait_for_c2(self, inp):
         args = {'task_name': '', 'time_skew': ''}
