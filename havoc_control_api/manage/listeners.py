@@ -449,6 +449,8 @@ class Listener:
             get_domain_entry_response = self.get_domain_entry()
             if 'Item' not in get_domain_entry_response:
                 return 'failed_domain_name_not_found'
+            if self.host_name in get_domain_entry_response['Item']['host_names']['SS']:
+                return 'failed_host_name_exists_for_domain'
             self.hosted_zone = get_domain_entry_response['Item']['hosted_zone']['S']
             if 'None' in get_domain_entry_response['Item']['listeners']['SS']:
                 associated_listeners = []
