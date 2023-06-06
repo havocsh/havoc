@@ -289,7 +289,7 @@ class Users:
             task_name = self.detail['task_name']
         else:
             task_name = exists['Item']['task_name']['S']
-        if remote_task and admin:
+        if remote_task == 'yes' and admin == 'yes':
             return format_response(400, 'failed', 'invalid detail: user cannot be assigned remote_task and admin', self.log)
         if new_user_id:
             user_attributes['user_id'] = new_user_id
