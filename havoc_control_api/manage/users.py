@@ -267,23 +267,30 @@ class Users:
         user_attributes = {}
         if 'new_user_id' in self.detail:
             new_user_id = self.detail['new_user_id']
-        if 'reset_keys' in self.detail and self.detail['reset_keys'].lower() == 'yes':
-            api_key = None
-            while not api_key:
-                api_key = generate_string(12)
-                existing_api_key = self.query_api_keys(api_key)
-                for item in existing_api_key['Items']:
-                    if 'api_key' in item:
-                        api_key = None
-            secret_key = generate_string(24, True)
-        if 'admin' in self.detail:
+        if 'reset_keys' in self.detail and self.detail['reset_keys'] is not None:
+            if self.detail['reset_keys'].lower() == 'yes':
+                api_key = None
+                while not api_key:
+                    api_key = generate_string(12)
+                    existing_api_key = self.query_api_keys(api_key)
+                    for item in existing_api_key['Items']:
+                        if 'api_key' in item:
+                            api_key = None
+                secret_key = generate_string(24, True)
+        if 'admin' in self.detail and self.detail['admin'] is not None:
             admin = self.detail['admin']
-        if 'remote_task' in self.detail:
+        else:
+            admin = exists['Item']['admin']['S']
+        if 'remote_task' in self.detail and self.detail['remote_task'] is not None:
             remote_task = self.detail['remote_task']
-        if 'task_name' in self.detail:
+        else:
+            remote_task = exists['Item']['remote_task']['S']
+        if 'task_name' in self.detail and self.detail['task_name'] is not None:
             task_name = self.detail['task_name']
+        else:
+            task_name = exists['Item']['task_name']['S']
         if remote_task and admin:
-            return format_response(400, 'failed', 'invalid detail', self.log)
+            return format_response(400, 'failed', 'invalid detail: user cannot be assigned remote_task and admin', self.log)
         if new_user_id:
             user_attributes['user_id'] = new_user_id
         if api_key and secret_key:
