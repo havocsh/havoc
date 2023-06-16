@@ -23,7 +23,8 @@
                 "${tasks_table}",
                 "${task_queue_table}",
                 "${playbook_queue_table}",
-                "${listeners_table}"
+                "${listeners_table}",
+                "${triggers_table}"
             ]
         },
         {

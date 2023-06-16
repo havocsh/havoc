@@ -83,6 +83,12 @@ resource "aws_api_gateway_resource" "playbook_operator_control_resource" {
   path_part   = "playbook-operator-control"
 }
 
+resource "aws_api_gateway_resource" "trigger_executor_resource" {
+  rest_api_id = aws_api_gateway_rest_api.rest_api.id
+  parent_id   = aws_api_gateway_rest_api.rest_api.root_resource_id
+  path_part   = "trigger-executor"
+}
+
 resource "aws_api_gateway_method" "manage_post" {
   rest_api_id   = aws_api_gateway_rest_api.rest_api.id
   resource_id   = aws_api_gateway_resource.manage_resource.id
@@ -139,6 +145,20 @@ resource "aws_api_gateway_method" "playbook_operator_control_post" {
   }
 }
 
+resource "aws_api_gateway_method" "trigger_executor_post" {
+  rest_api_id   = aws_api_gateway_rest_api.rest_api.id
+  resource_id   = aws_api_gateway_resource.trigger_executor_resource.id
+  http_method   = "POST"
+  authorization = "CUSTOM"
+  authorizer_id = aws_api_gateway_authorizer.authorizer.id
+
+  request_parameters = {
+    "method.request.header.x-api-key" = true
+    "method.request.header.x-signature" = true
+    "method.request.header.x-sig-date" = true
+  }
+}
+
 resource "aws_api_gateway_integration" "manage_lambda_integration" {
   rest_api_id             = aws_api_gateway_rest_api.rest_api.id
   resource_id             = aws_api_gateway_resource.manage_resource.id
@@ -173,4 +193,13 @@ resource "aws_api_gateway_integration" "playbook_operator_control_lambda_integra
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.playbook_operator_control.invoke_arn
+}
+
+resource "aws_api_gateway_integration" "trigger_executor_lambda_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.rest_api.id
+  resource_id             = aws_api_gateway_resource.trigger_executor_resource.id
+  http_method             = aws_api_gateway_method.trigger_executor_post.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.trigger_executor.invoke_arn
 }

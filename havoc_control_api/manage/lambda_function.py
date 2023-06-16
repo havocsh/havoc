@@ -9,6 +9,7 @@ import playbook_types
 import portgroups
 import task_type
 import tasks
+import trigger
 import users
 import workspace
 
@@ -37,6 +38,7 @@ def action(resource, command, region, deployment_name, user_id, detail, log):
         'portgroup': portgroups.Portgroup(deployment_name, region, user_id, detail, log),
         'task_type': task_type.Registration(deployment_name, region, user_id, detail, log),
         'task': tasks.Tasks(deployment_name, region, user_id, detail, log),
+        'trigger': trigger.Trigger(deployment_name, region, user_id, detail, log),
         'user': users.Users(deployment_name, region, user_id, detail, log),
         'workspace': workspace.Workspace(deployment_name, region, user_id, detail, log),
     }
@@ -72,7 +74,7 @@ def lambda_handler(event, context):
         return format_response(400, 'failed', 'missing resource', log)
     resource = data['resource']
 
-    allowed_resources = ['deployment', 'domain', 'listener', 'playbook', 'playbook_type', 'portgroup', 'task_type', 'task', 'user', 'workspace']
+    allowed_resources = ['deployment', 'domain', 'listener', 'playbook', 'playbook_type', 'portgroup', 'task_type', 'task', 'trigger', 'user', 'workspace']
     if resource not in allowed_resources:
         return format_response(400, 'failed', 'invalid resource', log)
 

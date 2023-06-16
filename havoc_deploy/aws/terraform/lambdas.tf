@@ -17,6 +17,30 @@ resource "aws_lambda_function" "authorizer" {
   }
 }
 
+resource "aws_lambda_function" "trigger_executor" {
+  function_name    = "${var.deployment_name}-trigger-executor"
+  filename         = "build/trigger_executor.zip"
+  source_code_hash = "build/trigger_executor.zip.base64sha256"
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.8"
+  timeout          = 900
+  role             = aws_iam_role.lambda_role.arn
+
+  environment {
+    variables = {
+      DEPLOYMENT_NAME = var.deployment_name
+    }
+  }
+}
+
+resource "aws_lambda_permission" "apigw_trigger_executor_lambda" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.trigger_executor.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
+}
+
 resource "aws_lambda_function" "manage" {
   function_name    = "${var.deployment_name}-manage"
   filename         = "build/manage.zip"
@@ -28,11 +52,13 @@ resource "aws_lambda_function" "manage" {
 
   environment {
     variables = {
-      DEPLOYMENT_NAME = var.deployment_name
-      VPC_ID          = aws_vpc.deployment_vpc.id
-      SUBNET_0        = aws_subnet.deployment_subnet_0.id
-      SUBNET_1        = aws_subnet.deployment_subnet_1.id
-      SECURITY_GROUP  = aws_security_group.listener_lb_default.id
+      DEPLOYMENT_NAME      = var.deployment_name
+      VPC_ID               = aws_vpc.deployment_vpc.id
+      SUBNET_0             = aws_subnet.deployment_subnet_0.id
+      SUBNET_1             = aws_subnet.deployment_subnet_1.id
+      SECURITY_GROUP       = aws_security_group.listener_lb_default.id
+      ROLE_ARN             = aws_iam_role.trigger_executor_role.arn
+      TRIGGER_EXECUTOR_ARN = aws_lambda_function.trigger_executor.invoke_arn
     }
   }
 }

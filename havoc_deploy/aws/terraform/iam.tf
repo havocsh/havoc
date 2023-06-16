@@ -9,13 +9,14 @@ data "template_file" "lambda_policy" {
   task_types_table            = aws_dynamodb_table.task_types.arn,
   deployment_table            = aws_dynamodb_table.deployment.arn,
   domains_table               = aws_dynamodb_table.domains.arn,
-  playbooks_table             = aws_dynamodb_table.playbooks.arn,
-  playbook_types_table        = aws_dynamodb_table.playbook_types.arn,
-  portgroups_table            = aws_dynamodb_table.portgroups.arn,
-  tasks_table                 = aws_dynamodb_table.tasks.arn,
-  task_queue_table            = aws_dynamodb_table.task_queue.arn,
-  playbook_queue_table        = aws_dynamodb_table.playbook_queue.arn,
   listeners_table             = aws_dynamodb_table.listeners.arn,
+  playbook_queue_table        = aws_dynamodb_table.playbook_queue.arn,
+  playbook_types_table        = aws_dynamodb_table.playbook_types.arn,
+  playbooks_table             = aws_dynamodb_table.playbooks.arn,
+  portgroups_table            = aws_dynamodb_table.portgroups.arn,
+  task_queue_table            = aws_dynamodb_table.task_queue.arn,
+  tasks_table                 = aws_dynamodb_table.tasks.arn,
+  triggers_table              = aws_dynamodb_table.triggers.arn,
   playbooks_bucket            = "${var.deployment_name}-playbooks",
   playbook_types_bucket       = "${var.deployment_name}-playbook-types",
   workspace_bucket            = "${var.deployment_name}-workspace",
@@ -199,6 +200,46 @@ data "aws_iam_policy" "ecs_playbook_operator_execution_policy" {
 resource "aws_iam_role_policy_attachment" "ecs_playbook_operator_execution_policy_attachment" {
   role = aws_iam_role.ecs_playbook_operator_execution_role.name
   policy_arn = data.aws_iam_policy.ecs_playbook_operator_execution_policy.arn
+}
+
+data "template_file" "trigger_executor_policy" {
+  template = file("templates/trigger_executor_policy.template")
+
+  vars = {
+  trigger_executor_role = aws_iam_role.trigger_executor_role.arn
+  }
+}
+
+resource "aws_iam_role" "trigger_executor_role" {
+  name = "${var.deployment_name}-trigger-executor-role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+            "Service": "events.amazonaws.com"
+        },
+        "Action": "sts:AssumeRole"
+      }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "trigger_executor_policy" {
+  name        = "${var.deployment_name}-trigger-executor-policy"
+  path        = "/"
+  description = "Policy for ./HAVOC trigger_executor Lambda function"
+  policy = data.template_file.trigger_executor_policy.rendered
+}
+
+resource "aws_iam_role_policy_attachment" "trigger_executor_policy_attachment" {
+  role = aws_iam_role.trigger_executor_role.name
+  policy_arn = aws_iam_policy.trigger_executor_policy.arn
 }
 
 data "template_file" "api_gateway_policy" {

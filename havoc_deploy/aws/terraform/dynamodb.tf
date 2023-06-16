@@ -406,6 +406,17 @@ resource "aws_dynamodb_table" "tasks" {
   }
 }
 
+resource "aws_dynamodb_table" "triggers" {
+  name           = "${var.deployment_name}-triggers"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "trigger_name"
+
+  attribute {
+  name = "trigger_name"
+  type = "S"
+  }
+}
+
 resource "aws_dynamodb_table" "listeners" {
   name           = "${var.deployment_name}-listeners"
   billing_mode   = "PAY_PER_REQUEST"
