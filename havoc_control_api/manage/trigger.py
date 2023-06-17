@@ -232,7 +232,7 @@ class Trigger:
         return 'trigger_deleted'
 
     def create(self):
-        trigger_details = ['trigger_name', 'execute_command', 'interval']
+        trigger_details = ['trigger_name', 'execute_command', 'schedule_expression']
         for i in trigger_details:
             if i not in self.detail:
                 return format_response(400, 'failed', f'invalid detail: missing required parameter {i}', self.log)
