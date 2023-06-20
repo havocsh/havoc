@@ -261,7 +261,32 @@ class Trigger:
                     else:
                         return format_response(500, 'failed', f'filter_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
                 return response
-        
+            empty_result_set = None
+            if filter_command == 'get_task_results' or filter_command == 'get_filtered_task_results' or filter_command == 'get_playbook_results':
+                if not filter_command_response['queue']:
+                    empty_result_set = True
+            if filter_command == 'get_agent_results':
+                    if not filter_command_response:
+                        empty_result_set = True
+            if empty_result_set:
+                add_queue_attr_resp = self.add_queue_attribute(stime, expiration_stime, filter_command, filter_command_args, str(filter_command_timeout),
+                                                            filter_command_json, execute_command, execute_command_args, str(execute_command_timeout),
+                                                            execute_command_json)
+                if add_queue_attr_resp != 'queue_attribute_added':
+                    if 'ClientError:' in add_queue_attr_resp or 'ParamValidationError:' in add_queue_attr_resp or 'invalid_format' in add_queue_attr_resp:
+                        return format_response(400, 'failed', f'filter_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
+                    else:
+                        return format_response(500, 'failed', f'filter_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
+                response = format_response(
+                    200, 
+                    'success', 
+                    f'filter_command {filter_command} with args {filter_command_args} executed but did not return results',
+                    self.log,
+                    trigger_name=self.trigger_name,
+                    scheduled_trigger=self.scheduled_trigger
+                )
+                return response
+
         if execute_command_args:
             json_args = json.dumps(execute_command_args)
             matches = re.findall('\${[^}]+}', json_args)
