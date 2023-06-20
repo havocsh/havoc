@@ -177,6 +177,84 @@ class HavocCMD(Cmd):
         print('\nDelete the given task type.')
         print('\n--task_type=<string> - (required) the name of the task type to delete')
 
+    def do_list_triggers(self, inp):
+        list_triggers_response = self.havoc_client.list_triggers()
+        format_output('list_triggers', list_triggers_response)
+
+    def help_list_triggers(self):
+        print('\nList all triggers.')
+
+    def do_get_trigger(self, inp):
+        args = {'trigger_name': ''}
+        command_args = convert_input(args, inp)
+        get_trigger_response = self.havoc_client.get_trigger(**command_args)
+        format_output('get_trigger', get_trigger_response)
+
+    def help_get_trigger(self):
+        print('\nGet details of a given trigger.')
+        print('\n--trigger_name=<string> - (required) the name of the trigger to get')
+
+    def do_create_trigger(self, inp):
+        args = {
+            'trigger_name': '',
+            'schedule_expression': '',
+            'execute_command': '',
+            'execute_command_args': '',
+            'execute_command_timeout': '',
+            'filter_command': '',
+            'filter_command_args': '', 
+            'filter_command_timeout': ''
+        }
+        command_args = convert_input(args, inp)
+        create_trigger_response = self.havoc_client.create_trigger(**command_args)
+        format_output('create_trigger', create_trigger_response)
+
+    def help_create_trigger(self):
+        print('\nCreate a new trigger with the given parameters.')
+        print('\n--trigger_name=<string> - (required) a name to assign to the trigger')
+        print('\n--schedule_expression=<string> - (required) a rate or cron expression to specify execution interval of the trigger - examples: "rate(5 minutes)" or "cron(0 0 * * FRI)"')
+        print('\n--execute_command=<string> - (required) The command to be executed by the trigger')
+        print('\n--execute_command_args=<dict> - (optional) arguments applied to the execute_command; arguments should be specified as a dictionary of keys and values')
+        print('\n--execute_command_timeout=<integer> - (optional) the number of seconds to wait for the execute command to return (defaults to 300 seconds)')
+        print('\n--filter_command=<string> - (optional) provide a filter_command to run prior to the execute_command - if the filter_command does not return results, the trigger will exit')
+        print('\n--filter_command_args=<dict> - (optional) arguments applied to the filter_command; arguments should be specified as a dictionary of keys and values')
+        print('\n--filter_command_timeout=<integer> - (optional) the number of seconds to wait for the filter command to return (defaults to 300 seconds)')
+        print('\n  *Note that the aggregate value of the execute_command_timeout and filter_command_timeout values should not exceed the schedule frequency')
+
+    def do_delete_trigger(self, inp):
+        args = {'trigger_name': ''}
+        command_args = convert_input(args, inp)
+        delete_trigger_response = self.havoc_client.delete_trigger(**command_args)
+        format_output('delete_trigger', delete_trigger_response)
+
+    def help_delete_trigger(self):
+        print('\nDelete the given trigger.')
+        print('\n--trigger_name=<string> - (required) the name of the trigger to delete')
+    
+    def do_execute_trigger(self, inp):
+        args = {
+            'trigger_name': '',
+            'execute_command': '',
+            'execute_command_args': '',
+            'execute_command_timeout': '',
+            'filter_command': '',
+            'filter_command_args': '',
+            'filter_command_timeout': ''
+        }
+        command_args = convert_input(args, inp)
+        execute_trigger_response = self.havoc_client.execute_trigger(**command_args)
+        format_output('execute_trigger', execute_trigger_response)
+
+    def help_execute_trigger(self):
+        print('\nExecute the given trigger.')
+        print('\n--trigger_name=<string> - (required) the name of the trigger to execute')
+        print('\n--execute_command=<string> - (required) The command to be executed by the trigger')
+        print('\n--execute_command_args=<dict> - (optional) arguments applied to the execute_command; arguments should be specified as a dictionary of keys and values')
+        print('\n--execute_command_timeout=<integer> - (optional) the number of seconds to wait for the execute command to return (defaults to 300 seconds)')
+        print('\n--filter_command=<string> - (optional) provide a filter_command to run prior to the execute_command - if the filter_command does not return results, the trigger will exit')
+        print('\n--filter_command_args=<dict> - (optional) arguments applied to the filter_command; arguments should be specified as a dictionary of keys and values')
+        print('\n--filter_command_timeout=<integer> - (optional) the number of seconds to wait for the filter command to return (defaults to 300 seconds)')
+
     def do_list_users(self, inp):
         list_users_response = self.havoc_client.list_users()
         format_output('list_users', list_users_response)
