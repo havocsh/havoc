@@ -482,3 +482,25 @@ resource "aws_dynamodb_table" "playbook_queue" {
   enabled        = true
   }
 }
+
+resource "aws_dynamodb_table" "trigger_queue" {
+  name           = "${var.deployment_name}-trigger-queue"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "trigger_name"
+  range_key      = "run_time"
+
+  attribute {
+    name = "trigger_name"
+    type = "S"
+  }
+
+  attribute {
+  name = "run_time"
+  type = "N"
+  }
+
+  ttl {
+  attribute_name = "expire_time"
+  enabled        = true
+  }
+}

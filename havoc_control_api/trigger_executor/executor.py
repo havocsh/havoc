@@ -5,6 +5,8 @@ import signal
 import havoc
 import botocore
 import boto3
+from datetime import datetime
+from datetime import timedelta
 
 
 def timeout_handler(signum, frame):
@@ -27,11 +29,12 @@ def format_response(status_code, result, message, log, **kwargs):
 
 class Trigger:
 
-    def __init__(self, deployment_name, scheduled_trigger, trigger_name, region, detail, user_id, log):
+    def __init__(self, deployment_name, results_queue_expiration, scheduled_trigger, trigger_name, region, detail, user_id, log):
         """
         Instantiate a trigger executor instance
         """
         self.deployment_name = deployment_name
+        self.results_queue_expiration = results_queue_expiration
         self.scheduled_trigger = scheduled_trigger
         self.trigger_name = trigger_name
         self.region = region
@@ -73,14 +76,70 @@ class Trigger:
                 'user_id': {'S': created_by}
             }
         )
+    
+    def add_queue_attribute(self, stime, expire_time, filter_command, filter_command_args, filter_command_timeout, filter_command_json,
+                            execute_command, execute_command_args, execute_command_timeout, execute_command_json):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-trigger-queue',
+                Key={
+                    'trigger_name': {'S': self.trigger_name},
+                    'run_time': {'N': stime}
+                },
+                UpdateExpression='set '
+                                'expire_time=:expire_time, '
+                                'user_id=:user_id, '
+                                'filter_command=:filter_command, '
+                                'filter_command_args=:filter_command_args, '
+                                'filter_command_timeout=:filter_command_timeout, '
+                                'filter_command_response=:filter_command_response, '
+                                'execute_command=:execute_command, '
+                                'execute_command_args=:execute_command_args, '
+                                'execute_command_timeout=:execute_command_timeout, '
+                                'execute_command_response=:execute_command_response',
+                ExpressionAttributeValues={
+                    ':expire_time': {'N': expire_time},
+                    ':user_id': {'S': self.user_id},
+                    ':filter_command': {'S': filter_command},
+                    ':filter_command_args': {'S': filter_command_args},
+                    ':filter_command_timeout': {'N': filter_command_timeout},
+                    ':filter_command_response': {'S': filter_command_json},
+                    ':execute_command': {'S': execute_command},
+                    ':execute_command_args': {'S': execute_command_args},
+                    ':execute_command_timeout': {'N': execute_command_timeout},
+                    ':execute_command_response': {'S': execute_command_json}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return f'ClientError: {error}'
+        except botocore.exceptions.ParamValidationError as error:
+            return f'ParamValidationError: {error}'
+        except Exception as error:
+            return error
+        return 'queue_attribute_added'
 
     def execute(self):
+        stime = datetime.utcnow().strftime('%s')
+        from_timestamp = datetime.utcfromtimestamp(int(stime))
+        expiration_time = from_timestamp + timedelta(days=self.results_queue_expiration)
+        expiration_stime = expiration_time.strftime('%s')
         filter_command = None
         filter_command_args = None
         filter_command_response = None
         if 'filter_command' in self.detail:
             filter_command = self.detail['filter_command']
-
+            filter_commands = ['get_agent_results', 'get_filtered_task_results', 'get_playbook_results', 'get_task_results', 'wait_for_c2', 'wait_for_idle_task']
+            if filter_command not in filter_commands:
+                response = format_response(
+                        400, 
+                        'failed', 
+                        'invalid detail: unsupported filter_command', 
+                        self.log, 
+                        trigger_name=self.trigger_name,
+                        scheduled_trigger=self.scheduled_trigger
+                    )
+                return response
+            
             if 'filter_command_args' in self.detail:
                 filter_command_args = self.detail['filter_command_args']
                 if filter_command_args is not None and not isinstance(filter_command_args, dict):
@@ -92,6 +151,7 @@ class Trigger:
                         trigger_name=self.trigger_name,
                         scheduled_trigger=self.scheduled_trigger
                     )
+
                     return response
             
             if 'filter_command_timeout' in self.detail:
@@ -170,33 +230,61 @@ class Trigger:
                     filter_command_response = filter_command_method()
             except Exception as e:
                 if e == 'timeout exceeded':
-                    response = format_response(
-                        200, 
-                        'success', 
-                        f'filter_command {filter_command} with args {filter_command_args} executed but did not return results before the {filter_command_timeout} second timeout expired', 
-                        self.log,
-                        trigger_name=self.trigger_name,
-                        scheduled_trigger=self.scheduled_trigger
-                    )
+                    status_code = 200
+                    outcome = 'success'
+                    message = f'filter_command {filter_command} with args {filter_command_args} executed but did not return results ' \
+                    f'before the {filter_command_timeout} second timeout expired'
                 else:
-                    response = format_response(
-                        400, 
-                        'failed', 
-                        f'filter_command {filter_command} with args {filter_command_args} failed with error: {e}', 
+                    status_code = 400
+                    outcome = 'failed'
+                    message = f'filter_command {filter_command} with args {filter_command_args} failed with error: {e}'
+                response = format_response(
+                        status_code, 
+                        outcome, 
+                        message,
                         self.log,
                         trigger_name=self.trigger_name,
                         scheduled_trigger=self.scheduled_trigger
                     )
+                filter_command_json = json.dumps(message)
+                execute_command_json = json.dumps(None)
+                if not filter_command_args:
+                    filter_command_args = 'None'
+                if not execute_command_args:
+                    execute_command_args = 'None'
+                add_queue_attr_resp = self.add_queue_attribute(stime, expiration_stime, filter_command, filter_command_args, str(filter_command_timeout),
+                                                               filter_command_json, execute_command, execute_command_args, str(execute_command_timeout),
+                                                               execute_command_json)
+                if add_queue_attr_resp != 'queue_attribute_added':
+                    if 'ClientError:' in add_queue_attr_resp or 'ParamValidationError:' in add_queue_attr_resp or 'invalid_format' in add_queue_attr_resp:
+                        return format_response(400, 'failed', f'filter_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
+                    else:
+                        return format_response(500, 'failed', f'filter_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
                 return response
         
         if execute_command_args:
             json_args = json.dumps(execute_command_args)
             matches = re.findall('\${[^}]+}', json_args)
             if matches and not filter_command_response:
+                message = f'no filter_command results available to populate variable references in execute_command_args'
+                filter_command_json = json.dumps(filter_command_response)
+                execute_command_json = json.dumps(message)
+                if not filter_command_args:
+                    filter_command_args = 'None'
+                if not execute_command_args:
+                    execute_command_args = 'None'
+                add_queue_attr_resp = self.add_queue_attribute(stime, expiration_stime, filter_command, filter_command_args, str(filter_command_timeout),
+                                                               filter_command_json, execute_command, execute_command_args, str(execute_command_timeout),
+                                                               execute_command_json)
+                if add_queue_attr_resp != 'queue_attribute_added':
+                    if 'ClientError:' in add_queue_attr_resp or 'ParamValidationError:' in add_queue_attr_resp or 'invalid_format' in add_queue_attr_resp:
+                        return format_response(400, 'failed', f'filter_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
+                    else:
+                        return format_response(500, 'failed', f'filter_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
                 response = format_response(
                     400, 
                     'failed', 
-                    f'no filter_command results available to populate variable references in execute_command_args', 
+                    message, 
                     self.log,
                     trigger_name=self.trigger_name,
                     scheduled_trigger=self.scheduled_trigger
@@ -221,29 +309,52 @@ class Trigger:
                 execute_command_response = execute_command_method()
         except Exception as e:
             if e == 'timeout exceeded':
-                response = format_response(
-                    200, 
-                    'success', 
-                    f'execute_command {execute_command} with args {execute_command_args} executed but did not return results before the {execute_command_timeout} second timeout expired', 
-                    self.log,
-                    trigger_name=self.trigger_name,
-                    scheduled_trigger=self.scheduled_trigger
-                )
+                status_code = 200
+                outcome = 'success'
+                message = f'execute_command {execute_command} with args {execute_command_args} executed but did not return results ' \
+                f'before the {execute_command_timeout} second timeout expired'
             else:
-                response = format_response(
-                    400, 
-                    'failed', 
-                    f'execute_command {execute_command} with args {execute_command_args} failed with error: {e}', 
+                status_code = 400
+                outcome = 'failed'
+                message = f'execute_command {execute_command} with args {execute_command_args} failed with error: {e}'
+            filter_command_json = json.dumps(filter_command_response)
+            execute_command_json = json.dumps(message)
+            if not filter_command_args:
+                filter_command_args = 'None'
+            if not execute_command_args:
+                execute_command_args = 'None'
+            add_queue_attr_resp = self.add_queue_attribute(stime, expiration_stime, filter_command, filter_command_args, str(filter_command_timeout),
+                                                           filter_command_json, execute_command, execute_command_args, str(execute_command_timeout), 
+                                                           execute_command_json)
+            if add_queue_attr_resp != 'queue_attribute_added':
+                if 'ClientError:' in add_queue_attr_resp or 'ParamValidationError:' in add_queue_attr_resp or 'invalid_format' in add_queue_attr_resp:
+                    return format_response(400, 'failed', f'execute_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
+                else:
+                    return format_response(500, 'failed', f'execute_command succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
+            response = format_response(
+                    status_code,
+                    outcome,
+                    message,
                     self.log,
                     trigger_name=self.trigger_name,
                     scheduled_trigger=self.scheduled_trigger
                 )
             return response
 
+        # Add entry to trigger_queue
+        add_queue_attr_resp = self.add_queue_attribute(stime, expiration_stime, filter_command, filter_command_args, str(filter_command_timeout), 
+                                                       filter_command_json, execute_command, execute_command_args, str(execute_command_timeout), 
+                                                       execute_command_json)
+        if add_queue_attr_resp != 'queue_attribute_added':
+            if 'ClientError:' in add_queue_attr_resp or 'ParamValidationError:' in add_queue_attr_resp or 'invalid_format' in add_queue_attr_resp:
+                return format_response(400, 'failed', f'execute trigger succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
+            else:
+                return format_response(500, 'failed', f'execute trigger succeeded but writing results to queue failed with error {add_queue_attr_resp}', self.log)
         # Send response
-        response = format_response(200, 'success', 'execute_trigger succeeded', None)
+        response_args = {}
         if filter_command_response:
-            response[filter_command] = filter_command_response
+            response_args['filter_command'] = filter_command_response
         if execute_command_response:
-            response[execute_command] = execute_command_response
+            response_args['execute_command'] = execute_command_response
+        response = format_response(200, 'success', 'execute_trigger succeeded', None, **response_args)
         return response

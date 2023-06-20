@@ -97,14 +97,26 @@ class Trigger:
         event_input['detail']['trigger_name'] = self.trigger_name
         event_input['detail']['execute_command'] = self.trigger_args['execute_command']
         if self.trigger_args['execute_command_args']:
+            if not isinstance(self.trigger_args['execute_command_args'], dict):
+                return 'execute_command_args_invalid_format'
             event_input['detail']['execute_command_args'] = self.trigger_args['execute_command_args']
         if self.trigger_args['execute_command_timeout']:
+            try:
+                int(self.trigger_args['execute_command_timeout'])
+            except:
+                return 'execute_command_timeout_invalid_format'
             event_input['detail']['execute_command_timeout'] = self.trigger_args['execute_command_timeout']
         if self.trigger_args['filter_command']:
             event_input['detail']['filter_command'] = self.trigger_args['filter_command']
         if self.trigger_args['filter_command_args']:
+            if not isinstance(self.trigger_args['filter_command_args'], dict):
+                return 'filter_command_args_invalid_format'
             event_input['detail']['filter_command_args'] = self.trigger_args['filter_command_args']
         if self.trigger_args['filter_command_timeout']:
+            try:
+                int(self.trigger_args['filter_command_timeout'])
+            except:
+                return 'filter_command_timeout_invalid_format'
             event_input['detail']['filter_command_timeout'] = self.trigger_args['filter_command_timeout']
         try:
             self.aws_cloudwatch_events_client.put_targets(
@@ -160,18 +172,32 @@ class Trigger:
         schedule_expression = self.trigger_args['schedule_expression']
         execute_command = self.trigger_args['execute_command']
         execute_command_args = self.trigger_args['execute_command_args']
+        if execute_command_args is not None and not isinstance(execute_command_args, dict):
+            return 'execute_command_args_invalid_format'
         if not execute_command_args:
             execute_command_args = 'None'
         execute_command_timeout = self.trigger_args['execute_command_timeout']
+        if execute_command_timeout is not None:
+            try:
+                int(execute_command_timeout)
+            except:
+                return 'execute_command_timeout_invalid_format'
         if not execute_command_timeout:
             execute_command_timeout = 'None'
         filter_command = self.trigger_args['filter_command']
         if not filter_command:
             filter_command = 'None'
         filter_command_args = self.trigger_args['filter_command_args']
+        if filter_command_args is not None and not isinstance(filter_command_args, dict):
+            return 'filter_command_args_invalid_format'
         if not filter_command_args:
             filter_command_args = 'None'
         filter_command_timeout = self.trigger_args['filter_command_timeout']
+        if filter_command_timeout is not None:
+            try:
+                int(filter_command_timeout)
+            except:
+                return 'filter_command_timeout_invalid_format'
         if not filter_command_timeout:
             filter_command_timeout = 'None'
         try:
@@ -258,15 +284,15 @@ class Trigger:
                     return format_response(400, 'failed', f'invalid detail: unknown parameter {k}', self.log)
 
         # Create trigger entry
-        create_trigger_entry_response = self.create_trigger_entry()
-        if create_trigger_entry_response == 'trigger_exists':
+        create_trigger_response = self.create_trigger_entry()
+        if create_trigger_response == 'trigger_exists':
             return format_response(409, 'failed', f'{self.trigger_name} already exists', self.log)
-        elif create_trigger_entry_response == 'trigger_created':
+        elif create_trigger_response == 'trigger_created':
             return format_response(200, 'success', 'create trigger succeeded', None)
-        elif 'ClientError:' in create_trigger_entry_response or 'ParamValidationError:' in create_trigger_entry_response:
-            return format_response(400, 'failed', f'create trigger failed with error {create_trigger_entry_response}', self.log)
+        elif 'ClientError:' in create_trigger_response or 'ParamValidationError:' in create_trigger_response or 'invalid_format' in create_trigger_response:
+            return format_response(400, 'failed', f'create trigger failed with error {create_trigger_response}', self.log)
         else:
-            return format_response(500, 'failed', f'create trigger failed with error {create_trigger_entry_response}', self.log)
+            return format_response(500, 'failed', f'create trigger failed with error {create_trigger_response}', self.log)
 
     def delete(self):
         if 'trigger_name' not in self.detail:

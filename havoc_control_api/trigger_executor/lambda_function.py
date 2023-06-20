@@ -22,6 +22,7 @@ def format_response(status_code, result, message, log, **kwargs):
 def lambda_handler(event, context):
     region = re.search('arn:aws:lambda:([^:]+):.*', context.invoked_function_arn).group(1)
     deployment_name = os.environ['DEPLOYMENT_NAME']
+    results_queue_expiration = int(os.environ['RESULTS_QUEUE_EXPIRATION'])
     log = {'event': event}
 
     if 'requestContext' in event:
@@ -49,7 +50,7 @@ def lambda_handler(event, context):
 
     if action == 'execute_trigger':
         # Execute trigger
-        execute_trigger = executor.Trigger(deployment_name, scheduled_trigger, trigger_name, region, detail, user_id, log)
+        execute_trigger = executor.Trigger(deployment_name, results_queue_expiration, scheduled_trigger, trigger_name, region, detail, user_id, log)
         response = execute_trigger.execute()
         return response
 
