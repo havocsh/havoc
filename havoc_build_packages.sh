@@ -2,7 +2,7 @@
 
 # Get deployment version
 deployment_version=$(grep "deployment_version = " .havoc/havoc.version | awk '{ print $NF }')
-pip_bin=./venv/bin/pip3
+pip_bin=../venv/bin/pip3
 
 echo ""
 echo " - Building ./HAVOC Lambda deployment packages."
