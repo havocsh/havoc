@@ -29,7 +29,7 @@ def lambda_handler(event, context):
         user_id = event['requestContext']['authorizer']['user_id']
         data = json.loads(event['body'])
     else:
-        data = event
+        data = json.loads(event)
         user_id = event['user_id']
 
     scheduled_trigger = False

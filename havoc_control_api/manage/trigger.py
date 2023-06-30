@@ -128,7 +128,7 @@ class Trigger:
                     {
                         'Arn': self.trigger_executor_arn,
                         'Id': self.trigger_name,
-                        'Input': event_input
+                        'Input': json.dumps(event_input)
                     }
                 ]
             )
