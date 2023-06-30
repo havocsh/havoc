@@ -4,7 +4,7 @@
         {
             "Effect": "Allow",
             "Action": [
-                "dynamodb:GetItem",
+                "dynamodb:GetItem"
             ],
             "Resource": [
                 "${authorizer_table}",
