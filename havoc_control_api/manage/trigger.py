@@ -97,9 +97,10 @@ class Trigger:
         event_input['detail']['trigger_name'] = self.trigger_name
         event_input['detail']['execute_command'] = self.trigger_args['execute_command']
         if self.trigger_args['execute_command_args']:
-            if not isinstance(self.trigger_args['execute_command_args'], dict):
+            execute_command_args = json.loads(self.trigger_args['execute_command_args'])
+            if not isinstance(execute_command_args, dict):
                 return 'execute_command_args_invalid_format'
-            event_input['detail']['execute_command_args'] = self.trigger_args['execute_command_args']
+            event_input['detail']['execute_command_args'] = execute_command_args
         if self.trigger_args['execute_command_timeout']:
             try:
                 int(self.trigger_args['execute_command_timeout'])
@@ -109,9 +110,10 @@ class Trigger:
         if self.trigger_args['filter_command']:
             event_input['detail']['filter_command'] = self.trigger_args['filter_command']
         if self.trigger_args['filter_command_args']:
-            if not isinstance(self.trigger_args['filter_command_args'], dict):
+            filter_command_args = json.loads(self.trigger_args['filter_command_args'])
+            if not isinstance(filter_command_args, dict):
                 return 'filter_command_args_invalid_format'
-            event_input['detail']['filter_command_args'] = self.trigger_args['filter_command_args']
+            event_input['detail']['filter_command_args'] = filter_command_args
         if self.trigger_args['filter_command_timeout']:
             try:
                 int(self.trigger_args['filter_command_timeout'])
@@ -172,8 +174,6 @@ class Trigger:
         schedule_expression = self.trigger_args['schedule_expression']
         execute_command = self.trigger_args['execute_command']
         execute_command_args = self.trigger_args['execute_command_args']
-        if execute_command_args is not None and not isinstance(execute_command_args, dict):
-            return 'execute_command_args_invalid_format'
         if not execute_command_args:
             execute_command_args = 'None'
         execute_command_timeout = self.trigger_args['execute_command_timeout']
@@ -188,8 +188,6 @@ class Trigger:
         if not filter_command:
             filter_command = 'None'
         filter_command_args = self.trigger_args['filter_command_args']
-        if filter_command_args is not None and not isinstance(filter_command_args, dict):
-            return 'filter_command_args_invalid_format'
         if not filter_command_args:
             filter_command_args = 'None'
         filter_command_timeout = self.trigger_args['filter_command_timeout']
