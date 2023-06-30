@@ -34,6 +34,7 @@ class Playbook:
         self.user_id = user_id
         self.log = log
         self.playbook_type = None
+        self.playbook_config = None
         self.run_ecs_task_response = None
         self.__aws_dynamodb_client = None
         self.__aws_ecs_client = None
@@ -119,6 +120,7 @@ class Playbook:
                                 {'name': 'DEPLOYMENT_NAME', 'value': self.deployment_name},
                                 {'name': 'USER_ID', 'value': self.user_id},
                                 {'name': 'PLAYBOOK_NAME', 'value': self.playbook_name},
+                                {'name': 'PLAYBOOK_TYPE', 'value': self.playbook_type},
                                 {'name': 'END_TIME', 'value': end_time}
                             ]
                         }
@@ -182,9 +184,16 @@ class Playbook:
         if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
             return format_response(404, 'failed', f'playbook {self.playbook_name} is already running', self.log)
         
+        if 'playbook_config' in self.detail:
+            self.playbook_config = self.detail['playbook_config']
+            if not isinstance(self.playbook_config, dict):
+                return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
+            self.playbook_config = json.dumps(self.playbook_config)
+        else:
+            self.playbook_config = playbook_entry['Item']['playbook_config']['S']
+        
         self.playbook_type = playbook_entry['Item']['playbook_type']['S']
         playbook_timeout = int(playbook_entry['Item']['playbook_timeout']['N'])
-        config_pointer = playbook_entry['Item']['config_pointer']['S']
         created_by = playbook_entry['Item']['created_by']['S']
         current_time = datetime.datetime.now()
         end_time_object = current_time + datetime.timedelta(playbook_timeout)
@@ -211,6 +220,7 @@ class Playbook:
                 'user_id': self.user_id,
                 'playbook_name': self.playbook_name,
                 'playbook_type': self.playbook_type,
+                'playbook_config': self.playbook_config
             },
             'playbook_operator_task_details': ecs_task_details,
         }
@@ -227,7 +237,13 @@ class Playbook:
 
         # Send execute_playbook command to the playbook operator
         operator_command = 'execute_playbook'
-        command_args = {'api_region': api_region, 'api_domain_name': api_domain_name, 'api_key': api_key, 'secret': secret_key, 'config_pointer': config_pointer}
+        command_args = {
+            'api_region': api_region,
+            'api_domain_name': api_domain_name,
+            'api_key': api_key,
+            'secret': secret_key,
+            'playbook_config': self.playbook_config
+        }
         payload = {'operator_command': operator_command, 'command_args': command_args, 'timestamp': timestamp, 'end_time': end_time}
         file_name = 'execute_playbook.json'
         upload_object_response = self.upload_object(payload, file_name)

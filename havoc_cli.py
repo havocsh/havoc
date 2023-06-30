@@ -385,8 +385,7 @@ class HavocCMD(Cmd):
         print('\n--playbook_name=<string> - (required) the name of the playbook to retrieve details for')
 
     def do_create_playbook(self, inp):
-        args = {'playbook_name': '', 'playbook_type': '', 'playbook_schedule': None, 'playbook_timeout': '',
-                'playbook_config': ''}
+        args = {'playbook_name': '', 'playbook_type': '', 'playbook_timeout': '', 'playbook_config': ''}
         command_args = convert_input(args, inp)
         create_playbook_response = self.havoc_client.create_playbook(**command_args)
         format_output('create_playbook', create_playbook_response)
@@ -419,7 +418,7 @@ class HavocCMD(Cmd):
         print('\n--playbook_name=<string> - (required) the name of the running playbook to be killed')
 
     def do_run_playbook(self, inp):
-        args = {'playbook_name': ''}
+        args = {'playbook_name': '', 'playbook_type': '', 'playbook_config': ''}
         command_args = convert_input(args, inp)
         run_playbook_response = self.havoc_client.run_playbook(**command_args)
         format_output('run_playbook', run_playbook_response)

@@ -29,7 +29,12 @@ if [ ! -d ./venv ]; then
         echo "Reqested version not found."
         exit
     fi
-    perl -pi -e "s/deployment_version = .*/deployment_version = ${deployment_version}/g" .havoc/havoc.cfg
+    if [ ! -f .havoc/havoc.version ]; then
+        touch .havoc/havoc.version
+        printf "[version]\ndeployment_version = ${deployment_version}" > .havoc/havoc.version
+    else
+        perl -pi -e "s/deployment_version = .*/deployment_version = ${deployment_version}/g" .havoc/havoc.version
+    fi
     echo " - Installing the ./HAVOC module."
     ./venv/bin/pip3 --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}"
     current_git_branch=$(${git_bin} status | awk 'FNR == 1 { print $3 }')
@@ -51,7 +56,12 @@ if [[ ${@} =~ "--deployment update" ]]; then
         echo "Reqested version not found."
         exit
     fi
-    perl -pi -e "s/deployment_version = .*/deployment_version = ${deployment_version}/g" .havoc/havoc.cfg
+    if [ ! -f .havoc/havoc.version ]; then
+        touch .havoc/havoc.version
+        printf "[version]\ndeployment_version = ${deployment_version}" > .havoc/havoc.version
+    else
+        perl -pi -e "s/deployment_version = .*/deployment_version = ${deployment_version}/g" .havoc/havoc.version
+    fi
 fi
 
 # Check for update request and pull latest commits plus attempt to upgrade ./HAVOC module

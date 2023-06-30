@@ -11,9 +11,10 @@ from havoc_deployment import ManageDeployment
 
 config = ConfigParser()
 config.read('.havoc/havoc.cfg')
-
-deployment_version = config.get('version', 'deployment_version')
 tf_version = config.get('version', 'tf_version')
+
+config.read('.havoc/havoc.version')
+deployment_version = config.get('version', 'deployment_version')
 
 init_parser = argparse.ArgumentParser(description='./HAVOC deployment script')
 

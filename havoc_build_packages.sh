@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Get deployment version
-deployment_version=$(grep "deployment_version = " .havoc/havoc.cfg | awk '{ print $NF }')
+deployment_version=$(grep "deployment_version = " .havoc/havoc.version | awk '{ print $NF }')
 pip_bin=./venv/bin/pip3
 
 echo ""

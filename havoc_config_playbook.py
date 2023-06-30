@@ -54,9 +54,10 @@ class ConfigPlaybook:
         print(f'\nGetting the template for playbook_type {playbook_selection}.')
         playbook_type_details = self.havoc_client.get_playbook_type(playbook_selection)
         playbook_template = hcl2.loads(playbook_type_details['playbook_template'])
+        playbook_config_source = {}
         if 'variable' in playbook_template:
             print('The playbook template contains variables that require static values.')
-            print('Please provide values for the variables below. They will be inserted into your playbook configuration:')
+            print('Please provide values for the variables below. They will be used as your playbook configuration:')
             playbook_vars = playbook_template['variable']
             for playbook_var in playbook_vars:
                 for k in playbook_var.keys():
@@ -73,27 +74,10 @@ class ConfigPlaybook:
                     else:
                         provided_value = input(f'Enter a value to use for variable {k}: ')
                     value = provided_value or default
-                    playbook_var[k]['value'] = value
-            print('\nConverting playbook template to a playbook config.')
-            for section in playbook_template:
-                if section != 'variable':
-                    json_section = json.dumps(playbook_template[section])
-                    dep_matches = re.findall('\${(variable\.[^}]+)}', json_section)
-                    if dep_matches:
-                        dep_value = None
-                        for dep_match in dep_matches:
-                            dep_match_list = dep_match.split('.')
-                            var_name = dep_match_list[1]
-                            for variable in playbook_template['variable']:
-                                for k in variable.keys():
-                                    if k == var_name:
-                                        dep_value = variable[k]['value']
-                            re_sub = re.compile('\${' + dep_match + '}')
-                            json_section = re.sub(re_sub, dep_value, json_section)
-                            new_section = json.loads(json_section)
-                            playbook_template[section] = new_section
-            del playbook_template['variable']
-            playbook_config = json.dumps(playbook_template)
+                    playbook_config_source[k] = value
+            playbook_config = json.dumps(playbook_config_source)
+        else:
+            playbook_config = {}
             print('Done.')
         playbook_name = None
         while not playbook_name:
@@ -106,12 +90,11 @@ class ConfigPlaybook:
                         print(f'A playbook with name {playbook_name} already exists.')
                         playbook_name = None
         playbook_timeout = input('Please enter a timeout value in minutes that this playbook will be allowed to run before self-terminating: ')
-        playbook_schedule = 'None'
         print('Creating a playbook with the configured properties. To run the configured playbook, use the following command in the ./HAVOC CLI:\n')
         print(f'  run_playbook --playbook_name={playbook_name}\n')
         print('To follow the playbook\'s progress, use the following command in the ./HAVOC CLI:\n')
         print(f'  tail_playbook_results --playbook_name={playbook_name}')
-        create_playbook_response = self.havoc_client.create_playbook(playbook_name, playbook_selection, playbook_schedule, playbook_timeout, playbook_config)
+        create_playbook_response = self.havoc_client.create_playbook(playbook_name, playbook_selection, playbook_timeout, playbook_config)
         if create_playbook_response:
             return 'completed'
         else:
