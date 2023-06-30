@@ -152,6 +152,20 @@ class Trigger:
         except Exception as error:
             return error
         return 'rule_deleted'
+    
+    def remove_targets(self):
+        try:
+            self.aws_cloudwatch_events_client.remove_targets(
+                Rule=self.trigger_name,
+                Ids=[self.trigger_name]
+            )
+        except botocore.exceptions.ClientError as error:
+            return f'ClientError: {error}'
+        except botocore.exceptions.ParamValidationError as error:
+            return f'ParamValidationError: {error}'
+        except Exception as error:
+            return error
+        return 'targets_removed'
 
     def create_trigger_entry(self):
 
@@ -234,6 +248,11 @@ class Trigger:
         trigger_entry = self.get_trigger_entry()
         if not trigger_entry:
             return 'trigger_entry_not_found'
+
+        # Remove the rule targets
+        remove_targets_response = self.remove_targets()
+        if remove_targets_response != 'targets_removed':
+            return remove_targets_response
 
         # Delete the rule
         delete_rule_response = self.delete_rule()
