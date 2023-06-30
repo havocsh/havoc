@@ -59,7 +59,7 @@ resource "aws_lambda_function" "manage" {
       SUBNET_1             = aws_subnet.deployment_subnet_1.id
       SECURITY_GROUP       = aws_security_group.listener_lb_default.id
       ROLE_ARN             = aws_iam_role.trigger_executor_role.arn
-      TRIGGER_EXECUTOR_ARN = aws_lambda_function.trigger_executor.invoke_arn
+      TRIGGER_EXECUTOR_ARN = aws_lambda_function.trigger_executor.arn
     }
   }
 }
