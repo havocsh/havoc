@@ -96,6 +96,11 @@
         },
         {
             "Effect": "Allow",
+            "Action": "events:*",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
             "Action": [
                 "route53:GetHostedZone",
                 "route53:ListHostedZones",
@@ -140,7 +145,8 @@
                 "${task_role}",
                 "${task_exec_role}",
                 "${playbook_operator_role}",
-                "${playbook_operator_exec_role}"
+                "${playbook_operator_exec_role}",
+                "${trigger_executor_role}"
             ]
         },
         {

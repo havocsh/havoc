@@ -24,7 +24,8 @@ data "template_file" "lambda_policy" {
   task_role                   = aws_iam_role.ecs_task_role.arn,
   task_exec_role              = aws_iam_role.ecs_task_execution_role.arn,
   playbook_operator_role      = aws_iam_role.ecs_playbook_operator_role.arn,
-  playbook_operator_exec_role = aws_iam_role.ecs_playbook_operator_execution_role.arn
+  playbook_operator_exec_role = aws_iam_role.ecs_playbook_operator_execution_role.arn,
+  trigger_executor_role       = aws_iam_role.trigger_executor_role.arn
   }
 }
 
@@ -207,7 +208,10 @@ data "template_file" "trigger_executor_policy" {
   template = file("templates/trigger_executor_policy.template")
 
   vars = {
-  trigger_executor_role = aws_iam_role.trigger_executor_role.arn
+    authorizer_table    = aws_dynamodb_table.authorizer.arn,
+    authorizer_index    = "${aws_dynamodb_table.authorizer.arn}/index/${var.deployment_name}-ApiKeyIndex"
+    deployment_table    = aws_dynamodb_table.deployment.arn,
+    trigger_queue_table = aws_dynamodb_table.trigger_queue.arn
   }
 }
 
