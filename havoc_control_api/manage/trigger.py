@@ -1,4 +1,5 @@
 import os
+import ast
 import json
 import botocore
 import boto3
@@ -97,7 +98,7 @@ class Trigger:
         event_input['detail']['trigger_name'] = self.trigger_name
         event_input['detail']['execute_command'] = self.trigger_args['execute_command']
         if self.trigger_args['execute_command_args']:
-            execute_command_args = json.loads(self.trigger_args['execute_command_args'])
+            execute_command_args = ast.literal_eval(self.trigger_args['execute_command_args'])
             if not isinstance(execute_command_args, dict):
                 return 'execute_command_args_invalid_format'
             event_input['detail']['execute_command_args'] = execute_command_args
@@ -110,7 +111,7 @@ class Trigger:
         if self.trigger_args['filter_command']:
             event_input['detail']['filter_command'] = self.trigger_args['filter_command']
         if self.trigger_args['filter_command_args']:
-            filter_command_args = json.loads(self.trigger_args['filter_command_args'])
+            filter_command_args = ast.literal_eval(self.trigger_args['filter_command_args'])
             if not isinstance(filter_command_args, dict):
                 return 'filter_command_args_invalid_format'
             event_input['detail']['filter_command_args'] = filter_command_args
