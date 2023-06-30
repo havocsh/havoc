@@ -19,6 +19,15 @@
                 "dynamodb:UpdateItem"
             ],
             "Resource": "${trigger_queue_table}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "*"
         }
     ]
 }
