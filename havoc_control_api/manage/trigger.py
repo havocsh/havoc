@@ -277,8 +277,8 @@ class Trigger:
         for k, v in self.detail.items():
             if k != 'trigger_name':
                 if k in self.trigger_args:
-                    if k == 'filter_command' and k not in filter_commands:
-                        return format_response(400, 'failed', f'invalid detail: {k} is not a supported filter_command', self.log)
+                    if k == 'filter_command' and v not in filter_commands:
+                        return format_response(400, 'failed', f'invalid detail: {v} is not a supported filter_command', self.log)
                     self.trigger_args[k] = v
                 else:
                     return format_response(400, 'failed', f'invalid detail: unknown parameter {k}', self.log)
