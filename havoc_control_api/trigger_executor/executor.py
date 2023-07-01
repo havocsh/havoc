@@ -342,9 +342,9 @@ class Trigger:
             execute_command_args = json.loads(json_args, strict=False)
 
         signal.alarm(execute_command_timeout)
+        test_call = self.havoc_client.list_tasks()
+        print(test_call)
         try:
-            test_call = self.havoc_client.list_tasks()
-            print(test_call)
             execute_command_method = getattr(self.havoc_client, execute_command)
             if execute_command_args:
                 execute_command_response = execute_command_method(**execute_command_args)
