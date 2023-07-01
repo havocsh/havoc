@@ -189,7 +189,7 @@ class Trigger:
         execute_command_args = None
         if 'execute_command_args' in self.detail:
             if not self.scheduled_trigger:
-                execute_command_args = ast.literal(self.detail['execute_command_args'])
+                execute_command_args = ast.literal_eval(self.detail['execute_command_args'])
             else:
                 execute_command_args = self.detail['execute_command_args']
             if execute_command_args and not isinstance(execute_command_args, dict):
