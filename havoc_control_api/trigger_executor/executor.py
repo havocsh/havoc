@@ -47,8 +47,8 @@ class Trigger:
         self.api_region = None
         self.api_domain_name = None
         self.__aws_dynamodb_client = None
-        self.__deployment_details = None
         self.__credentials = None
+        self.__deployment_details = None
         self.__havoc_client = None
 
     @property
@@ -59,16 +59,16 @@ class Trigger:
         return self.__aws_dynamodb_client
     
     @property
-    def deployment_details(self):
-        if self.__deployment_details is None:
-            self.__deployment_details = self.get_deployment_details()
-        return self.__deployment_details
-
-    @property
     def credentials(self):
         if self.__credentials is None:
             self.__credentials = self.get_credentials()
         return self.__credentials
+    
+    @property
+    def deployment_details(self):
+        if self.__deployment_details is None:
+            self.__deployment_details = self.get_deployment_details()
+        return self.__deployment_details
     
     @property
     def havoc_client(self):
@@ -80,19 +80,19 @@ class Trigger:
             self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret, api_version=1)
         return self.__havoc_client
     
+    def get_credentials(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-authorizer',
+            Key={
+                'user_id': {'S': self.user_id}
+            }
+        )
+    
     def get_deployment_details(self):
         return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-deployment',
             Key={
                 'deployment_name': {'S': self.deployment_name}
-            }
-        )
-    
-    def get_credentials(self, created_by):
-        return self.aws_dynamodb_client.get_item(
-            TableName=f'{self.deployment_name}-authorizer',
-            Key={
-                'user_id': {'S': created_by}
             }
         )
     
