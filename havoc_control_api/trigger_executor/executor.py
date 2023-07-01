@@ -1,4 +1,5 @@
 import re
+import ast
 import json
 import dpath
 import signal
@@ -101,11 +102,11 @@ class Trigger:
                     ':expire_time': {'N': expire_time},
                     ':user_id': {'S': self.user_id},
                     ':filter_command': {'S': filter_command},
-                    ':filter_command_args': {'S': filter_command_args},
+                    ':filter_command_args': {'S': json.dumps(filter_command_args)},
                     ':filter_command_timeout': {'N': filter_command_timeout},
                     ':filter_command_response': {'S': filter_command_json},
                     ':execute_command': {'S': execute_command},
-                    ':execute_command_args': {'S': execute_command_args},
+                    ':execute_command_args': {'S': json.dumps(execute_command_args)},
                     ':execute_command_timeout': {'N': execute_command_timeout},
                     ':execute_command_response': {'S': execute_command_json}
                 }
@@ -141,7 +142,10 @@ class Trigger:
                 return response
             
             if 'filter_command_args' in self.detail:
-                filter_command_args = self.detail['filter_command_args']
+                if not self.scheduled_trigger:
+                    filter_command_args = ast.literal_eval(self.detail['filter_command_args'])
+                else:
+                    filter_command_args = self.detail['filter_command_args']
                 if filter_command_args is not None and not isinstance(filter_command_args, dict):
                     response = format_response(
                         400, 
@@ -184,7 +188,10 @@ class Trigger:
 
         execute_command_args = None
         if 'execute_command_args' in self.detail:
-            execute_command_args = self.detail['execute_command_args']
+            if not self.scheduled_trigger:
+                execute_command_args = ast.literal(self.detail['execute_command_args'])
+            else:
+                execute_command_args = self.detail['execute_command_args']
             if execute_command_args and not isinstance(execute_command_args, dict):
                 response = format_response(
                     400, 
@@ -249,9 +256,9 @@ class Trigger:
                 filter_command_json = json.dumps(message)
                 execute_command_json = json.dumps(None)
                 if not filter_command_args:
-                    filter_command_args = 'None'
+                    filter_command_args = {'no_args': 'true'}
                 if not execute_command_args:
-                    execute_command_args = 'None'
+                    execute_command_args = {'no_args': 'true'}
                 add_queue_attr_resp = self.add_queue_attribute(stime, expiration_stime, filter_command, filter_command_args, str(filter_command_timeout),
                                                                filter_command_json, execute_command, execute_command_args, str(execute_command_timeout),
                                                                execute_command_json)
@@ -295,9 +302,7 @@ class Trigger:
                 filter_command_json = json.dumps(filter_command_response)
                 execute_command_json = json.dumps(message)
                 if not filter_command_args:
-                    filter_command_args = 'None'
-                if not execute_command_args:
-                    execute_command_args = 'None'
+                    filter_command_args = {'no_args': 'true'}
                 add_queue_attr_resp = self.add_queue_attribute(stime, expiration_stime, filter_command, filter_command_args, str(filter_command_timeout),
                                                                filter_command_json, execute_command, execute_command_args, str(execute_command_timeout),
                                                                execute_command_json)
@@ -345,9 +350,9 @@ class Trigger:
             filter_command_json = json.dumps(filter_command_response)
             execute_command_json = json.dumps(message)
             if not filter_command_args:
-                filter_command_args = 'None'
+                filter_command_args = {'no_args': 'true'}
             if not execute_command_args:
-                execute_command_args = 'None'
+                execute_command_args = {'no_args': 'true'}
             add_queue_attr_resp = self.add_queue_attribute(stime, expiration_stime, filter_command, filter_command_args, str(filter_command_timeout),
                                                            filter_command_json, execute_command, execute_command_args, str(execute_command_timeout), 
                                                            execute_command_json)

@@ -190,7 +190,7 @@ class Trigger:
         execute_command = self.trigger_args['execute_command']
         execute_command_args = self.trigger_args['execute_command_args']
         if not execute_command_args:
-            execute_command_args = 'None'
+            execute_command_args = {'no_args': 'true'}
         execute_command_timeout = self.trigger_args['execute_command_timeout']
         if execute_command_timeout is not None:
             try:
@@ -204,7 +204,7 @@ class Trigger:
             filter_command = 'None'
         filter_command_args = self.trigger_args['filter_command_args']
         if not filter_command_args:
-            filter_command_args = 'None'
+            filter_command_args = {'no_args': 'true'}
         filter_command_timeout = self.trigger_args['filter_command_timeout']
         if filter_command_timeout is not None:
             try:
