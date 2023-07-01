@@ -47,6 +47,8 @@ class Trigger:
         self.api_region = None
         self.api_domain_name = None
         self.__aws_dynamodb_client = None
+        self.__deployment_details = None
+        self.__credentials = None
         self.__havoc_client = None
 
     @property
@@ -57,9 +59,25 @@ class Trigger:
         return self.__aws_dynamodb_client
     
     @property
+    def deployment_details(self):
+        if self.__deployment_details is None:
+            self.__deployment_details = self.get_deployment_details()
+        return self.__deployment_details
+
+    @property
+    def credentials(self):
+        if self.__credentials is None:
+            self.__credentials = self.get_credentials()
+        return self.__credentials
+    
+    @property
     def havoc_client(self):
         if self.__havoc_client is None:
-            self.__havoc_client = havoc.Connect(self.api_region, self.api_domain_name, self.api_key, self.secret, api_version=1)
+            api_region = self.deployment_details['Item']['api_region']['S']
+            api_domain_name = self.deployment_details['Item']['api_domain_name']['S']
+            api_key = self.credentials['Item']['api_key']['S']
+            secret = self.credentials['Item']['secret_key']['S']
+            self.__havoc_client = havoc.Connect(api_region, api_domain_name, api_key, secret, api_version=1)
         return self.__havoc_client
     
     def get_deployment_details(self):
@@ -239,14 +257,6 @@ class Trigger:
         else:
             execute_command_timeout = 300
 
-        deployment_details = self.get_deployment_details()
-        self.api_region = deployment_details['Item']['api_region']['S']
-        self.api_domain_name = deployment_details['Item']['api_domain_name']['S']
-
-        credentials = self.get_credentials(self.user_id)
-        self.api_key = credentials['Item']['api_key']['S']
-        self.secret_key = credentials['Item']['secret_key']['S']
-
         if filter_command:
             signal.alarm(filter_command_timeout)
             try:
@@ -342,8 +352,6 @@ class Trigger:
             execute_command_args = json.loads(json_args, strict=False)
 
         signal.alarm(execute_command_timeout)
-        test_call = self.havoc_client.list_tasks()
-        print(test_call)
         try:
             execute_command_method = getattr(self.havoc_client, execute_command)
             if execute_command_args:
