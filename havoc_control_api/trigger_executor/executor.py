@@ -126,6 +126,7 @@ class Trigger:
         expiration_stime = expiration_time.strftime('%s')
         filter_command = None
         filter_command_args = None
+        filter_command_timeout = None
         filter_command_response = None
         if 'filter_command' in self.detail:
             filter_command = self.detail['filter_command']
