@@ -16,7 +16,7 @@ tf_version = config.get('version', 'tf_version')
 config.read('.havoc/havoc.version')
 deployment_version = config.get('version', 'deployment_version')
 
-init_parser = argparse.ArgumentParser(description='./HAVOC deployment script')
+init_parser = argparse.ArgumentParser(description='./HAVOC handler')
 
 init_parser.add_argument('--profile', help='Manage profiles for the ./HAVOC CLI and other utilities.')
 init_parser.add_argument('--deployment', help='Manage your ./HAVOC deployment (create|modify|update|remove|get_deployment|connect_tf_backend|disconnect_tf_backend).')
