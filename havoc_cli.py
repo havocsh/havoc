@@ -255,6 +255,20 @@ class HavocCMD(Cmd):
         print('\n--filter_command_args=<dict> - (optional) arguments applied to the filter_command; arguments should be specified as a dictionary of keys and values')
         print('\n--filter_command_timeout=<integer> - (optional) the number of seconds to wait for the filter command to return (defaults to 300 seconds)')
 
+    def do_get_trigger_results(self, inp):
+        args = {'trigger_name': '', 'filter_command': '', 'execute_command': '', 'start_time': '', 'end_time': ''}
+        command_args = convert_input(args, inp)
+        get_trigger_results_response = self.havoc_client.get_trigger_results(**command_args)
+        format_output('get_trigger_results', get_trigger_results_response)
+
+    def help_get_trigger_results(self):
+        print('\nGet results for a given trigger, filtered by filter_command, execute_command, start_time and end_time.')
+        print('\n--trigger_name=<string> - (required) retrieve results for the given trigger_name')
+        print('\n--filter_command=<string> - (optional) filter the results by the specified filter_command')
+        print('\n--execute_command=<string> - (optional) filter the results by the specified execute_command')
+        print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
+        print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
+
     def do_list_users(self, inp):
         list_users_response = self.havoc_client.list_users()
         format_output('list_users', list_users_response)
@@ -428,14 +442,15 @@ class HavocCMD(Cmd):
         print('\n--playbook_name=<string> - (required) the name of the playbook to run')
     
     def do_get_playbook_results(self, inp):
-        args = {'playbook_name': '', 'start_time': '', 'end_time': ''}
+        args = {'playbook_name': '', 'operator_command': '', 'start_time': '', 'end_time': ''}
         command_args = convert_input(args, inp)
         get_playbook_results_response = self.havoc_client.get_playbook_results(**command_args)
-        format_output('get_task_results', get_playbook_results_response)
+        format_output('get_playbook_results', get_playbook_results_response)
 
     def help_get_playbook_results(self):
         print('\nGet all results for a given playbook.')
-        print('\n--playbook_name=<string> - (required) the name of the playbook to retrieve results from')
+        print('\n--playbook_name=<string> - (required) retrieve results for the given playbook_name')
+        print('\n--operator_command=<string> - (optional) filter the results by the specified operator_command')
         print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
         print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
     
@@ -717,28 +732,16 @@ class HavocCMD(Cmd):
         print('\n--instruct_args=<dict> - (optional) a dictionary of arguments to pass with the command')
 
     def do_get_task_results(self, inp):
-        args = {'task_name': '', 'start_time': '', 'end_time': ''}
+        args = {'task_name': '', 'instruct_command': '', 'instruct_instance': '', 'start_time': '', 'end_time': ''}
         command_args = convert_input(args, inp)
         get_task_results_response = self.havoc_client.get_task_results(**command_args)
         format_output('get_task_results', get_task_results_response)
 
     def help_get_task_results(self):
-        print('\nGet all instruct_command results for a given task.')
+        print('\nGet results for a given task, filtered by instruct_command, instruct_instance, start_time and end_time.')
         print('\n--task_name=<string> - (required) the name of the task to retrieve results from')
-        print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
-        print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
-
-    def do_get_filtered_task_results(self, inp):
-        args = {'task_name': '', 'instruct_command': '', 'instruct_instance': '', 'start_time': '', 'end_time': ''}
-        command_args = convert_input(args, inp)
-        get_filtered_task_results_response = self.havoc_client.get_filtered_task_results(**command_args)
-        format_output('get_filtered_task_results', get_filtered_task_results_response)
-
-    def help_get_filtered_task_results(self):
-        print('\nGet results for a given task filtered by instruct_command and/or instruct_instance.')
-        print('\n--task_name=<string> - (required) the name of the task to retrieve results from')
-        print('\n--instruct_instance=<string> - (optional) the instruct_instance to retrieve results for')
-        print('\n--instruct_command=<string> - (optional) the command to retrieve results for')
+        print('\n--instruct_instance=<string> - (optional) filter the results by the specified instruct_instance')
+        print('\n--instruct_command=<string> - (optional) filter the results by the specified instruct_command')
         print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
         print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
 
