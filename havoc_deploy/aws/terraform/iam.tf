@@ -208,10 +208,11 @@ data "template_file" "trigger_executor_policy" {
   template = file("templates/trigger_executor_policy.template")
 
   vars = {
-    authorizer_table    = aws_dynamodb_table.authorizer.arn,
-    authorizer_index    = "${aws_dynamodb_table.authorizer.arn}/index/${var.deployment_name}-ApiKeyIndex"
-    deployment_table    = aws_dynamodb_table.deployment.arn,
-    trigger_queue_table = aws_dynamodb_table.trigger_queue.arn
+    authorizer_table      = aws_dynamodb_table.authorizer.arn,
+    authorizer_index      = "${aws_dynamodb_table.authorizer.arn}/index/${var.deployment_name}-ApiKeyIndex"
+    deployment_table      = aws_dynamodb_table.deployment.arn,
+    trigger_queue_table   = aws_dynamodb_table.trigger_queue.arn
+    trigger_executor_role = aws_iam_role.trigger_executor_role.arn
   }
 }
 
