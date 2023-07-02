@@ -92,6 +92,7 @@ class Queue:
             for item in queue_data['Items']:
                 run_time = item['run_time']['N']
                 trigger_name = item['trigger_name']['S']
+                scheduled_trigger = item['scheduled_trigger']['S']
                 filter_command = item['filter_command']['S']
                 filter_command_args = item['filter_command_args']['S']
                 filter_command_timeout = item['filter_command_timeout']['S']
@@ -105,6 +106,7 @@ class Queue:
                 # Add queue entry to results
                 queue_list.append({
                     'trigger_name': trigger_name,
+                    'scheduled_triger': scheduled_trigger,
                     'filter_command': filter_command,
                     'filter_command_args': filter_command_args,
                     'filter_command_timeout': filter_command_timeout,

@@ -124,6 +124,7 @@ class Trigger:
                 UpdateExpression='set '
                                 'expire_time=:expire_time, '
                                 'user_id=:user_id, '
+                                'scheduled_trigger=:scheduled_trigger, '
                                 'filter_command=:filter_command, '
                                 'filter_command_args=:filter_command_args, '
                                 'filter_command_timeout=:filter_command_timeout, '
@@ -135,6 +136,7 @@ class Trigger:
                 ExpressionAttributeValues={
                     ':expire_time': {'N': expire_time},
                     ':user_id': {'S': self.user_id},
+                    ':scheduled_trigger': {'S': json.dumps(self.scheduled_trigger)},
                     ':filter_command': {'S': filter_command},
                     ':filter_command_args': {'S': json.dumps(filter_command_args)},
                     ':filter_command_timeout': {'N': str(filter_command_timeout)},

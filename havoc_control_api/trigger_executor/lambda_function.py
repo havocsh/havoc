@@ -35,6 +35,8 @@ def lambda_handler(event, context):
     scheduled_trigger = False
     if 'scheduled_trigger' in data:
         scheduled_trigger = True
+    else:
+        scheduled_trigger = False
 
     if 'action' not in data:
         return format_response(400, 'failed', 'request must contain valid action', log)
