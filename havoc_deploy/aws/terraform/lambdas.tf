@@ -1,5 +1,11 @@
 # lambdas.tf
 
+data "aws_caller_identity" "current" {}
+
+locals {
+    account_id = data.aws_caller_identity.current.account_id
+}
+
 resource "aws_lambda_function" "authorizer" {
   function_name    = "${var.deployment_name}-authorizer"
   filename         = "build/authorizer.zip"
@@ -40,6 +46,14 @@ resource "aws_lambda_permission" "apigw_trigger_executor_lambda" {
   function_name = aws_lambda_function.trigger_executor.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "events_trigger_executor_lambda" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.trigger_executor.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = "arn:aws:events:${var.aws_region}:${local.account_id}:rule/*"
 }
 
 resource "aws_lambda_function" "manage" {
