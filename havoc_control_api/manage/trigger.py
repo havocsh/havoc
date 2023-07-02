@@ -246,7 +246,7 @@ class Trigger:
     def delete_trigger_entry(self):
         # Verify the trigger exists
         trigger_entry = self.get_trigger_entry()
-        if not trigger_entry:
+        if 'Item' not in trigger_entry:
             return 'trigger_entry_not_found'
 
         # Remove the rule targets
