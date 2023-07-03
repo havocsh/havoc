@@ -1,4 +1,4 @@
-import re
+import ast
 import json
 import botocore
 import boto3
@@ -176,25 +176,40 @@ class Playbook:
         return 'playbook_entry_updated'
 
     def launch(self):
-
-        playbook_entry = self.get_playbook_entry()
-        if 'Item' not in playbook_entry:
-            return format_response(404, 'failed', f'playbook {self.playbook_name} does not exist', self.log)
-
-        if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
-            return format_response(404, 'failed', f'playbook {self.playbook_name} is already running', self.log)
+        if 'playbook_type' in self.detail:
+            self.playbook_type = self.detail['playbook_type']
         
         if 'playbook_config' in self.detail:
             self.playbook_config = self.detail['playbook_config']
             if not isinstance(self.playbook_config, dict):
                 return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
-            self.playbook_config = json.dumps(self.playbook_config)
-        else:
-            self.playbook_config = playbook_entry['Item']['playbook_config']['S']
+            self.playbook_config = ast.literal_eval(self.playbook_config)
         
-        self.playbook_type = playbook_entry['Item']['playbook_type']['S']
-        playbook_timeout = int(playbook_entry['Item']['playbook_timeout']['N'])
-        created_by = playbook_entry['Item']['created_by']['S']
+        playbook_timeout = None
+        if 'playbook_timeout' in self.detail:
+            try:
+                playbook_timeout = int(self.detail['playbook_timeout'])
+            except Exception as e:
+                return format_response(400, 'failed', f'invalid detail: assigning playbook_timeout failed with error {e}', self.log)
+
+        if not self.playbook_type or not self.playbook_config or not playbook_timeout:
+            playbook_entry = self.get_playbook_entry()
+            if 'Item' not in playbook_entry:
+                return format_response(
+                    404, 
+                    'failed', 
+                    f'playbook {self.playbook_name} does not exist and ad-hoc playbook requirements not met', 
+                    self.log
+                )
+            if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
+                return format_response(409, 'failed', f'playbook {self.playbook_name} is already running', self.log)
+            self.playbook_config = playbook_entry['Item']['playbook_config']['S']
+            self.playbook_type = playbook_entry['Item']['playbook_type']['S']
+            playbook_timeout = int(playbook_entry['Item']['playbook_timeout']['N'])
+            created_by = playbook_entry['Item']['created_by']['S']
+        else:
+            created_by = self.user_id
+
         current_time = datetime.datetime.now()
         end_time_object = current_time + datetime.timedelta(playbook_timeout)
         end_time = end_time_object.strftime('%s')
