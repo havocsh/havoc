@@ -34,6 +34,11 @@ variable "domain_name" {
   default     = null
 }
 
+variable "enable_task_results_logging" {
+  description = "If set to true, successful task requests/responses will be logged to an S3 bucket."
+  type        = bool
+}
+
 variable "deployment_admin_email" {
   description = "The email address that will be referenced as the deployment admin."
 }

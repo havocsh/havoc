@@ -10,10 +10,11 @@ from datetime import datetime, timedelta
 
 class Deliver:
 
-    def __init__(self, region, deployment_name, results_queue_expiration, results):
+    def __init__(self, region, deployment_name, results_queue_expiration, enable_task_results_logging, results):
         self.region = region
         self.deployment_name = deployment_name
         self.results_queue_expiration = results_queue_expiration
+        self.enable_task_results_logging = enable_task_results_logging
         self.user_id = None
         self.results = results
         self.task_name = None
@@ -22,6 +23,7 @@ class Deliver:
         self.task_version = None
         self.__aws_dynamodb_client = None
         self.__aws_route53_client = None
+        self.__aws_s3_client = None
 
     @property
     def aws_dynamodb_client(self):
@@ -36,6 +38,13 @@ class Deliver:
         if self.__aws_route53_client is None:
             self.__aws_route53_client = boto3.client('route53', region_name=self.region)
         return self.__aws_route53_client
+    
+    @property
+    def aws_s3_client(self):
+        """Returns the boto3 S3 session (establishes one automatically if one does not already exist)"""
+        if self.__aws_s3_client is None:
+            self.__aws_s3_client = boto3.client('s3', region_name=self.region)
+        return self.__aws_s3_client
 
     def get_domain_entry(self, domain_name):
         return self.aws_dynamodb_client.get_item(
@@ -193,6 +202,19 @@ class Deliver:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'portgroup_entry_updated'
+    
+    def upload_object(self, payload_bytes, stime):
+        try:
+            self.aws_s3_client.put_object(
+                Body=payload_bytes,
+                Bucket=f'{self.deployment_name}-logging',
+                Key=stime + '.txt'
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 's3_object_uploaded'
 
     def deliver_result(self):
         # Set vars
@@ -219,6 +241,7 @@ class Deliver:
         task_instruct_args = payload['instruct_args']
         task_public_ip = payload['public_ip']
         task_local_ip = payload['local_ip']
+        task_forward_log = payload['forward_log']
         if 'end_time' in payload:
             task_end_time = payload['end_time']
         else:
@@ -241,6 +264,19 @@ class Deliver:
         del payload['instruct_user_id']
         del payload['end_time']
         del payload['forward_log']
+
+        # Log task result to S3 if enable_task_results_logging is set to true
+        if self.enable_task_results_logging == 'true' and task_forward_log == 'True':
+            s3_payload = copy.deepcopy(payload)
+            if task_instruct_command == 'terminate':
+                del s3_payload['instruct_args']
+            if 'status' in s3_payload['task_response']:
+                if s3_payload['task_response']['status'] == 'ready':
+                    del s3_payload['instruct_args']
+
+            # Send result to S3
+            payload_bytes = json.dumps(s3_payload).encode('utf-8')
+            self.upload_object(payload_bytes, stime)
 
         # Add job to results queue
         db_payload = copy.deepcopy(payload)
