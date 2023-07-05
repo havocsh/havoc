@@ -200,7 +200,11 @@ class Playbook:
                 return format_response(400, 'failed', f'invalid detail: missing required parameter {i}', self.log)
         self.playbook_name = self.detail['playbook_name']
         self.playbook_type = self.detail['playbook_type']
-        self.playbook_timeout = self.detail['playbook_timeout']
+        self.playbook_timeout = str(self.detail['playbook_timeout'])
+        try:
+            int(self.playbook_timeout)
+        except Exception as error:
+            return format_response(400, 'failed', f'invalid detail: playbook_timeout assignment failed with error {error}', self.log)
         self.playbook_config = ast.literal_eval(self.detail['playbook_config'])
         if not isinstance(self.playbook_config, dict):
                 return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
