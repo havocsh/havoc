@@ -270,7 +270,7 @@ class Deliver:
             s3_payload = copy.deepcopy(payload)
             if task_instruct_command == 'terminate':
                 del s3_payload['instruct_args']
-            if 'status' in s3_payload['task_response']:
+            if 'status' in s3_payload['instruct_command_output']:
                 if s3_payload['instruct_command_output']['status'] == 'ready':
                     del s3_payload['instruct_args']
 
