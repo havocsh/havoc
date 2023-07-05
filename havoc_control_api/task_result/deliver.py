@@ -276,7 +276,9 @@ class Deliver:
 
             # Send result to S3
             payload_bytes = json.dumps(s3_payload).encode('utf-8')
-            self.upload_object(payload_bytes, stime)
+            upload_object_response = self.upload_object(payload_bytes, stime)
+            if upload_object_response != 's3_object_uploaded':
+                print(f'Error uploading task results log entry to S3 bucket: {upload_object_response}')
 
         # Add job to results queue
         db_payload = copy.deepcopy(payload)

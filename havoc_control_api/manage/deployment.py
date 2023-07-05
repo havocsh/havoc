@@ -55,6 +55,8 @@ class Deployment:
             results_queue_expiration = self.detail['results_queue_expiration']
             api_domain_name = self.detail['api_domain_name']
             api_region = self.detail['api_region']
+            enable_task_results_logging = self.detail['enable_task_results_logging']
+            task_results_logging_bucket = self.detail['task_results_logging_bucket']
             tfstate_s3_bucket = self.detail['tfstate_s3_bucket']
             tfstate_s3_key = self.detail['tfstate_s3_key']
             tfstate_s3_region = self.detail['tfstate_s3_region']
@@ -65,9 +67,16 @@ class Deployment:
                     Key={
                         'deployment_name': {'S': self.deployment_name}
                     },
-                    UpdateExpression='set deployment_version=:deployment_version, deployment_admin_email=:deployment_admin_email, '
-                                    'results_queue_expiration=:results_queue_expiration, api_domain_name=:api_domain_name, api_region=:api_region, '
-                                    'tfstate_s3_bucket=:tfstate_s3_bucket, tfstate_s3_key=:tfstate_s3_key, tfstate_s3_region=:tfstate_s3_region, '
+                    UpdateExpression='set deployment_version=:deployment_version, '
+                                    'deployment_admin_email=:deployment_admin_email, '
+                                    'results_queue_expiration=:results_queue_expiration, '
+                                    'api_domain_name=:api_domain_name, '
+                                    'api_region=:api_region, '
+                                    'enable_task_results_logging=:enable_task_results_logging, '
+                                    'task_results_logging_bucket=:task_results_logging_bucket, '
+                                    'tfstate_s3_bucket=:tfstate_s3_bucket, '
+                                    'tfstate_s3_key=:tfstate_s3_key, '
+                                    'tfstate_s3_region=:tfstate_s3_region, '
                                     'tfstate_dynamodb_table=:tfstate_dynamodb_table',
                     ExpressionAttributeValues={
                         ':deployment_version': {'S': deployment_version},
@@ -75,6 +84,8 @@ class Deployment:
                         ':results_queue_expiration': {'S': results_queue_expiration},
                         ':api_domain_name': {'S': api_domain_name},
                         ':api_region': {'S': api_region},
+                        ':enable_task_results_logging': {'S': enable_task_results_logging},
+                        ':task_results_logging_bucket': {'S': task_results_logging_bucket},
                         ':tfstate_s3_bucket': {'S': tfstate_s3_bucket},
                         ':tfstate_s3_key': {'S': tfstate_s3_key},
                         ':tfstate_s3_region': {'S': tfstate_s3_region},
@@ -158,6 +169,8 @@ class Deployment:
         results_queue_expiration = deployment_entry['Item']['results_queue_expiration']['S']
         api_domain_name = deployment_entry['Item']['api_domain_name']['S']
         api_region = deployment_entry['Item']['api_region']['S']
+        enable_task_results_logging = deployment_entry['Item']['enable_task_results_logging']['S']
+        task_results_logging_bucket = deployment_entry['Item']['task_results_logging_bucket']['S']
         tfstate_s3_bucket = deployment_entry['Item']['tfstate_s3_bucket']['S']
         tfstate_s3_key = deployment_entry['Item']['tfstate_s3_key']['S']
         tfstate_s3_region = deployment_entry['Item']['tfstate_s3_region']['S']
@@ -173,6 +186,8 @@ class Deployment:
             results_queue_expiration=results_queue_expiration,
             api_domain_name=api_domain_name,
             api_region=api_region,
+            enable_task_results_logging=enable_task_results_logging,
+            task_results_logging_bucket=task_results_logging_bucket,
             tfstate_s3_bucket=tfstate_s3_bucket,
             tfstate_s3_key=tfstate_s3_key,
             tfstate_s3_region=tfstate_s3_region,
