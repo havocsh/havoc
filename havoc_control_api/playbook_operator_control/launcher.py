@@ -178,7 +178,7 @@ class Playbook:
                 ExpressionAttributeValues={
                     ':playbook_type': {'S': self.playbook_type},
                     ':playbook_config': {'S': self.playbook_config},
-                    ':playbook_timeout': {'S': self.playbook_timeout},
+                    ':playbook_timeout': {'N': self.playbook_timeout},
                     ':playbook_status': {'S': playbook_status},
                     ':last_executed_by': {'S': self.user_id},
                     ':last_execution_time': {'S': timestamp},
@@ -206,10 +206,7 @@ class Playbook:
                 return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
         
         if 'playbook_timeout' in self.detail:
-            try:
-                self.playbook_timeout = int(self.detail['playbook_timeout'])
-            except Exception as e:
-                return format_response(400, 'failed', f'invalid detail: assigning playbook_timeout failed with error {e}', self.log)
+            self.playbook_timeout = self.detail['playbook_timeout']
 
         playbook_entry = None
         get_playbook_entry_response = self.get_playbook_entry()
@@ -217,7 +214,6 @@ class Playbook:
             playbook_entry = get_playbook_entry_response['Item']
         if not playbook_entry:
             if not self.playbook_type or not self.playbook_config or not self.playbook_timeout:
-                print(f'playbook_type: {self.playbook_type}, playbook_config: {self.playbook_config}, playbook_timeout: {self.playbook_timeout}')
                 return format_response(
                     404, 
                     'failed', 
@@ -228,6 +224,10 @@ class Playbook:
             if 'Item' not in get_playbook_type_entry_response:
                 return format_response(404, 'failed', f'playbook_type {self.playbook_type} does not exist', self.log)
             self.created_by = self.user_id
+            try:
+                self.playbook_timeout = int(self.playbook_timeout)
+            except Exception as e:
+                return format_response(400, 'failed', f'invalid detail: assigning playbook_timeout failed with error {e}', self.log)
         else:
             if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
                 return format_response(409, 'failed', f'playbook {self.playbook_name} is already running', self.log)
