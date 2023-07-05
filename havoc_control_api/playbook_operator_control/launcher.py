@@ -217,6 +217,7 @@ class Playbook:
             playbook_entry = get_playbook_entry_response['Item']
         if not playbook_entry:
             if not self.playbook_type or not self.playbook_config or not self.playbook_timeout:
+                print(f'playbook_type: {self.playbook_type}, playbook_config: {self.playbook_config}, playbook_timeout: {self.playbook_timeout}')
                 return format_response(
                     404, 
                     'failed', 
