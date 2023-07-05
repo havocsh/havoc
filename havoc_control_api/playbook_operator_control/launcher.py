@@ -178,7 +178,7 @@ class Playbook:
                 ExpressionAttributeValues={
                     ':playbook_type': {'S': self.playbook_type},
                     ':playbook_config': {'S': json.dumps(self.playbook_config)},
-                    ':playbook_timeout': {'N': self.playbook_timeout},
+                    ':playbook_timeout': {'N': str(self.playbook_timeout)},
                     ':playbook_status': {'S': playbook_status},
                     ':last_executed_by': {'S': self.user_id},
                     ':last_execution_time': {'S': timestamp},
@@ -201,7 +201,7 @@ class Playbook:
             try:
                 self.playbook_config = ast.literal_eval(self.detail['playbook_config'])
             except Exception as error:
-                return format_response(400, 'failed', f'invalid detail: evaluating playbook_config failed with error: {error}', self.log)
+                return format_response(400, 'failed', f'invalid detail: evaluating playbook_config failed with error {error}', self.log)
             if not isinstance(self.playbook_config, dict):
                 return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
         
