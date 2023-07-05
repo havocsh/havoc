@@ -332,7 +332,7 @@ class ManageDeployment:
 
     def modify(self):
         # Setup method for modifying deployment parameters. Re-run terraform apply after changes.
-        print('\nAvailable parameters:\n[1] AWS Profile\n[2] Deployment Admin Email\n[3] Results Queue Expiration Time\n')
+        print('\nAvailable parameters:\n[1] AWS Profile\n[2] Deployment Admin Email\n[3] Results Queue Expiration Time\n[4] Enable/disable task results logging\n')
         parameters = {}
         deployment_update = {}
         mod = True
@@ -349,6 +349,14 @@ class ManageDeployment:
                     results_queue_expiration = input('Enter the desired task results queue expiration time in number of days: ')
                     parameters['results_queue_expiration'] = results_queue_expiration
                     deployment_update['results_queue_expiration'] = results_queue_expiration
+                if parameter_input == '4':
+                    enable_task_results_logging_input = input('Would you like to log task results to S3? (y|n): ')
+                    if enable_task_results_logging_input in ['y', 'Y', 'yes', 'Yes', 'YES']:
+                        enable_task_results_logging = 'true'
+                    else:
+                        enable_task_results_logging = 'false'
+                    parameters['enable_task_results_logging'] = enable_task_results_logging
+                    deployment_update['enable_task_results_logging'] = enable_task_results_logging
                 mod = input('\nWould you like to modify another paramenter? (y|n): ')
                 if mod in ['n', 'N', 'no', 'No', 'NO'] or mod is None:
                     mod = False
@@ -359,7 +367,7 @@ class ManageDeployment:
             print('No parameters entered. Exiting.')
             return 'completed'
 
-        # Read existing tfvars file and extract combine existing parameters with modified parameters.
+        # Read existing tfvars file and combine existing parameters with modified parameters.
         with open('./havoc_deploy/aws/terraform/terraform.tfvars', 'r') as f:
             for line in f:
                 if '=' in line:
@@ -371,7 +379,6 @@ class ManageDeployment:
         with open('./havoc_deploy/aws/terraform/terraform.tfvars', 'w') as f:
             for k,v in parameters.items():
                 f.write(f'{k} = "{v}"\n')
-            
 
         # Run Terraform and check for errors:
         print('Initializing Terraform.\n')

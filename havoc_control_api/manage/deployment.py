@@ -121,18 +121,27 @@ class Deployment:
                 api_region = self.detail['api_region']
             else:
                 api_region = existing_deployment['Item']['api_region']['S']
+            if 'enable_task_results_logging' in self.detail:
+                enable_task_results_logging = self.detail['enable_task_results_logging']
+            else:
+                enable_task_results_logging = existing_deployment['Item']['enable_task_results_logging']['S']
             try:
                 self.aws_dynamodb_client.update_item(
                     TableName=f'{self.deployment_name}-deployment',
                     Key={
                         'deployment_name': {'S': self.deployment_name}
                     },
-                    UpdateExpression='set deployment_version=:deployment_version, deployment_admin_email=:deployment_admin_email, '
-                                    'results_queue_expiration=:results_queue_expiration, api_domain_name=:api_domain_name, api_region=:api_region',
+                    UpdateExpression='set deployment_version=:deployment_version, '
+                                    'deployment_admin_email=:deployment_admin_email, '
+                                    'results_queue_expiration=:results_queue_expiration, '
+                                    'api_domain_name=:api_domain_name, '
+                                    'api_region=:api_region, '
+                                    'enable_task_results_logging=:enable_task_results_logging',
                     ExpressionAttributeValues={
                         ':deployment_version': {'S': deployment_version},
                         ':deployment_admin_email': {'S': deployment_admin_email},
                         ':results_queue_expiration': {'S': results_queue_expiration},
+                        ':enable_task_results_logging': {'S': enable_task_results_logging},
                         ':api_domain_name': {'S': api_domain_name},
                         ':api_region': {'S': api_region}
                     }
