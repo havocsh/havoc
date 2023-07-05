@@ -1,5 +1,13 @@
 # s3.tf
 
+resource "aws_s3_bucket" "playbooks" {
+  bucket = "${var.deployment_name}-playbooks"
+
+  tags = {
+    Name = "${var.deployment_name}-playbooks"
+  }
+}
+
 resource "aws_s3_bucket" "playbook_types" {
   bucket = "${var.deployment_name}-playbook-types"
 
