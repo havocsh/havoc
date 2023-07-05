@@ -177,7 +177,7 @@ class Playbook:
                                 'created_by=:created_by',
                 ExpressionAttributeValues={
                     ':playbook_type': {'S': self.playbook_type},
-                    ':playbook_config': {'S': self.playbook_config},
+                    ':playbook_config': {'S': json.dumps(self.playbook_config)},
                     ':playbook_timeout': {'N': self.playbook_timeout},
                     ':playbook_status': {'S': playbook_status},
                     ':last_executed_by': {'S': self.user_id},
@@ -231,7 +231,7 @@ class Playbook:
         else:
             if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
                 return format_response(409, 'failed', f'playbook {self.playbook_name} is already running', self.log)
-            self.playbook_config = playbook_entry['Item']['playbook_config']['S']
+            self.playbook_config = json.loads(playbook_entry['Item']['playbook_config']['S'])
             self.playbook_type = playbook_entry['Item']['playbook_type']['S']
             self.playbook_timeout = int(playbook_entry['Item']['playbook_timeout']['N'])
             self.created_by = playbook_entry['Item']['created_by']['S']

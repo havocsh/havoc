@@ -75,7 +75,7 @@ class ConfigPlaybook:
                         provided_value = input(f'Enter a value to use for variable {k}: ')
                     value = provided_value or default
                     playbook_config_source[k] = value
-            playbook_config = json.dumps(playbook_config_source)
+            playbook_config = playbook_config_source
         else:
             playbook_config = {}
             print('Done.')

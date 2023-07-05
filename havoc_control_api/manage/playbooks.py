@@ -1,3 +1,4 @@
+import ast
 import json
 import botocore
 import boto3
@@ -200,7 +201,7 @@ class Playbook:
         self.playbook_name = self.detail['playbook_name']
         self.playbook_type = self.detail['playbook_type']
         self.playbook_timeout = self.detail['playbook_timeout']
-        self.playbook_config = self.detail['playbook_config']
+        self.playbook_config = ast.literal_eval(self.detail['playbook_config'])
         if not isinstance(self.playbook_config, dict):
                 return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
         self.playbook_config = json.dumps(self.playbook_config)
