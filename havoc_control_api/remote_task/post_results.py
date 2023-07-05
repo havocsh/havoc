@@ -21,10 +21,11 @@ def format_response(status_code, result, message, log, **kwargs):
 
 class Deliver:
 
-    def __init__(self, region, deployment_name, results_queue_expiration, user_id, results: dict, log):
+    def __init__(self, region, deployment_name, results_queue_expiration, enable_task_results_logging, user_id, results: dict, log):
         self.region = region
         self.deployment_name = deployment_name
         self.results_queue_expiration = results_queue_expiration
+        self.enable_task_results_logging = enable_task_results_logging
         self.user_id = user_id
         self.results = results
         self.log = log
@@ -33,6 +34,7 @@ class Deliver:
         self.task_type = None
         self.task_version = None
         self.__aws_dynamodb_client = None
+        self.__aws_s3_client = None
 
     @property
     def aws_dynamodb_client(self):
@@ -40,6 +42,13 @@ class Deliver:
         if self.__aws_dynamodb_client is None:
             self.__aws_dynamodb_client = boto3.client('dynamodb', region_name=self.region)
         return self.__aws_dynamodb_client
+    
+    @property
+    def aws_s3_client(self):
+        """Returns the boto3 S3 session (establishes one automatically if one does not already exist)"""
+        if self.__aws_s3_client is None:
+            self.__aws_s3_client = boto3.client('s3', region_name=self.region)
+        return self.__aws_s3_client
 
     def add_queue_attribute(self, stime, expire_time, task_instruct_id, task_instruct_instance, task_instruct_command,
                             task_instruct_args, task_public_ip, task_local_ip, json_payload):
@@ -128,6 +137,19 @@ class Deliver:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'task_entry_updated'
+    
+    def upload_object(self, payload_bytes, stime):
+        try:
+            self.aws_s3_client.put_object(
+                Body=payload_bytes,
+                Bucket=f'{self.deployment_name}-logging',
+                Key=stime + '.txt'
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 's3_object_uploaded'
 
     def deliver_result(self):
         # Set vars
@@ -150,6 +172,7 @@ class Deliver:
         task_instruct_args = self.results['instruct_args']
         task_public_ip = self.results['public_ip']
         task_local_ip = self.results['local_ip']
+        task_forward_log = self.results['forward_log']
         stime = self.results['timestamp']
         from_timestamp = datetime.utcfromtimestamp(int(stime))
         expiration_time = from_timestamp + timedelta(days=self.results_queue_expiration)
@@ -176,6 +199,21 @@ class Deliver:
         del self.results['instruct_user_id']
         del self.results['end_time']
         del self.results['forward_log']
+
+        # Log task result to S3 if enable_task_results_logging is set to true
+        if self.enable_task_results_logging == 'true' and task_forward_log == 'True':
+            s3_payload = copy.deepcopy(self.results)
+            if task_instruct_command == 'terminate':
+                del s3_payload['instruct_args']
+            if 'status' in s3_payload['task_response']:
+                if s3_payload['instruct_command_output']['status'] == 'ready':
+                    del s3_payload['instruct_args']
+
+            # Send result to S3
+            payload_bytes = json.dumps(s3_payload).encode('utf-8')
+            upload_object_response = self.upload_object(payload_bytes, stime)
+            if upload_object_response != 's3_object_uploaded':
+                print(f'Error uploading task results log entry to S3 bucket: {upload_object_response}')
 
         # Add job to results queue
         db_payload = copy.deepcopy(self.results)

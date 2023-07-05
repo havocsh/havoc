@@ -97,8 +97,9 @@ resource "aws_lambda_function" "remote_task" {
 
   environment {
     variables = {
-      DEPLOYMENT_NAME          = var.deployment_name
-      RESULTS_QUEUE_EXPIRATION = var.results_queue_expiration
+      DEPLOYMENT_NAME             = var.deployment_name
+      RESULTS_QUEUE_EXPIRATION    = var.results_queue_expiration
+      ENABLE_TASK_RESULTS_LOGGING = var.enable_task_results_logging
     }
   }
 }
