@@ -35,6 +35,8 @@ class Playbook:
         self.log = log
         self.playbook_type = None
         self.playbook_config = None
+        self.playbook_timeout = None
+        self.created_by = None
         self.run_ecs_task_response = None
         self.__aws_dynamodb_client = None
         self.__aws_ecs_client = None
@@ -66,6 +68,14 @@ class Playbook:
             TableName=f'{self.deployment_name}-playbooks',
             Key={
                 'playbook_name': {'S': self.playbook_name}
+            }
+        )
+    
+    def get_playbook_type_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-playbook-types',
+            Key={
+                'playbook_type': {'S': self.playbook_type}
             }
         )
     
@@ -213,6 +223,9 @@ class Playbook:
                     f'playbook {self.playbook_name} does not exist and ad-hoc playbook requirements not met', 
                     self.log
                 )
+            get_playbook_type_entry_response = self.get_playbook_type_entry()
+            if 'Item' not in get_playbook_type_entry_response:
+                return format_response(404, 'failed', f'playbook_type {self.playbook_type} does not exist', self.log)
             self.created_by = self.user_id
         else:
             if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
