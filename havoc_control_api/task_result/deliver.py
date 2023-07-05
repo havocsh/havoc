@@ -271,7 +271,7 @@ class Deliver:
             if task_instruct_command == 'terminate':
                 del s3_payload['instruct_args']
             if 'status' in s3_payload['task_response']:
-                if s3_payload['task_response']['status'] == 'ready':
+                if s3_payload['instruct_command_output']['status'] == 'ready':
                     del s3_payload['instruct_args']
 
             # Send result to S3
