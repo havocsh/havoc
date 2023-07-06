@@ -95,11 +95,11 @@ class Queue:
                 scheduled_trigger = item['scheduled_trigger']['S']
                 filter_command = item['filter_command']['S']
                 filter_command_args = item['filter_command_args']['S']
-                filter_command_timeout = item['filter_command_timeout']['S']
+                filter_command_timeout = item['filter_command_timeout']['N']
                 filter_command_response = item['filter_command_response']['S']
                 execute_command = item['execute_command']['S']
                 execute_command_args = item['execute_command_args']['S']
-                execute_command_timeout = item['execute_command_timeout']['S']
+                execute_command_timeout = item['execute_command_timeout']['N']
                 execute_command_response = item['execute_command_response']['S']
                 user_id = item['user_id']['S']
 
