@@ -213,7 +213,7 @@ class Playbook:
         playbook_entry = None
         get_playbook_entry_response = self.get_playbook_entry()
         if 'Item' in get_playbook_entry_response:
-            playbook_entry = get_playbook_entry_response['Item']
+            playbook_entry = get_playbook_entry_response
         if not playbook_entry:
             if not self.playbook_type or not self.playbook_config or not self.playbook_timeout:
                 return format_response(
