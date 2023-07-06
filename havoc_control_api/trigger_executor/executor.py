@@ -170,7 +170,7 @@ class Trigger:
         execute_command_result = None
         if 'filter_command' in self.detail:
             filter_command = self.detail['filter_command']
-            filter_commands = ['get_agent_results', 'get_filtered_task_results', 'get_playbook_results', 'get_task_results', 'wait_for_c2', 'wait_for_idle_task']
+            filter_commands = ['get_agent_results', 'get_playbook_results', 'get_task_results', 'wait_for_c2', 'wait_for_idle_task']
             if filter_command not in filter_commands:
                 response = format_response(
                         400, 
@@ -320,6 +320,9 @@ class Trigger:
                     scheduled_trigger=self.scheduled_trigger
                 )
                 return response
+            else:
+                filter_command_response = {filter_command: filter_command_response}
+            
 
         if execute_command_args:
             json_args = json.dumps(execute_command_args)
@@ -348,7 +351,15 @@ class Trigger:
                 if search_path:
                     orig_path = search_path.group(1)
                     dep_path = re.sub('\.', '/', orig_path)
-                    dep_value = dpath.get(filter_command_response, dep_path)
+                    try:
+                        dep_value = dpath.get(filter_command_response, dep_path)
+                    except:
+                        return format_response(
+                            400,
+                            'failed',
+                            f'variable {dep_path} in execute_command_args cannot be found in filter_command_response {filter_command_response}',
+                            self.log
+                        )
                     re_sub = re.compile('\${' + re.escape(orig_path) + '}')
                     json_args = re.sub(re_sub, str(dep_value), json_args)
             execute_command_args = json.loads(json_args, strict=False)
