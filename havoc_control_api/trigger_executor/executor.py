@@ -156,6 +156,7 @@ class Trigger:
         return 'queue_attribute_added'
 
     def execute(self):
+        signal.signal(signal.SIGALRM, timeout_handler)
         stime = datetime.utcnow().strftime('%s')
         from_timestamp = datetime.utcfromtimestamp(int(stime))
         expiration_time = from_timestamp + timedelta(days=self.results_queue_expiration)
