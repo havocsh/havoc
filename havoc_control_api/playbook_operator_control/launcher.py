@@ -200,8 +200,10 @@ class Playbook:
         if 'playbook_config' in self.detail:
             try:
                 self.playbook_config = ast.literal_eval(self.detail['playbook_config'])
-            except Exception as error:
-                return format_response(400, 'failed', f'invalid detail: evaluating playbook_config failed with error {error}', self.log)
+            except:
+                pass
+            if not self.playbook_config:
+                self.playbook_config = self.detail['playbook_config']
             if not isinstance(self.playbook_config, dict):
                 return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
         
