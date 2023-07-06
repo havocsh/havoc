@@ -128,7 +128,7 @@ class Trigger:
                                 'filter_command=:filter_command, '
                                 'filter_command_args=:filter_command_args, '
                                 'filter_command_timeout=:filter_command_timeout, '
-                                'filter_command_response=:filter_command_response, '
+                                'filter_command_result=:filter_command_result, '
                                 'execute_command=:execute_command, '
                                 'execute_command_args=:execute_command_args, '
                                 'execute_command_timeout=:execute_command_timeout, '
@@ -140,7 +140,7 @@ class Trigger:
                     ':filter_command': {'S': filter_command},
                     ':filter_command_args': {'S': json.dumps(filter_command_args)},
                     ':filter_command_timeout': {'N': str(filter_command_timeout)},
-                    ':filter_command_response': {'S': filter_command_result},
+                    ':filter_command_result': {'S': filter_command_result},
                     ':execute_command': {'S': execute_command},
                     ':execute_command_args': {'S': json.dumps(execute_command_args)},
                     ':execute_command_timeout': {'N': str(execute_command_timeout)},
