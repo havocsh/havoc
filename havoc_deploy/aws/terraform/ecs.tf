@@ -29,8 +29,8 @@ resource "aws_ecs_task_definition" "nmap" {
   memory                   = 1024
   tags                     = {
     deployment_name    = var.deployment_name
-    name               = "nmap"
-    task_version = var.deployment_version
+    name               = "${var.deployment_name}-nmap"
+    task_version       = var.deployment_version
   }
 }
 
@@ -55,8 +55,8 @@ resource "aws_ecs_task_definition" "metasploit" {
   memory                   = 8192
   tags                     = {
     deployment_name    = var.deployment_name
-    name               = "metasploit"
-    task_version = var.deployment_version
+    name               = "${var.deployment_name}-metasploit"
+    task_version       = var.deployment_version
   }
 }
 
@@ -81,7 +81,7 @@ resource "aws_ecs_task_definition" "powershell_empire" {
   memory                   = 4096
   tags                     = {
     deployment_name    = var.deployment_name
-    name               = "powershell_empire"
+    name               = "${var.deployment_name}-powershell_empire"
     task_version = var.deployment_version
   }
 }
@@ -107,8 +107,8 @@ resource "aws_ecs_task_definition" "http_server" {
   memory                   = 4096
   tags                     = {
     deployment_name    = var.deployment_name
-    name               = "http_server"
-    task_version = var.deployment_version
+    name               = "${var.deployment_name}-http_server"
+    task_version       = var.deployment_version
   }
 }
 
@@ -133,8 +133,8 @@ resource "aws_ecs_task_definition" "trainman" {
   memory                   = 4096
   tags                     = {
     deployment_name    = var.deployment_name
-    name               = "trainman"
-    task_version = var.deployment_version
+    name               = "${var.deployment_name}-trainman"
+    task_version       = var.deployment_version
   }
 }
 
@@ -159,8 +159,8 @@ resource "aws_ecs_task_definition" "exfilkit" {
   memory                   = 4096
   tags                     = {
     deployment_name    = var.deployment_name
-    name               = "exfilkit"
-    task_version = var.deployment_version
+    name               = "${var.deployment_name}-exfilkit"
+    task_version       = var.deployment_version
   }
 }
 
@@ -184,8 +184,8 @@ resource "aws_ecs_task_definition" "playbook_operator" {
   cpu                      = 1024
   memory                   = 4096
   tags                     = {
-    deployment_name    = var.deployment_name
-    name               = "playbook_operator"
+    deployment_name           = var.deployment_name
+    name                      = "${var.deployment_name}-playbook_operator"
     playbook_operator_version = var.deployment_version
   }
 }

@@ -142,7 +142,7 @@ class Playbook:
                         'value': self.playbook_name
                     }
                 ],
-                taskDefinition='playbook_operator'
+                taskDefinition=f'{self.deployment_name}-playbook_operator'
             )
         except botocore.exceptions.ClientError as error:
             return error
