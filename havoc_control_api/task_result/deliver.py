@@ -205,6 +205,26 @@ class Deliver:
     
     def put_log_event(self, payload, stime):
         try:
+            describe_log_streams_response = self.aws_logs_client.describe_log_streams(
+                logGroupName=f'{self.deployment_name}/task_results_logging',
+                logStreamNamePrefix=f'{self.task_name}'
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        log_streams = describe_log_streams_response['logStreams']
+        if not log_streams:
+            try:
+                self.aws_logs_client.create_log_stream(
+                    logGroupName=f'{self.deployment_name}/task_results_logging',
+                    logStreamName=f'{self.task_name}'
+                )
+            except botocore.exceptions.ClientError as error:
+                return error
+            except botocore.exceptions.ParamValidationError as error:
+                return error
+        try:
             self.aws_logs_client.put_log_events(
                 logGroupName=f'{self.deployment_name}/task_results_logging',
                 logStreamName=f'{self.task_name}',
