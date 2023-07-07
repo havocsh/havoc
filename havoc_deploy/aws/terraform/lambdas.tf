@@ -201,6 +201,7 @@ resource "aws_lambda_function" "playbook_operator_result" {
     variables = {
       DEPLOYMENT_NAME          = var.deployment_name
       RESULTS_QUEUE_EXPIRATION = var.results_queue_expiration
+      ENABLE_PLAYBOOK_RESULTS_LOGGING = var.enable_playbook_results_logging
     }
   }
 }

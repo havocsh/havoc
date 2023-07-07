@@ -13,6 +13,11 @@ resource "aws_cloudwatch_log_group" "task_results_logging" {
   retention_in_days = var.results_queue_expiration
 }
 
+resource "aws_cloudwatch_log_group" "playbook_results_logging" {
+  name              = "${var.deployment_name}/playbook_results_logging"
+  retention_in_days = var.results_queue_expiration
+}
+
 resource "aws_cloudwatch_log_group" "authorizer" {
   name              = "/aws/lambda/${var.deployment_name}-authorizer"
   retention_in_days = var.results_queue_expiration

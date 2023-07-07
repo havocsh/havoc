@@ -35,7 +35,12 @@ variable "domain_name" {
 }
 
 variable "enable_task_results_logging" {
-  description = "If set to true, successful task requests/responses will be logged to an S3 bucket."
+  description = "If set to true, successful task requests/responses will be logged to CloudWatch Logs."
+  type        = bool
+}
+
+variable "enable_playbook_results_logging" {
+  description = "If set to true, playbook operations will be logged to CloudWatch Logs."
   type        = bool
 }
 
