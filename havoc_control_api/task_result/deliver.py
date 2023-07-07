@@ -204,30 +204,19 @@ class Deliver:
         return 'portgroup_entry_updated'
     
     def put_log_event(self, payload, stime):
+        log_stream_time = datetime.strftime(datetime.now(), '%Y/%m/%d')
+        log_stream_name = f'{log_stream_time}/{self.task_name}'
         try:
-            describe_log_streams_response = self.aws_logs_client.describe_log_streams(
+            self.aws_logs_client.create_log_stream(
                 logGroupName=f'{self.deployment_name}/task_results_logging',
-                logStreamNamePrefix=f'{self.task_name}'
+                logStreamName=log_stream_name
             )
-        except botocore.exceptions.ClientError as error:
-            return error
-        except botocore.exceptions.ParamValidationError as error:
-            return error
-        log_streams = describe_log_streams_response['logStreams']
-        if not log_streams:
-            try:
-                self.aws_logs_client.create_log_stream(
-                    logGroupName=f'{self.deployment_name}/task_results_logging',
-                    logStreamName=f'{self.task_name}'
-                )
-            except botocore.exceptions.ClientError as error:
-                return error
-            except botocore.exceptions.ParamValidationError as error:
-                return error
+        except self.aws_logs_client.exceptions.ResourceAlreadyExistsException:
+            pass
         try:
             self.aws_logs_client.put_log_events(
                 logGroupName=f'{self.deployment_name}/task_results_logging',
-                logStreamName=f'{self.task_name}',
+                logStreamName=log_stream_name,
                 logEvents=[
                     {
                         'timestamp': int(stime) * 1000,
