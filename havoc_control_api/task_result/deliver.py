@@ -230,7 +230,7 @@ class Deliver:
                 logStreamName=f'{self.task_name}',
                 logEvents=[
                     {
-                        'timestamp': int(stime),
+                        'timestamp': int(stime) * 1000,
                         'message': payload
                     }
                 ]
