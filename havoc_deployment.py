@@ -70,7 +70,7 @@ class ManageDeployment:
             deployment_admin_email = deployment_details['deployment_admin_email']
             results_queue_expiration = deployment_details['results_queue_expiration']
             enable_task_results_logging = deployment_details['enable_task_results_logging']
-            task_results_logging_bucket = deployment_details['task_results_logging_bucket']
+            task_results_logging_cwlogs_group = deployment_details['task_results_logging_cwlogs_group']
             retrieved_api_domain_name = deployment_details['api_domain_name']
             retrieved_api_region = deployment_details['api_region']
             tfstate_s3_bucket = deployment_details['tfstate_s3_bucket']
@@ -89,7 +89,7 @@ class ManageDeployment:
         print(f'  DEPLOYMENT_ADMIN_EMAIL = {deployment_admin_email}')
         print(f'  RESULTS_QUEUE_EXPIRATION = {results_queue_expiration}')
         print(f'  ENABLE_TASK_RESULTS_LOGGING = {enable_task_results_logging}')
-        print(f'  TASK_RESULTS_LOGGING_BUCKET = {task_results_logging_bucket}')
+        print(f'  TASK_RESULTS_LOGGING_CWLOGS_GROUP = {task_results_logging_cwlogs_group}')
         print(f'  API_DOMAIN_NAME = {retrieved_api_domain_name}')
         print(f'  API_REGION = {retrieved_api_region}')
         print(f'  TERRAFORM_STATE_S3_BUCKET = {tfstate_s3_bucket}')
@@ -215,8 +215,7 @@ class ManageDeployment:
             deployment_name_input = input('./HAVOC deployment name: ')
             test_bucket_1 = self.validate_deployment_name(f'{deployment_name_input}-workspace')
             test_bucket_2 = self.validate_deployment_name(f'{deployment_name_input}-terraform-state')
-            test_bucket_3 = self.validate_deployment_name(f'{deployment_name_input}-logging')
-            if test_bucket_1 and test_bucket_2 and test_bucket_3:
+            if test_bucket_1 and test_bucket_2:
                 deployment_name = deployment_name_input
         deployment_admin_email = input('./HAVOC deployment administrator email: ')
         results_queue_expiration = input('Task results queue expiration: ')
@@ -225,7 +224,7 @@ class ManageDeployment:
             enable_task_results_logging = 'true'
         else:
             enable_task_results_logging = 'false'
-        task_results_logging_bucket = f'{deployment_name_input}-logging'
+        task_results_logging_cwlogs_group = f'{deployment_name_input}/task_results_logging'
         enable_domain = input('Enable custom domain name? (Y/N): ')
         if enable_domain in ['y','Y','yes','Yes','YES']:
             enable_domain_name = 'true'
@@ -241,7 +240,6 @@ class ManageDeployment:
             f.write(f'deployment_admin_email = "{deployment_admin_email}"\n')
             f.write(f'results_queue_expiration = "{results_queue_expiration}"\n')
             f.write(f'enable_task_results_logging = {enable_task_results_logging}\n')
-            f.write(f'task_results_logging_bucket = {task_results_logging_bucket}\n')
             f.write(f'deployment_version = "{self.deployment_version}"\n')
             if enable_domain_name == 'true':
                 f.write(f'enable_domain_name = {enable_domain_name}\n')
@@ -317,7 +315,7 @@ class ManageDeployment:
             api_domain_name,
             api_region,
             enable_task_results_logging,
-            task_results_logging_bucket,
+            task_results_logging_cwlogs_group,
             tfstate_s3_bucket, 
             tfstate_s3_key, 
             tfstate_s3_region, 

@@ -31,14 +31,6 @@ resource "aws_s3_bucket" "workspace" {
   }
 }
 
-resource "aws_s3_bucket" "task_results_logging" {
-  bucket = "${var.deployment_name}-logging"
-
-  tags = {
-    Name = "${var.deployment_name}-logging"
-  }
-}
-
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "${var.deployment_name}-terraform-state"
 

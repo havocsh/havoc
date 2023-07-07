@@ -23,7 +23,7 @@ class Deliver:
         self.task_version = None
         self.__aws_dynamodb_client = None
         self.__aws_route53_client = None
-        self.__aws_s3_client = None
+        self.__aws_logs_client = None
 
     @property
     def aws_dynamodb_client(self):
@@ -40,11 +40,11 @@ class Deliver:
         return self.__aws_route53_client
     
     @property
-    def aws_s3_client(self):
-        """Returns the boto3 S3 session (establishes one automatically if one does not already exist)"""
-        if self.__aws_s3_client is None:
-            self.__aws_s3_client = boto3.client('s3', region_name=self.region)
-        return self.__aws_s3_client
+    def aws_logs_client(self):
+        """Returns the boto3 logs session (establishes one automatically if one does not already exist)"""
+        if self.__aws_logs_client is None:
+            self.__aws_logs_client = boto3.client('logs', region_name=self.region)
+        return self.__aws_logs_client
 
     def get_domain_entry(self, domain_name):
         return self.aws_dynamodb_client.get_item(
@@ -203,18 +203,23 @@ class Deliver:
             return error
         return 'portgroup_entry_updated'
     
-    def upload_object(self, payload_bytes, stime):
+    def put_log_event(self, payload, stime):
         try:
-            self.aws_s3_client.put_object(
-                Body=payload_bytes,
-                Bucket=f'{self.deployment_name}-logging',
-                Key=stime + '.txt'
+            self.aws_logs_client.put_log_events(
+                logGroupName=f'{self.deployment_name}/task_results_logging',
+                logStreamName=f'{self.task_name}',
+                logEvents=[
+                    {
+                        'timestamp': int(stime),
+                        'message': payload
+                    }
+                ]
             )
         except botocore.exceptions.ClientError as error:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
-        return 's3_object_uploaded'
+        return 'log_event_written'
 
     def deliver_result(self):
         # Set vars
@@ -251,9 +256,6 @@ class Deliver:
         expiration_time = from_timestamp + timedelta(days=self.results_queue_expiration)
         expiration_stime = expiration_time.strftime('%s')
 
-        # Add stime to payload as timestamp
-        payload['timestamp'] = stime
-
         # Get task portgroups
         task_entry = self.get_task_entry()
         portgroups = task_entry['Item']['portgroups']['SS']
@@ -265,20 +267,20 @@ class Deliver:
         del payload['end_time']
         del payload['forward_log']
 
-        # Log task result to S3 if enable_task_results_logging is set to true
+        # Log task result to CloudWatch Logs if enable_task_results_logging is set to true
         if self.enable_task_results_logging == 'true' and task_forward_log == 'True':
-            s3_payload = copy.deepcopy(payload)
+            cwlogs_payload = copy.deepcopy(payload)
             if task_instruct_command == 'terminate':
-                del s3_payload['instruct_args']
-            if 'status' in s3_payload['instruct_command_output']:
-                if s3_payload['instruct_command_output']['status'] == 'ready':
-                    del s3_payload['instruct_args']
+                del cwlogs_payload['instruct_args']
+            if 'status' in cwlogs_payload['instruct_command_output']:
+                if cwlogs_payload['instruct_command_output']['status'] == 'ready':
+                    del cwlogs_payload['instruct_args']
 
-            # Send result to S3
-            payload_bytes = json.dumps(s3_payload).encode('utf-8')
-            upload_object_response = self.upload_object(payload_bytes, stime)
-            if upload_object_response != 's3_object_uploaded':
-                print(f'Error uploading task results log entry to S3 bucket: {upload_object_response}')
+            # Send result to CloudWatch Logs
+            cwlogs_payload_json = json.dumps(cwlogs_payload)
+            put_log_event_response = self.put_log_event(cwlogs_payload_json, stime)
+            if put_log_event_response != 'log_event_written':
+                print(f'Error writing task result log entry to CloudWatch Logs: {put_log_event_response}')
 
         # Add job to results queue
         db_payload = copy.deepcopy(payload)

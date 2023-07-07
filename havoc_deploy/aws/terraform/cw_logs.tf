@@ -6,6 +6,10 @@ resource "aws_cloudwatch_log_group" "ecs_playbook_operator_logs" {
   name = "${var.deployment_name}/playbook_operator_cluster"
 }
 
+resource "aws_cloudwatch_log_group" "task_results_logging" {
+  name = "${var.deployment_name}/task_results_logging"
+}
+
 resource "aws_cloudwatch_log_subscription_filter" "task_result_lambdafunction_logfilter" {
   name            = "task_result_lambdafunction_logfilter"
   log_group_name  = aws_cloudwatch_log_group.ecs_task_logs.name

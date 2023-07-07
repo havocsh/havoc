@@ -42,9 +42,7 @@
                 "arn:aws:s3:::${playbooks_bucket}",
                 "arn:aws:s3:::${playbooks_bucket}/*",
                 "arn:aws:s3:::${playbook_types_bucket}",
-                "arn:aws:s3:::${playbook_types_bucket}/*",
-                "arn:aws:s3:::${task_results_logging_bucket}",
-                "arn:aws:s3:::${task_results_logging_bucket}/*"
+                "arn:aws:s3:::${playbook_types_bucket}/*"
             ]
         },
         {

@@ -21,7 +21,6 @@ data "template_file" "lambda_policy" {
   playbooks_bucket            = "${var.deployment_name}-playbooks",
   playbook_types_bucket       = "${var.deployment_name}-playbook-types",
   workspace_bucket            = "${var.deployment_name}-workspace",
-  task_results_logging_bucket = "${var.deployment_name}-logging",
   task_role                   = aws_iam_role.ecs_task_role.arn,
   task_exec_role              = aws_iam_role.ecs_task_execution_role.arn,
   playbook_operator_role      = aws_iam_role.ecs_playbook_operator_role.arn,
