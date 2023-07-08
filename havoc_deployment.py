@@ -327,6 +327,7 @@ class ManageDeployment:
             api_region,
             enable_task_results_logging,
             task_results_logging_cwlogs_group,
+            enable_playbook_results_logging,
             playbook_results_logging_cwlogs_group,
             tfstate_s3_bucket, 
             tfstate_s3_key, 
