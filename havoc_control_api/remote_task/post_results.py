@@ -1,5 +1,7 @@
 import json
 import copy
+import zlib
+import base64
 import botocore
 import boto3
 from datetime import datetime, timedelta
@@ -222,6 +224,10 @@ class Deliver:
             if 'status' in cwlogs_payload['instruct_command_output']:
                 if cwlogs_payload['instruct_command_output']['status'] == 'ready':
                     del cwlogs_payload['instruct_args']
+            if 'get_shell_command_results' in cwlogs_payload['instruct_command_output']:
+                get_shell_command_results = cwlogs_payload['instruct_command_output']['get_shell_command_results']
+                tmp_results = json.loads(zlib.decompress(base64.b64decode(get_shell_command_results.encode())).decode())
+                cwlogs_payload['instruct_command_output']['get_shell_command_results'] = tmp_results
 
             # Send result to CloudWatch Logs
             cwlogs_payload_json = json.dumps(cwlogs_payload)
