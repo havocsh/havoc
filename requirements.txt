@@ -4,3 +4,4 @@ botocore
 requests
 python-hcl2
 gnureadline
+wheel
