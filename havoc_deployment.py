@@ -16,6 +16,16 @@ def load_havoc_profiles():
     havoc_profiles.read('.havoc/profiles')
     return havoc_profiles
 
+
+def input_collector(message):
+    collected_input = None
+    while not collected_input:
+        collected_input = input(message)
+        if not collected_input:
+            print('The value cannot be empty.')
+    return collected_input
+
+
 class ManageDeployment:
 
     def __init__(self, tf_bin, deployment_version, profile=None):
@@ -107,7 +117,7 @@ class ManageDeployment:
         # Get the Terraform backend details
         print('Starting configuration for Terraform backend connection.')
         if not self.aws_profile:
-            self.aws_profile = input('Specify the AWS credentials profile to use (or you can leave it blank for default): ')
+            self.aws_profile = input_collector('Specify the AWS credentials profile to use (or you can leave it blank for default): ')
 
         print('Getting backend connection settings from ./HAVOC deployment details.')
         try:
@@ -212,8 +222,8 @@ class ManageDeployment:
 
         # Write out terraform.tfvars file
         print('\nSetting up Terraform variables. Please provide the requested details.')
-        aws_region = input('\nAWS region: ')
-        self.aws_profile = input('AWS profile: ')
+        aws_region = input_collector('\nAWS region: ')
+        self.aws_profile = input_collector('AWS profile: ')
         deployment_name = None
         while not deployment_name:
             deployment_name_input = input('./HAVOC deployment name: ')
@@ -221,25 +231,25 @@ class ManageDeployment:
             test_bucket_2 = self.validate_deployment_name(f'{deployment_name_input}-terraform-state')
             if test_bucket_1 and test_bucket_2:
                 deployment_name = deployment_name_input
-        deployment_admin_email = input('./HAVOC deployment administrator email: ')
-        results_queue_expiration = input('Task results queue expiration: ')
-        enable_task_logging = input('Enable task results logging? (Y/N): ')
+        deployment_admin_email = input_collector('./HAVOC deployment administrator email: ')
+        results_queue_expiration = input_collector('Task results queue expiration: ')
+        enable_task_logging = input_collector('Enable task results logging? (Y/N): ')
         if enable_task_logging in ['y','Y','yes','Yes','YES']:
             enable_task_results_logging = 'true'
         else:
             enable_task_results_logging = 'false'
         task_results_logging_cwlogs_group = f'{deployment_name_input}/task_results_logging'
-        enable_playbook_logging = input('Enable playbook results logging? (Y/N): ')
+        enable_playbook_logging = input_collector('Enable playbook results logging? (Y/N): ')
         if enable_playbook_logging in ['y','Y','yes','Yes','YES']:
             enable_playbook_results_logging = 'true'
         else:
             enable_playbook_results_logging = 'false'
         playbook_results_logging_cwlogs_group = f'{deployment_name_input}/playbook_results_logging'
-        enable_domain = input('Enable custom domain name? (Y/N): ')
+        enable_domain = input_collector('Enable custom domain name? (Y/N): ')
         if enable_domain in ['y','Y','yes','Yes','YES']:
             enable_domain_name = 'true'
-            custom_domain_name = input('Custom domain name: ')
-            hosted_zone = input('Hosted zone ID: ')
+            custom_domain_name = input_collector('Custom domain name: ')
+            hosted_zone = input_collector('Hosted zone ID: ')
         else:
             enable_domain_name = 'false'
 
@@ -349,26 +359,26 @@ class ManageDeployment:
         mod = True
         while mod:
             try:
-                parameter_input = input('Enter the number of the parameter you would like to modify: ')
+                parameter_input = input_collector('Enter the number of the parameter you would like to modify: ')
                 if parameter_input == '1':
-                    parameters['aws_profile'] = input('Enter the desired AWS profile to be used by Terraform: ')
+                    parameters['aws_profile'] = input_collector('Enter the desired AWS profile to be used by Terraform: ')
                 if parameter_input == '2':
-                    deployment_admin_email = input('Enter the desired ./HAVOC deployment administrator email: ')
+                    deployment_admin_email = input_collector('Enter the desired ./HAVOC deployment administrator email: ')
                     parameters['deployment_admin_email'] = deployment_admin_email
                     deployment_update['deployment_admin_email'] = deployment_admin_email
                 if parameter_input == '3':
-                    results_queue_expiration = input('Enter the desired task results queue expiration time in number of days: ')
+                    results_queue_expiration = input_collector('Enter the desired task results queue expiration time in number of days: ')
                     parameters['results_queue_expiration'] = results_queue_expiration
                     deployment_update['results_queue_expiration'] = results_queue_expiration
                 if parameter_input == '4':
-                    enable_task_results_logging_input = input('Would you like to log task results to S3? (y|n): ')
+                    enable_task_results_logging_input = input_collector('Would you like to log task results to S3? (y|n): ')
                     if enable_task_results_logging_input in ['y', 'Y', 'yes', 'Yes', 'YES']:
                         enable_task_results_logging = 'true'
                     else:
                         enable_task_results_logging = 'false'
                     parameters['enable_task_results_logging'] = enable_task_results_logging
                     deployment_update['enable_task_results_logging'] = enable_task_results_logging
-                mod = input('\nWould you like to modify another paramenter? (y|n): ')
+                mod = input_collector('\nWould you like to modify another paramenter? (y|n): ')
                 if mod in ['n', 'N', 'no', 'No', 'NO'] or mod is None:
                     mod = False
             except KeyboardInterrupt:
