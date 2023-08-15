@@ -187,7 +187,7 @@ class Domain:
                             'Action': 'DELETE',
                             'ResourceRecordSet': {
                                 'Name': name,
-                                'Type': 'A',
+                                'Type': 'CNAME',
                                 'TTL': 300,
                                 'ResourceRecords': [
                                     {
