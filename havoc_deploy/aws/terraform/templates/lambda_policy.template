@@ -25,7 +25,8 @@
                 "${playbook_queue_table}",
                 "${listeners_table}",
                 "${triggers_table}",
-                "${trigger_queue_table}"
+                "${trigger_queue_table}",
+                "${webhook_service_table}"
             ]
         },
         {
