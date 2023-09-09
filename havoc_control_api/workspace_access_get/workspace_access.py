@@ -32,7 +32,6 @@ class WorkspaceAccess:
         self.path = 'shared/'
         self.filename = None
         self.presigned_url = None
-        self.fields = json.dumps(None)
         self.__aws_s3_client = None
         self.__aws_dynamodb_client = None
 
@@ -100,12 +99,10 @@ class WorkspaceAccess:
                 UpdateExpression='set '
                                 'expire_time=:expire_time, '
                                 'presigned_url=:presigned_url, '
-                                'data_fields=:data_fields, '
                                 'created_by=:created_by',
                 ExpressionAttributeValues={
                     ':expire_time': {'N': expire_time},
                     ':presigned_url': {'S': self.presigned_url},
-                    ':data_fields': {'S': self.fields},
                     ':created_by': {'S': self.user_id}
                 }
             )
@@ -193,7 +190,7 @@ class WorkspaceAccess:
                     url = item['presigned_url']
                     object_dict = {'object_access': object_access, 'presigned_url': url}
                     objects_list.append(object_dict)
-        return format_response(200, 'success', 'list workspace object access urls succeeded', None, workspace_get_urls=objects_list)
+        return format_response(200, 'success', 'list_workspace_get_urls succeeded', None, workspace_get_urls=objects_list)
 
     def update(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)

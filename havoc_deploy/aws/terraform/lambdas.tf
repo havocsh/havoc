@@ -237,14 +237,14 @@ resource "aws_lambda_permission" "apigw_workspace_access_get_lambda" {
   source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
 }
 
-resource "aws_lambda_function" "workspace_access_post" {
-  function_name    = "${var.deployment_name}-workspace-access-post"
-  filename         = "build/workspace_access_post.zip"
-  source_code_hash = "build/workspace_access_post.zip.base64sha256"
+resource "aws_lambda_function" "workspace_access_put" {
+  function_name    = "${var.deployment_name}-workspace-access-put"
+  filename         = "build/workspace_access_put.zip"
+  source_code_hash = "build/workspace_access_put.zip.base64sha256"
   handler          = "lambda_function.lambda_handler"
   runtime          = "python3.8"
   timeout          = 60
-  role             = aws_iam_role.workspace_access_post_lambda_role.arn
+  role             = aws_iam_role.workspace_access_put_lambda_role.arn
 
   environment {
     variables = {
@@ -253,10 +253,10 @@ resource "aws_lambda_function" "workspace_access_post" {
   }
 }
 
-resource "aws_lambda_permission" "apigw_workspace_access_post_lambda" {
+resource "aws_lambda_permission" "apigw_workspace_access_put_lambda" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.workspace_access_post.function_name
+  function_name = aws_lambda_function.workspace_access_put.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
 }

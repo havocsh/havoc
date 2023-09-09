@@ -14,14 +14,14 @@ resource "aws_api_gateway_deployment" "rest_api" {
     aws_api_gateway_method.playbook_operator_control_post,
     aws_api_gateway_method.trigger_executor_post,
     aws_api_gateway_method.workspace_access_get_post,
-    aws_api_gateway_method.workspace_access_post_post,
+    aws_api_gateway_method.workspace_access_put_post,
     aws_api_gateway_integration.manage_lambda_integration,
     aws_api_gateway_integration.remote_task_lambda_integration,
     aws_api_gateway_integration.task_control_lambda_integration,
     aws_api_gateway_integration.playbook_operator_control_lambda_integration,
     aws_api_gateway_integration.trigger_executor_lambda_integration,
     aws_api_gateway_integration.workspace_access_get_lambda_integration,
-    aws_api_gateway_integration.workspace_access_post_lambda_integration
+    aws_api_gateway_integration.workspace_access_put_lambda_integration
   ]
 
   triggers = {
@@ -32,21 +32,21 @@ resource "aws_api_gateway_deployment" "rest_api" {
       aws_api_gateway_resource.playbook_operator_control_resource,
       aws_api_gateway_resource.trigger_executor_resource,
       aws_api_gateway_resource.workspace_access_get_resource,
-      aws_api_gateway_resource.workspace_access_post_resource,
+      aws_api_gateway_resource.workspace_access_put_resource,
       aws_api_gateway_method.manage_post,
       aws_api_gateway_method.remote_task_post,
       aws_api_gateway_method.task_control_post,
       aws_api_gateway_method.playbook_operator_control_post,
       aws_api_gateway_method.trigger_executor_post,
       aws_api_gateway_method.workspace_access_get_post,
-      aws_api_gateway_method.workspace_access_post_post,
+      aws_api_gateway_method.workspace_access_put_post,
       aws_api_gateway_integration.manage_lambda_integration,
       aws_api_gateway_integration.remote_task_lambda_integration,
       aws_api_gateway_integration.task_control_lambda_integration,
       aws_api_gateway_integration.playbook_operator_control_lambda_integration,
       aws_api_gateway_integration.trigger_executor_lambda_integration,
       aws_api_gateway_integration.workspace_access_get_lambda_integration,
-      aws_api_gateway_integration.workspace_access_post_lambda_integration
+      aws_api_gateway_integration.workspace_access_put_lambda_integration
     ]))
   }
 
@@ -123,7 +123,7 @@ resource "aws_api_gateway_resource" "workspace_access_get_resource" {
   path_part   = "workspace-access-get"
 }
 
-resource "aws_api_gateway_resource" "workspace_access_post_resource" {
+resource "aws_api_gateway_resource" "workspace_access_put_resource" {
   rest_api_id = aws_api_gateway_rest_api.rest_api.id
   parent_id   = aws_api_gateway_rest_api.rest_api.root_resource_id
   path_part   = "workspace-access-post"
@@ -213,9 +213,9 @@ resource "aws_api_gateway_method" "workspace_access_get_post" {
   }
 }
 
-resource "aws_api_gateway_method" "workspace_access_post_post" {
+resource "aws_api_gateway_method" "workspace_access_put_post" {
   rest_api_id   = aws_api_gateway_rest_api.rest_api.id
-  resource_id   = aws_api_gateway_resource.workspace_access_post_resource.id
+  resource_id   = aws_api_gateway_resource.workspace_access_put_resource.id
   http_method   = "POST"
   authorization = "CUSTOM"
   authorizer_id = aws_api_gateway_authorizer.authorizer.id
@@ -281,11 +281,11 @@ resource "aws_api_gateway_integration" "workspace_access_get_lambda_integration"
   uri                     = aws_lambda_function.workspace_access_get.invoke_arn
 }
 
-resource "aws_api_gateway_integration" "workspace_access_post_lambda_integration" {
+resource "aws_api_gateway_integration" "workspace_access_put_lambda_integration" {
   rest_api_id             = aws_api_gateway_rest_api.rest_api.id
-  resource_id             = aws_api_gateway_resource.workspace_access_post_resource.id
-  http_method             = aws_api_gateway_method.workspace_access_post_post.http_method
+  resource_id             = aws_api_gateway_resource.workspace_access_put_resource.id
+  http_method             = aws_api_gateway_method.workspace_access_put_post.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.workspace_access_post.invoke_arn
+  uri                     = aws_lambda_function.workspace_access_put.invoke_arn
 }

@@ -32,7 +32,6 @@ class WorkspaceAccess:
         self.path = None
         self.filename = None
         self.presigned_url = None
-        self.fields = None
         self.__aws_s3_client = None
         self.__aws_dynamodb_client = None
 
@@ -50,7 +49,7 @@ class WorkspaceAccess:
             self.__aws_dynamodb_client = boto3.client('dynamodb', region_name=self.region)
         return self.__aws_dynamodb_client
     
-    def query_workspace_post_urls(self):
+    def query_workspace_put_urls(self):
         object_access_urls = {'Items': []}
         scan_kwargs = {'TableName': f'{self.deployment_name}-workspace-access'}
         done = False
@@ -65,7 +64,7 @@ class WorkspaceAccess:
             done = start_key is None
         return object_access_urls
     
-    def get_workspace_post_url(self):
+    def get_workspace_put_url(self):
         return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-workspace-access',
             Key={
@@ -73,20 +72,23 @@ class WorkspaceAccess:
             }
         )
     
-    def create_workspace_post_url(self, expiration):
+    def create_workspace_put_url(self, expiration):
         bucket_name = f'{self.deployment_name}-workspace'
         object_name = self.path + self.filename
         try:
-            generate_presigned_post_response = self.aws_s3_client.generate_presigned_post(bucket_name, object_name, ExpiresIn=expiration)
-            self.presigned_url = generate_presigned_post_response['url']
-            self.fields = json.dumps(generate_presigned_post_response['fields'])
+            generate_presigned_put_response = self.aws_s3_client.generate_presigned_url('put_object',
+                                                                                         Params={'Bucket': bucket_name, 
+                                                                                                 'Key': object_name,
+                                                                                                 'Content-Type': 'application/octet-stream'},
+                                                                                         ExpiresIn=expiration)
+            self.presigned_url = generate_presigned_put_response['url']
         except botocore.exceptions.ClientError as error:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
-        return 'workspace_post_url_created'
+        return 'workspace_put_url_created'
     
-    def add_workspace_post_url_entry(self, stime, expire_time):
+    def add_workspace_put_url_entry(self, stime, expire_time):
         try:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-workspace-access',
@@ -97,12 +99,10 @@ class WorkspaceAccess:
                 UpdateExpression='set '
                                 'expire_time=:expire_time, '
                                 'presigned_url=:presigned_url, '
-                                'data_fields=:data_fields, '
                                 'created_by=:created_by',
                 ExpressionAttributeValues={
                     ':expire_time': {'N': expire_time},
                     ':presigned_url': {'S': self.presigned_url},
-                    ':data_fields': {'S': self.fields},
                     ':created_by': {'S': self.user_id}
                 }
             )
@@ -110,7 +110,7 @@ class WorkspaceAccess:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
-        return 'workspace_post_url_entry_added'
+        return 'workspace_put_url_entry_added'
 
     def create(self):
         # Validate request details and assign parameters
@@ -137,14 +137,14 @@ class WorkspaceAccess:
         expiration_stime = expiration_time.strftime('%s')
         
         # Generate the presigned URL and write the details to workspace-object-access-urls table
-        create_workspace_post_url_response = self.create_workspace_post_url(expiration)
-        if create_workspace_post_url_response != 'workspace_post_url_created':
-            return format_response(500, 'failed', f'create_workspace_post_url failed with error {create_workspace_post_url_response}', self.log)
+        create_workspace_put_url_response = self.create_workspace_put_url(expiration)
+        if create_workspace_put_url_response != 'workspace_put_url_created':
+            return format_response(500, 'failed', f'create_workspace_put_url failed with error {create_workspace_put_url_response}', self.log)
         
-        add_workspace_post_url_entry_response = self.add_workspace_post_url_entry(stime, expiration_stime)
-        if add_workspace_post_url_entry_response != 'workspace_post_url_entry_added':
-            return format_response(500, 'failed', f'create_workspace_post_url failed with error {add_workspace_post_url_entry_response}', self.log)
-        return format_response(200, 'success', 'create_workspace_post_url succeeded', None, workspace_post_url=self.presigned_url, data_fields=self.fields)
+        add_workspace_put_url_entry_response = self.add_workspace_put_url_entry(stime, expiration_stime)
+        if add_workspace_put_url_entry_response != 'workspace_put_url_entry_added':
+            return format_response(500, 'failed', f'create_workspace_put_url failed with error {add_workspace_put_url_entry_response}', self.log)
+        return format_response(200, 'success', 'create_workspace_put_url succeeded', None, workspace_put_url=self.presigned_url)
 
     def delete(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)
@@ -159,23 +159,21 @@ class WorkspaceAccess:
         self.filename = self.detail['filename']
 
         # Get the object access url details
-        get_workspace_post_url_response = self.get_workspace_post_url()
-        if 'Item' not in get_workspace_post_url_response:
-            return format_response(404, 'failed', 'workspace_post_url not found', self.log)
+        get_workspace_put_url_response = self.get_workspace_put_url()
+        if 'Item' not in get_workspace_put_url_response:
+            return format_response(404, 'failed', 'workspace_put_url not found', self.log)
         
         # Setup response parameters
-        object_access = get_workspace_post_url_response['Item']['object_access']['S']
-        create_time = get_workspace_post_url_response['Item']['create_time']['N']
-        expire_time = get_workspace_post_url_response['Item']['expire_time']['N']
-        presigned_url = get_workspace_post_url_response['Item']['presigned_url']['S']
-        fields = get_workspace_post_url_response['Item']['data_fields']['S']
-        created_by = get_workspace_post_url_response['Item']['created_by']['S']
+        object_access = get_workspace_put_url_response['Item']['object_access']['S']
+        create_time = get_workspace_put_url_response['Item']['create_time']['N']
+        expire_time = get_workspace_put_url_response['Item']['expire_time']['N']
+        presigned_url = get_workspace_put_url_response['Item']['presigned_url']['S']
+        created_by = get_workspace_put_url_response['Item']['created_by']['S']
         
         return format_response(
-            200, 'success', 'get_workspace_post_url succeeded', None,
+            200, 'success', 'get_workspace_put_url succeeded', None,
             object_access=object_access,
             presigned_url=presigned_url,
-            data_fields=fields,
             create_time=create_time,
             expire_time=expire_time,
             created_by=created_by
@@ -195,17 +193,16 @@ class WorkspaceAccess:
             self.filename = '.*'
         requested_object = re.compile(f'{self.access_type} {self.path}{self.filename}')
         objects_list = []
-        workspace_post_urls_response = self.query_workspace_post_urls()
-        if 'Items' in workspace_post_urls_response:
-            for item in workspace_post_urls_response['Items']:
+        workspace_put_urls_response = self.query_workspace_put_urls()
+        if 'Items' in workspace_put_urls_response:
+            for item in workspace_put_urls_response['Items']:
                 object_access = item['object_access']['S']
                 search = re.search(requested_object, object_access)
                 if search:
                     url = item['presigned_url']['S']
-                    fields = item['data_fields']['S']
-                    object_dict = {'object_access': object_access, 'presigned_url': url, 'data_fields': fields}
+                    object_dict = {'object_access': object_access, 'presigned_url': url}
                     objects_list.append(object_dict)
-        return format_response(200, 'success', 'list_workspace_post_urls succeeded', None, workspace_post_urls=objects_list)
+        return format_response(200, 'success', 'list_workspace_put_urls succeeded', None, workspace_put_urls=objects_list)
 
     def update(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)

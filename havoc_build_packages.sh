@@ -41,9 +41,9 @@ echo " - Packaging havoc_control_api/workspace_access_get"
 cd workspace_access_get && zip -q -r ../../havoc_deploy/aws/terraform/build/workspace_access_get.zip .
 cd .. && openssl dgst -sha256 -binary ../havoc_deploy/aws/terraform/build/workspace_access_get.zip | openssl enc -base64 > ../havoc_deploy/aws/terraform/build/workspace_access_get.zip.base64sha256
 
-echo " - Packaging havoc_control_api/workspace_access_post"
-cd workspace_access_post && zip -q -r ../../havoc_deploy/aws/terraform/build/workspace_access_post.zip .
-cd .. && openssl dgst -sha256 -binary ../havoc_deploy/aws/terraform/build/workspace_access_post.zip | openssl enc -base64 > ../havoc_deploy/aws/terraform/build/workspace_access_post.zip.base64sha256
+echo " - Packaging havoc_control_api/workspace_access_put"
+cd workspace_access_put && zip -q -r ../../havoc_deploy/aws/terraform/build/workspace_access_put.zip .
+cd .. && openssl dgst -sha256 -binary ../havoc_deploy/aws/terraform/build/workspace_access_put.zip | openssl enc -base64 > ../havoc_deploy/aws/terraform/build/workspace_access_put.zip.base64sha256
 
 echo " - Packaging havoc_control_api/trigger_executor"
 if [ ! -d trigger_executor/havoc ]; then

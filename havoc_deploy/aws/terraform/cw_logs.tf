@@ -63,8 +63,8 @@ resource "aws_cloudwatch_log_group" "workspace_access_get" {
   retention_in_days = var.results_queue_expiration
 }
 
-resource "aws_cloudwatch_log_group" "workspace_access_post" {
-  name              = "/aws/lambda/${var.deployment_name}-workspace-access-post"
+resource "aws_cloudwatch_log_group" "workspace_access_put" {
+  name              = "/aws/lambda/${var.deployment_name}-workspace-access-put"
   retention_in_days = var.results_queue_expiration
 }
 
