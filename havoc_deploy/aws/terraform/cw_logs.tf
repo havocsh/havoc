@@ -58,6 +58,16 @@ resource "aws_cloudwatch_log_group" "playbook_operator_result" {
   retention_in_days = var.results_queue_expiration
 }
 
+resource "aws_cloudwatch_log_group" "workspace_access_get" {
+  name              = "/aws/lambda/${var.deployment_name}-workspace-access-get"
+  retention_in_days = var.results_queue_expiration
+}
+
+resource "aws_cloudwatch_log_group" "workspace_access_post" {
+  name              = "/aws/lambda/${var.deployment_name}-workspace-access-post"
+  retention_in_days = var.results_queue_expiration
+}
+
 resource "aws_cloudwatch_log_subscription_filter" "task_result_lambdafunction_logfilter" {
   name            = "task_result_lambdafunction_logfilter"
   log_group_name  = aws_cloudwatch_log_group.ecs_task_logs.name
