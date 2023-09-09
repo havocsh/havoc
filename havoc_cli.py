@@ -656,6 +656,71 @@ class HavocCMD(Cmd):
         print('\n--host_name=<string> - (optional) if using an FQDN, specify the host name to be set in DNS')
         print('\n--domain_name=<string> - (optional) if using an FQDN, specify the domain name to be set in DNS')
 
+    def do_list_workspace_get_urls(self, inp):
+        args = {'filename': ''}
+        command_args = convert_input(args, inp)
+        list_workspace_get_urls_response = self.havoc_client.list_workspace_get_urls(**command_args)
+        format_output('list_workspace_get_urls', list_workspace_get_urls_response)
+
+    def help_list_workspace_get_urls(self):
+        print('\nList all existing workspace_get_urls.')
+        print('\n--filename=<string> - (optional) provide a file name to list workspace_get_urls for a specific file')
+
+    def do_get_workspace_get_url(self, inp):
+        args = {'filename': ''}
+        command_args = convert_input(args, inp)
+        get_workspace_get_url_response = self.havoc_client.get_workspace_get_url(**command_args)
+        format_output('get_workspace_get_url', get_workspace_get_url_response)
+
+    def help_get_workspace_get_url(self):
+        print('\nGet details of a given workspace_get_url.')
+        print('\n--filename=<string> - (required) the name of the file to retrieve the workspace_get_url for')
+
+    def do_create_workspace_get_url(self, inp):
+        args = {'filename': '', 'expiration': ''}
+        command_args = convert_input(args, inp)
+        create_workspace_get_url_response = self.havoc_client.create_workspace_get_url(**command_args)
+        format_output('create_workspace_get_url', create_workspace_get_url_response)
+
+    def help_create_workspace_get_url(self):
+        print('\nCreate a new workspace_get_url with the given parameters.')
+        print('\n--filename=<string> - (required) the name of the file to create the workspace_get_url for')
+        print('\n--expiration=<integer> - (optional) amount of time in seconds for the workspace_get_url to remain valid - defaults to 3600')
+
+    def do_list_workspace_post_urls(self, inp):
+        args = {'path': '', 'filename': ''}
+        command_args = convert_input(args, inp)
+        list_workspace_post_urls_response = self.havoc_client.list_workspace_post_urls(**command_args)
+        format_output('list_workspace_post_urls', list_workspace_post_urls_response)
+
+    def help_list_workspace_post_urls(self):
+        print('\nList all existing workspace_post_urls.')
+        print('\n--path=<string> - (optional) provide a path to list workspace_post_urls for a specific path - can be "shared/" or "upload/"')        
+        print('\n--filename=<string> - (optional) provide a file name to list workspace_get_urls for a specific file')
+
+    def do_get_workspace_post_url(self, inp):
+        args = {'path': '', 'filename': ''}
+        command_args = convert_input(args, inp)
+        get_workspace_post_url_response = self.havoc_client.get_workspace_post_url(**command_args)
+        format_output('get_workspace_post_url', get_workspace_post_url_response)
+
+    def help_get_workspace_post_url(self):
+        print('\nGet details of a given workspace_post_url.')
+        print('\n--path=<string> - (required) the path to the file to retrieve the workspace_post_url for - can be "shared/" or "upload/"')
+        print('\n--filename=<string> - (required) the name of the file to retrieve the workspace_post_url for')
+
+    def do_create_workspace_post_url(self, inp):
+        args = {'path': '', 'filename': '', 'expiration': ''}
+        command_args = convert_input(args, inp)
+        create_workspace_post_url_response = self.havoc_client.create_workspace_post_url(**command_args)
+        format_output('create_workspace_post_url', create_workspace_post_url_response)
+
+    def help_create_workspace_post_url(self):
+        print('\nCreate a new workspace_post_url with the given parameters.')
+        print('\n--path=<string> - (required) the path to the file to create the workspace_post_url for - can be "shared/" or "upload/"')
+        print('\n--filename=<string> - (required) the name of the file to create the workspace_post_url for')
+        print('\n--expiration=<integer> - (optional) amount of time in seconds for the workspace_post_url to remain valid - defaults to 3600')
+    
     def do_delete_listener(self, inp):
         args = {'listener_name': ''}
         command_args = convert_input(args, inp)
