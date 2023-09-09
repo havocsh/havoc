@@ -76,12 +76,15 @@ class WorkspaceAccess:
         bucket_name = f'{self.deployment_name}-workspace'
         object_name = self.path + self.filename
         try:
-            generate_presigned_put_response = self.aws_s3_client.generate_presigned_url('put_object',
-                                                                                         Params={'Bucket': bucket_name, 
-                                                                                                 'Key': object_name,
-                                                                                                 'Content-Type': 'application/octet-stream'},
-                                                                                         ExpiresIn=expiration)
-            self.presigned_url = generate_presigned_put_response['url']
+            self.presigned_url = self.aws_s3_client.generate_presigned_url(
+                'put_object',
+                Params={
+                    'Bucket': bucket_name,
+                    'Key': object_name,
+                    'Content-Type': 'application/octet-stream'
+                },
+                ExpiresIn=expiration
+            )
         except botocore.exceptions.ClientError as error:
             return error
         except botocore.exceptions.ParamValidationError as error:
