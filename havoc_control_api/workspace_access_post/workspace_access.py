@@ -97,12 +97,12 @@ class WorkspaceAccess:
                 UpdateExpression='set '
                                 'expire_time=:expire_time, '
                                 'presigned_url=:presigned_url, '
-                                'fields=:fields, '
+                                'data_fields=:data_fields, '
                                 'created_by=:created_by',
                 ExpressionAttributeValues={
                     ':expire_time': {'N': expire_time},
                     ':presigned_url': {'S': self.presigned_url},
-                    ':fields': {'S': self.fields},
+                    ':data_fields': {'S': self.fields},
                     ':created_by': {'S': self.user_id}
                 }
             )
@@ -144,7 +144,7 @@ class WorkspaceAccess:
         add_workspace_post_url_entry_response = self.add_workspace_post_url_entry(stime, expiration_stime)
         if add_workspace_post_url_entry_response != 'workspace_post_url_entry_added':
             return format_response(500, 'failed', f'create_workspace_post_url failed with error {add_workspace_post_url_entry_response}', self.log)
-        return format_response(200, 'success', 'create_workspace_post_url succeeded', None, workspace_post_url=self.presigned_url, fields=self.fields)
+        return format_response(200, 'success', 'create_workspace_post_url succeeded', None, workspace_post_url=self.presigned_url, data_fields=self.fields)
 
     def delete(self):
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)
@@ -168,14 +168,14 @@ class WorkspaceAccess:
         create_time = get_workspace_post_url_response['Item']['create_time']['N']
         expire_time = get_workspace_post_url_response['Item']['expire_time']['N']
         presigned_url = get_workspace_post_url_response['Item']['presigned_url']['S']
-        fields = get_workspace_post_url_response['Item']['fields']['S']
+        fields = get_workspace_post_url_response['Item']['data_fields']['S']
         created_by = get_workspace_post_url_response['Item']['created_by']['S']
         
         return format_response(
             200, 'success', 'get_workspace_post_url succeeded', None,
             object_access=object_access,
             presigned_url=presigned_url,
-            fields=fields,
+            data_fields=fields,
             create_time=create_time,
             expire_time=expire_time,
             created_by=created_by
@@ -202,8 +202,8 @@ class WorkspaceAccess:
                 search = re.search(requested_object, object_access)
                 if search:
                     url = item['presigned_url']['S']
-                    fields = item['fields']['S']
-                    object_dict = {'object_access': object_access, 'presigned_url': url, 'fields': fields}
+                    fields = item['data_fields']['S']
+                    object_dict = {'object_access': object_access, 'presigned_url': url, 'data_fields': fields}
                     objects_list.append(object_dict)
         return format_response(200, 'success', 'list_workspace_post_urls succeeded', None, workspace_post_urls=objects_list)
 

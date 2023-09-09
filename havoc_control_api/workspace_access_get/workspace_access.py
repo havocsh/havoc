@@ -100,12 +100,12 @@ class WorkspaceAccess:
                 UpdateExpression='set '
                                 'expire_time=:expire_time, '
                                 'presigned_url=:presigned_url, '
-                                'fields=:fields, '
+                                'data_fields=:data_fields, '
                                 'created_by=:created_by',
                 ExpressionAttributeValues={
                     ':expire_time': {'N': expire_time},
                     ':presigned_url': {'S': self.presigned_url},
-                    ':fields': {'S': self.fields},
+                    ':data_fields': {'S': self.fields},
                     ':created_by': {'S': self.user_id}
                 }
             )
