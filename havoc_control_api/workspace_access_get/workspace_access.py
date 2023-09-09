@@ -121,7 +121,10 @@ class WorkspaceAccess:
             return format_response(400, 'failed', f'invalid detail: missing filename', self.log)
         self.filename = self.detail['filename']
         if 'expiration' in self.detail:
-            expiration = self.detail['expiration']
+            try:
+                expiration = int(self.detail['expiration'])
+            except Exception as e:
+                return format_response(400, 'failed', f'invalid detail: {e}', self.log)
         else:
             expiration = 3600
         
