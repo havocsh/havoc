@@ -25,7 +25,29 @@ resource "aws_api_gateway_deployment" "rest_api" {
   ]
 
   triggers = {
-    redeployment = sha1(jsonencode(aws_api_gateway_rest_api.rest_api.body))
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.manage_resource,
+      aws_api_gateway_resource.remote_task_resource,
+      aws_api_gateway_resource.task_control_resource,
+      aws_api_gateway_resource.playbook_operator_control_resource,
+      aws_api_gateway_resource.trigger_executor_resource,
+      aws_api_gateway_resource.workspace_access_get_resource,
+      aws_api_gateway_resource.workspace_access_post_resource,
+      aws_api_gateway_method.manage_post,
+      aws_api_gateway_method.remote_task_post,
+      aws_api_gateway_method.task_control_post,
+      aws_api_gateway_method.playbook_operator_control_post,
+      aws_api_gateway_method.trigger_executor_post,
+      aws_api_gateway_method.workspace_access_get_post,
+      aws_api_gateway_method.workspace_access_post_post,
+      aws_api_gateway_integration.manage_lambda_integration,
+      aws_api_gateway_integration.remote_task_lambda_integration,
+      aws_api_gateway_integration.task_control_lambda_integration,
+      aws_api_gateway_integration.playbook_operator_control_lambda_integration,
+      aws_api_gateway_integration.trigger_executor_lambda_integration,
+      aws_api_gateway_integration.workspace_access_get_lambda_integration,
+      aws_api_gateway_integration.workspace_access_post_lambda_integration
+    ]))
   }
 
   lifecycle {
