@@ -442,7 +442,7 @@ resource "aws_dynamodb_table" "webhook_service" {
 resource "aws_dynamodb_table" "workspace_access" {
   name           = "${var.deployment_name}-workspace-access"
   billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "auth_key"
+  hash_key       = "object_access"
   range_key      = "create_time"
 
   attribute {
