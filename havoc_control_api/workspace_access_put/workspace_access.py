@@ -81,7 +81,7 @@ class WorkspaceAccess:
                 Params={
                     'Bucket': bucket_name,
                     'Key': object_name,
-                    'Content-Type': 'application/octet-stream'
+                    'ContentType': 'application/octet-stream'
                 },
                 ExpiresIn=expiration
             )
