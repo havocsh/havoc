@@ -17,8 +17,8 @@
             "Effect": "Allow",
             "Action": "s3:PutObject",
             "Resource": [
-                "arn:aws:s3:::${workspace_bucket}/shared",
-                "arn:aws:s3:::${workspace_bucket}/uploads"
+                "arn:aws:s3:::${workspace_bucket}/shared/*",
+                "arn:aws:s3:::${workspace_bucket}/upload/*"
             ]
         },
         {

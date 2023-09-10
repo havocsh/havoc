@@ -16,7 +16,7 @@
         {
             "Effect": "Allow",
             "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::${workspace_bucket}/shared"
+            "Resource": "arn:aws:s3:::${workspace_bucket}/shared/*"
         },
         {
             "Effect": "Allow",
