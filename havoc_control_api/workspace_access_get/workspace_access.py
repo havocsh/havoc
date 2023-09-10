@@ -114,7 +114,7 @@ class WorkspaceAccess:
 
     def create(self):
         # Validate request details and assign parameters
-        if 'filename' not in self.details:
+        if 'filename' not in self.detail:
             return format_response(400, 'failed', f'invalid detail: missing filename', self.log)
         self.filename = self.detail['filename']
         if 'expiration' in self.detail:
@@ -146,7 +146,7 @@ class WorkspaceAccess:
     
     def get(self):
         # Validate request details and assign parameters
-        if 'filename' not in self.details:
+        if 'filename' not in self.detail:
             return format_response(400, 'failed', f'invalid detail: missing filename', self.log)
         self.filename = self.detail['filename']
 
