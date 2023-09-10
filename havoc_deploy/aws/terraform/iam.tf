@@ -39,8 +39,8 @@ data "template_file" "workspace_access_get_lambda_policy" {
   }
 }
 
-data "template_file" "workspace_access_post_lambda_policy" {
-  template = file("templates/workspace_access_post_lambda_policy.template")
+data "template_file" "workspace_access_put_lambda_policy" {
+  template = file("templates/workspace_access_put_lambda_policy.template")
 
   vars = {
     workspace_access_table = aws_dynamodb_table.workspace_access.arn,
@@ -114,8 +114,8 @@ resource "aws_iam_role_policy_attachment" "workspace_access_get_lambda_policy_at
   policy_arn = aws_iam_policy.workspace_access_get_lambda_policy.arn
 }
 
-resource "aws_iam_role" "workspace_access_post_lambda_role" {
-  name = "${var.deployment_name}-workspace-access-post-lambda-role"
+resource "aws_iam_role" "workspace_access_put_lambda_role" {
+  name = "${var.deployment_name}-workspace-access-put-lambda-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -135,16 +135,16 @@ resource "aws_iam_role" "workspace_access_post_lambda_role" {
 EOF
 }
 
-resource "aws_iam_policy" "workspace_access_post_lambda_policy" {
-  name        = "${var.deployment_name}-workspace-access-post-lambda-policy"
+resource "aws_iam_policy" "workspace_access_put_lambda_policy" {
+  name        = "${var.deployment_name}-workspace-access-put-lambda-policy"
   path        = "/"
   description = "Policy for ./HAVOC workspace access POST Lambda functions"
-  policy = data.template_file.workspace_access_post_lambda_policy.rendered
+  policy = data.template_file.workspace_access_put_lambda_policy.rendered
 }
 
-resource "aws_iam_role_policy_attachment" "workspace_access_post_lambda_policy_attachment" {
-  role = aws_iam_role.workspace_access_post_lambda_role.name
-  policy_arn = aws_iam_policy.workspace_access_post_lambda_policy.arn
+resource "aws_iam_role_policy_attachment" "workspace_access_put_lambda_policy_attachment" {
+  role = aws_iam_role.workspace_access_put_lambda_role.name
+  policy_arn = aws_iam_policy.workspace_access_put_lambda_policy.arn
 }
 
 data "template_file" "ecs_task_policy" {
