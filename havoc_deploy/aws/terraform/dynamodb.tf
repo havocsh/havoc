@@ -58,6 +58,9 @@ resource "aws_dynamodb_table_item" "domain_name" {
   "tasks": {
     "SS": ${jsonencode(["None"])}
   },
+  "listeners": {
+    "SS": ${jsonencode(["None"])}
+  },
   "host_names": {
     "SS": ["${var.deployment_name}-api"]
   },
