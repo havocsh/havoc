@@ -326,57 +326,64 @@ class HavocCMD(Cmd):
         print('\n--user_id=<string> - (required) the user_id of the user to be deleted')
 
     def do_list_files(self, inp):
-        list_files_response = self.havoc_client.list_files()
+        args = {'path': ''}
+        command_args = convert_input(args, inp)
+        list_files_response = self.havoc_client.list_files(**command_args)
         format_output('list_files', list_files_response)
 
     def help_list_files(self):
-        print('\nList all files in the shared workspace.')
+        print('\nList all files or files for a specific path in the workspace.')
+        print('\n--path=<string> - (optional) the remote path in the workspace; can be shared/ or upload/')
 
     def do_get_file(self, inp):
-        args = {'file_name': '', 'file_path': ''}
+        args = {'file_name': '', 'path': '', 'local_path': ''}
         command_args = convert_input(args, inp)
-        file_path = command_args['file_path']
+        local_path = command_args['local_path']
         file_name = command_args['file_name']
-        f = open(f'{file_path}/{file_name}', 'wb')
-        del command_args['file_path']
+        f = open(f'{local_path}/{file_name}', 'wb')
+        del command_args['local_path']
         get_file_response = self.havoc_client.get_file(**command_args)
         file_contents = get_file_response['file_contents']
         f.write(file_contents)
         f.close()
         del get_file_response['file_contents']
-        get_file_response['file_path'] = file_path
+        get_file_response['local_path'] = local_path
         format_output('get_file', get_file_response)
 
     def help_get_file(self):
-        print('\nDownload a file from the shared workspace.')
+        print('\nDownload a file from the workspace.')
+        print('\n--path=<string> - (required) the remote path in the workspace; can be shared/ or upload/')
         print('\n--file_name=<string> - (required) the name of the file to download.')
-        print('\n--file_path=<string> - (required) the path to the local directory to download the file to')
+        print('\n--local_path=<string> - (required) the path to the local directory to download the file to')
 
     def do_create_file(self, inp):
-        args = {'file_name': '', 'file_path': ''}
+        args = {'file_name': '', 'path': '', 'local_path': ''}
         command_args = convert_input(args, inp)
-        file_path = command_args['file_path']
+        path = command_args['path']
         file_name = command_args['file_name']
-        with open(f'{file_path}/{file_name}', 'rb') as f:
+        local_path = command_args['local_path']
+        with open(f'{local_path}/{file_name}', 'rb') as f:
             raw_file = f.read()
         command_args['raw_file'] = raw_file
-        del command_args['file_path']
+        del command_args['local_path']
         create_file_response = self.havoc_client.create_file(**command_args)
         format_output('create_file', create_file_response)
 
     def help_create_file(self):
-        print('\nUpload a file to the shared workspace.')
+        print('\nUpload a file to the workspace.')
+        print('\n--path=<string> - (required) the remote path in the workspace; can be shared/ or upload/')
         print('\n--file_name=<string> - (required) the name of the file to upload.')
-        print('\n--file_path=<string> - (required) the path to the local directory where the file resides')
+        print('\n--local_path=<string> - (required) the path to the local directory where the file resides')
 
     def do_delete_file(self, inp):
-        args = {'file_name': ''}
+        args = {'file_name': '', 'path': ''}
         command_args = convert_input(args, inp)
         delete_file_response = self.havoc_client.delete_file(**command_args)
         format_output('delete_file', delete_file_response)
 
     def help_delete_file(self):
-        print('\nDelete a file in the shared workspace.')
+        print('\nDelete a file in the workspace.')
+        print('\n--path=<string> - (required) the remote path in the workspace; can be shared/ or upload/')
         print('\n--file_name=<string> - (required) the name of the file to be deleted.')
 
     def do_list_playbooks(self, inp):
