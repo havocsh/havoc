@@ -2,7 +2,7 @@
 
 resource "aws_acm_certificate" "api_gateway_cert" {
   count             = var.enable_domain_name ? 1 : 0
-  domain_name       = "${var.deployment_name}-api.${var.domain_name}"
+  domain_name       = "*.${var.domain_name}"
   validation_method = "DNS"
 
   tags = {
