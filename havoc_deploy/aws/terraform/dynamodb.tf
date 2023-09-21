@@ -431,17 +431,6 @@ resource "aws_dynamodb_table" "listeners" {
   }
 }
 
-resource "aws_dynamodb_table" "webhook_service" {
-  name           = "${var.deployment_name}-webhook-service"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "auth_key"
-
-  attribute {
-    name = "auth_key"
-    type = "S"
-  }
-}
-
 resource "aws_dynamodb_table" "workspace_access" {
   name           = "${var.deployment_name}-workspace-access"
   billing_mode   = "PAY_PER_REQUEST"
