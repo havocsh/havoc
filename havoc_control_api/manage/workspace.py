@@ -28,6 +28,7 @@ class Workspace:
         self.user_id = user_id
         self.detail = detail
         self.log = log
+        self.path = None
         self.filename = None
         self.file_contents = None
         self.__aws_s3_client = None
@@ -52,7 +53,7 @@ class Workspace:
             self.aws_s3_client.put_object(
                 Body=self.file_contents,
                 Bucket=f'{self.deployment_name}-workspace',
-                Key='shared/' + self.filename
+                Key=self.path + self.filename
             )
         except botocore.exceptions.ClientError as error:
             return error
@@ -63,14 +64,14 @@ class Workspace:
     def list_objects(self):
         return self.aws_s3_client.list_objects_v2(
             Bucket=f'{self.deployment_name}-workspace',
-            Prefix='shared/'
+            Prefix=self.path
         )
 
     def get_object(self):
         try:
             get_object_response = self.aws_s3_client.get_object(
                 Bucket=f'{self.deployment_name}-workspace',
-                Key='shared/' + self.filename
+                Key=self.path + self.filename
             )
         except botocore.exceptions.ClientError as error:
             return error
@@ -82,7 +83,7 @@ class Workspace:
         try:
             self.aws_s3_client.delete_object(
                 Bucket=f'{self.deployment_name}-workspace',
-                Key='shared/' + self.filename
+                Key=self.path + self.filename
             )
         except botocore.exceptions.ClientError as error:
             return error
@@ -91,40 +92,44 @@ class Workspace:
         return 'object_deleted'
 
     def list(self):
-
-        list_results = self.list_objects()
-        regex = 'shared/(.*)'
-        file_list = []
-        file_name_list = []
-        if 'Contents' in list_results:
-            for l in list_results['Contents']:
-                search = re.search(regex, l['Key'])
-                if search.group(1):
-                    file_list.append(l['Key'])
-            for file_entry in file_list:
-                file_name = re.search(regex, file_entry).group(1)
-                file_name_list.append(file_name)
-        return format_response(200, 'success', 'list files succeeded', None, files=file_name_list)
+        if 'path' in self.detail:
+            if self.detail['path'] not in ['shared/', 'upload/']:
+                return format_response(400, 'failed', f'invalid path', self.log)
+            path_list = [self.detail['path']]
+        else:
+            path_list = ['shared/', 'upload/']
+        
+        file_dict = {}
+        for self.path in path_list:
+            list_results = self.list_objects()
+            regex = f'{self.path}(.*)'
+            file_list = []
+            if 'Contents' in list_results:
+                for l in list_results['Contents']:
+                    search = re.search(regex, l['Key'])
+                    if search.group(1):
+                        file_list.append(search.group(1))
+            file_dict[self.path] = file_list
+        return format_response(200, 'success', 'list files succeeded', None, files=file_dict)
 
     def get(self):
-        if 'filename' not in self.detail:
-            return format_response(400, 'failed', 'invalid detail', self.log)
+        filename_details = ['path', 'filename']
+        for i in filename_details:
+            if i not in self.detail:
+                return format_response(400, 'failed', f'invalid detail: missing {i}', self.log)
+        self.path = self.detail['path']
         self.filename = self.detail['filename']
 
         # List files in bucket to confirm that file is present
         list_results = self.list_objects()
-        regex = 'shared/(.*)'
+        regex = f'{self.path}(.*)'
         file_list = []
-        file_name_list = []
         if 'Contents' in list_results:
             for l in list_results['Contents']:
                 search = re.search(regex, l['Key'])
                 if search.group(1):
-                    file_list.append(l['Key'])
-            for file_entry in file_list:
-                file_name = re.search(regex, file_entry).group(1)
-                file_name_list.append(file_name)
-        if self.filename in file_name_list:
+                    file_list.append(search.group(1))
+        if self.filename in file_list:
             get_object_results = self.get_object()
             if 'Body' in get_object_results:
                 object = get_object_results['Body'].read()
@@ -138,10 +143,13 @@ class Workspace:
             return format_response(404, 'failed', 'file not found', self.log)
 
     def create(self):
-        filename_details = ['filename', 'file_contents']
+        filename_details = ['path', 'filename', 'file_contents']
         for i in filename_details:
             if i not in self.detail:
-                return format_response(400, 'failed', 'invalid detail', self.log)
+                return format_response(400, 'failed', f'invalid detail: missing {i}', self.log)
+        self.path = self.detail['path']
+        if self.path not in ['shared/', 'upload/']:
+            return format_response(400, 'failed', f'invalid path', self.log)
         self.filename = self.detail['filename']
         self.file_contents = self.detail['file_contents']
 
@@ -162,24 +170,25 @@ class Workspace:
             return format_response(500, 'failed', f'create_file failed with error {upload_object_response}', self.log)
 
     def delete(self):
-        if 'filename' not in self.detail:
-            return format_response(400, 'failed', 'invalid detail', self.log)
+        filename_details = ['path', 'filename']
+        for i in filename_details:
+            if i not in self.detail:
+                return format_response(400, 'failed', f'invalid detail: missing {i}', self.log)
+        self.path = self.detail['path']
+        if self.path not in ['shared/', 'upload/']:
+            return format_response(400, 'failed', f'invalid path', self.log)
         self.filename = self.detail['filename']
 
         # List files in bucket to confirm that file is present
         list_results = self.list_objects()
-        regex = 'shared/(.*)'
+        regex = f'{self.path}(.*)'
         file_list = []
-        file_name_list = []
         if 'Contents' in list_results:
             for l in list_results['Contents']:
                 search = re.search(regex, l['Key'])
                 if search.group(1):
-                    file_list.append(l['Key'])
-            for file_entry in file_list:
-                file_name = re.search(regex, file_entry).group(1)
-                file_name_list.append(file_name)
-        if self.filename in file_name_list:
+                    file_list.append(search.group(1))
+        if self.filename in file_list:
             delete_object_response = self.delete_object()
             if delete_object_response == 'object_deleted':
                 return format_response(200, 'success', 'delete_file succeeded', None)

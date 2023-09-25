@@ -1,5 +1,11 @@
 # lambdas.tf
 
+data "aws_caller_identity" "current" {}
+
+locals {
+    account_id = data.aws_caller_identity.current.account_id
+}
+
 resource "aws_lambda_function" "authorizer" {
   function_name    = "${var.deployment_name}-authorizer"
   filename         = "build/authorizer.zip"
@@ -42,6 +48,14 @@ resource "aws_lambda_permission" "apigw_trigger_executor_lambda" {
   source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
 }
 
+resource "aws_lambda_permission" "events_trigger_executor_lambda" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.trigger_executor.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = "arn:aws:events:${var.aws_region}:${local.account_id}:rule/*"
+}
+
 resource "aws_lambda_function" "manage" {
   function_name    = "${var.deployment_name}-manage"
   filename         = "build/manage.zip"
@@ -59,7 +73,7 @@ resource "aws_lambda_function" "manage" {
       SUBNET_1             = aws_subnet.deployment_subnet_1.id
       SECURITY_GROUP       = aws_security_group.listener_lb_default.id
       ROLE_ARN             = aws_iam_role.trigger_executor_role.arn
-      TRIGGER_EXECUTOR_ARN = aws_lambda_function.trigger_executor.invoke_arn
+      TRIGGER_EXECUTOR_ARN = aws_lambda_function.trigger_executor.arn
     }
   }
 }
@@ -83,8 +97,9 @@ resource "aws_lambda_function" "remote_task" {
 
   environment {
     variables = {
-      DEPLOYMENT_NAME          = var.deployment_name
-      RESULTS_QUEUE_EXPIRATION = var.results_queue_expiration
+      DEPLOYMENT_NAME             = var.deployment_name
+      RESULTS_QUEUE_EXPIRATION    = var.results_queue_expiration
+      ENABLE_TASK_RESULTS_LOGGING = var.enable_task_results_logging
     }
   }
 }
@@ -159,8 +174,9 @@ resource "aws_lambda_function" "task_result" {
 
   environment {
     variables = {
-      DEPLOYMENT_NAME          = var.deployment_name
-      RESULTS_QUEUE_EXPIRATION = var.results_queue_expiration
+      DEPLOYMENT_NAME             = var.deployment_name
+      RESULTS_QUEUE_EXPIRATION    = var.results_queue_expiration
+      ENABLE_TASK_RESULTS_LOGGING = var.enable_task_results_logging
     }
   }
 }
@@ -185,6 +201,7 @@ resource "aws_lambda_function" "playbook_operator_result" {
     variables = {
       DEPLOYMENT_NAME          = var.deployment_name
       RESULTS_QUEUE_EXPIRATION = var.results_queue_expiration
+      ENABLE_PLAYBOOK_RESULTS_LOGGING = var.enable_playbook_results_logging
     }
   }
 }
@@ -194,4 +211,52 @@ resource "aws_lambda_permission" "cwlogs_playbook_operator_result_lambda" {
   function_name = aws_lambda_function.playbook_operator_result.function_name
   principal     = "logs.${var.aws_region}.amazonaws.com"
   source_arn    = "${aws_cloudwatch_log_group.ecs_playbook_operator_logs.arn}:*"
+}
+
+resource "aws_lambda_function" "workspace_access_get" {
+  function_name    = "${var.deployment_name}-workspace-access-get"
+  filename         = "build/workspace_access_get.zip"
+  source_code_hash = "build/workspace_access_get.zip.base64sha256"
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.8"
+  timeout          = 60
+  role             = aws_iam_role.workspace_access_get_lambda_role.arn
+
+  environment {
+    variables = {
+      DEPLOYMENT_NAME = var.deployment_name
+    }
+  }
+}
+
+resource "aws_lambda_permission" "apigw_workspace_access_get_lambda" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.workspace_access_get.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_function" "workspace_access_put" {
+  function_name    = "${var.deployment_name}-workspace-access-put"
+  filename         = "build/workspace_access_put.zip"
+  source_code_hash = "build/workspace_access_put.zip.base64sha256"
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.8"
+  timeout          = 60
+  role             = aws_iam_role.workspace_access_put_lambda_role.arn
+
+  environment {
+    variables = {
+      DEPLOYMENT_NAME = var.deployment_name
+    }
+  }
+}
+
+resource "aws_lambda_permission" "apigw_workspace_access_put_lambda" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.workspace_access_put.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.rest_api.execution_arn}/*/*"
 }

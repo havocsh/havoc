@@ -1,17 +1,7 @@
 import os
 import re
 import json
-import deployment
-import domains
-import listeners
-import playbooks
-import playbook_types
-import portgroups
-import task_type
-import tasks
-import trigger
-import users
-import workspace
+import workspace_access
 
 
 def format_response(status_code, result, message, log, **kwargs):
@@ -30,17 +20,7 @@ def format_response(status_code, result, message, log, **kwargs):
 
 def action(resource, command, region, deployment_name, user_id, detail, log):
     resources = {
-        'deployment': deployment.Deployment(deployment_name, region, user_id, detail, log),
-        'domain': domains.Domain(deployment_name, region, user_id, detail, log),
-        'listener': listeners.Listener(deployment_name, region, user_id, detail, log),
-        'playbook': playbooks.Playbook(deployment_name, region, user_id, detail, log),
-        'playbook_type': playbook_types.Registration(deployment_name, region, user_id, detail, log),
-        'portgroup': portgroups.Portgroup(deployment_name, region, user_id, detail, log),
-        'task_type': task_type.Registration(deployment_name, region, user_id, detail, log),
-        'task': tasks.Tasks(deployment_name, region, user_id, detail, log),
-        'trigger': trigger.Trigger(deployment_name, region, user_id, detail, log),
-        'user': users.Users(deployment_name, region, user_id, detail, log),
-        'workspace': workspace.Workspace(deployment_name, region, user_id, detail, log)
+        'workspace_access': workspace_access.WorkspaceAccess(deployment_name, region, user_id, detail, log)
     }
     r = resources[resource]
     functions = {
@@ -74,7 +54,7 @@ def lambda_handler(event, context):
         return format_response(400, 'failed', 'missing resource', log)
     resource = data['resource']
 
-    allowed_resources = ['deployment', 'domain', 'listener', 'playbook', 'playbook_type', 'portgroup', 'task_type', 'task', 'trigger', 'user', 'workspace']
+    allowed_resources = ['workspace_access']
     if resource not in allowed_resources:
         return format_response(400, 'failed', 'invalid resource', log)
 

@@ -1,4 +1,4 @@
-import re
+import ast
 import json
 import botocore
 import boto3
@@ -34,6 +34,9 @@ class Playbook:
         self.user_id = user_id
         self.log = log
         self.playbook_type = None
+        self.playbook_config = None
+        self.playbook_timeout = None
+        self.created_by = None
         self.run_ecs_task_response = None
         self.__aws_dynamodb_client = None
         self.__aws_ecs_client = None
@@ -65,6 +68,14 @@ class Playbook:
             TableName=f'{self.deployment_name}-playbooks',
             Key={
                 'playbook_name': {'S': self.playbook_name}
+            }
+        )
+    
+    def get_playbook_type_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-playbook-types',
+            Key={
+                'playbook_type': {'S': self.playbook_type}
             }
         )
     
@@ -119,6 +130,7 @@ class Playbook:
                                 {'name': 'DEPLOYMENT_NAME', 'value': self.deployment_name},
                                 {'name': 'USER_ID', 'value': self.user_id},
                                 {'name': 'PLAYBOOK_NAME', 'value': self.playbook_name},
+                                {'name': 'PLAYBOOK_TYPE', 'value': self.playbook_type},
                                 {'name': 'END_TIME', 'value': end_time}
                             ]
                         }
@@ -130,7 +142,7 @@ class Playbook:
                         'value': self.playbook_name
                     }
                 ],
-                taskDefinition='playbook_operator'
+                taskDefinition=f'{self.deployment_name}-playbook_operator'
             )
         except botocore.exceptions.ClientError as error:
             return error
@@ -154,17 +166,25 @@ class Playbook:
                     'playbook_name': {'S': self.playbook_name}
                 },
                 UpdateExpression='set '
+                                'playbook_type=:playbook_type, '
+                                'playbook_config=:playbook_config, '
+                                'playbook_timeout=:playbook_timeout, '
                                 'playbook_status=:playbook_status, '
                                 'last_executed_by=:last_executed_by, '
                                 'last_execution_time=:last_execution_time, '
                                 'termination_time=:termination_time, '
-                                'ecs_task_id=:ecs_task_id',
+                                'ecs_task_id=:ecs_task_id, '
+                                'created_by=:created_by',
                 ExpressionAttributeValues={
+                    ':playbook_type': {'S': self.playbook_type},
+                    ':playbook_config': {'S': json.dumps(self.playbook_config)},
+                    ':playbook_timeout': {'N': str(self.playbook_timeout)},
                     ':playbook_status': {'S': playbook_status},
                     ':last_executed_by': {'S': self.user_id},
                     ':last_execution_time': {'S': timestamp},
                     ':termination_time': {'S': end_time},
-                    ':ecs_task_id': {'S': ecs_task_id}
+                    ':ecs_task_id': {'S': ecs_task_id},
+                    ':created_by': {'S': self.created_by}
                 }
             )
         except botocore.exceptions.ClientError as error:
@@ -174,20 +194,52 @@ class Playbook:
         return 'playbook_entry_updated'
 
     def launch(self):
-
-        playbook_entry = self.get_playbook_entry()
-        if 'Item' not in playbook_entry:
-            return format_response(404, 'failed', f'playbook {self.playbook_name} does not exist', self.log)
-
-        if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
-            return format_response(404, 'failed', f'playbook {self.playbook_name} is already running', self.log)
+        if 'playbook_type' in self.detail:
+            self.playbook_type = self.detail['playbook_type']
         
-        self.playbook_type = playbook_entry['Item']['playbook_type']['S']
-        playbook_timeout = int(playbook_entry['Item']['playbook_timeout']['N'])
-        config_pointer = playbook_entry['Item']['config_pointer']['S']
-        created_by = playbook_entry['Item']['created_by']['S']
+        if 'playbook_config' in self.detail:
+            try:
+                self.playbook_config = ast.literal_eval(self.detail['playbook_config'])
+            except:
+                pass
+            if not self.playbook_config:
+                self.playbook_config = self.detail['playbook_config']
+            if not isinstance(self.playbook_config, dict):
+                return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
+        
+        if 'playbook_timeout' in self.detail:
+            self.playbook_timeout = self.detail['playbook_timeout']
+
+        playbook_entry = None
+        get_playbook_entry_response = self.get_playbook_entry()
+        if 'Item' in get_playbook_entry_response:
+            playbook_entry = get_playbook_entry_response
+        if not playbook_entry:
+            if not self.playbook_type or not self.playbook_config or not self.playbook_timeout:
+                return format_response(
+                    404, 
+                    'failed', 
+                    f'playbook {self.playbook_name} does not exist and ad-hoc playbook requirements not met', 
+                    self.log
+                )
+            get_playbook_type_entry_response = self.get_playbook_type_entry()
+            if 'Item' not in get_playbook_type_entry_response:
+                return format_response(404, 'failed', f'playbook_type {self.playbook_type} does not exist', self.log)
+            self.created_by = self.user_id
+            try:
+                self.playbook_timeout = int(self.playbook_timeout)
+            except Exception as e:
+                return format_response(400, 'failed', f'invalid detail: assigning playbook_timeout failed with error {e}', self.log)
+        else:
+            if playbook_entry['Item']['playbook_status']['S'] != 'not_running':
+                return format_response(409, 'failed', f'playbook {self.playbook_name} is already running', self.log)
+            self.playbook_config = json.loads(playbook_entry['Item']['playbook_config']['S'])
+            self.playbook_type = playbook_entry['Item']['playbook_type']['S']
+            self.playbook_timeout = int(playbook_entry['Item']['playbook_timeout']['N'])
+            self.created_by = playbook_entry['Item']['created_by']['S']
+
         current_time = datetime.datetime.now()
-        end_time_object = current_time + datetime.timedelta(playbook_timeout)
+        end_time_object = current_time + datetime.timedelta(self.playbook_timeout)
         end_time = end_time_object.strftime('%s')
         timestamp = current_time.strftime('%s')
 
@@ -195,7 +247,7 @@ class Playbook:
         api_region = deployment_details['Item']['api_region']['S']
         api_domain_name = deployment_details['Item']['api_domain_name']['S']
 
-        credentials = self.get_credentials(created_by)
+        credentials = self.get_credentials(self.created_by)
         api_key = credentials['Item']['api_key']['S']
         secret_key = credentials['Item']['secret_key']['S']
 
@@ -211,6 +263,7 @@ class Playbook:
                 'user_id': self.user_id,
                 'playbook_name': self.playbook_name,
                 'playbook_type': self.playbook_type,
+                'playbook_config': self.playbook_config
             },
             'playbook_operator_task_details': ecs_task_details,
         }
@@ -227,7 +280,13 @@ class Playbook:
 
         # Send execute_playbook command to the playbook operator
         operator_command = 'execute_playbook'
-        command_args = {'api_region': api_region, 'api_domain_name': api_domain_name, 'api_key': api_key, 'secret': secret_key, 'config_pointer': config_pointer}
+        command_args = {
+            'api_region': api_region,
+            'api_domain_name': api_domain_name,
+            'api_key': api_key,
+            'secret': secret_key,
+            'playbook_config': self.playbook_config
+        }
         payload = {'operator_command': operator_command, 'command_args': command_args, 'timestamp': timestamp, 'end_time': end_time}
         file_name = 'execute_playbook.json'
         upload_object_response = self.upload_object(payload, file_name)

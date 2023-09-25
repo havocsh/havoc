@@ -255,6 +255,20 @@ class HavocCMD(Cmd):
         print('\n--filter_command_args=<dict> - (optional) arguments applied to the filter_command; arguments should be specified as a dictionary of keys and values')
         print('\n--filter_command_timeout=<integer> - (optional) the number of seconds to wait for the filter command to return (defaults to 300 seconds)')
 
+    def do_get_trigger_results(self, inp):
+        args = {'trigger_name': '', 'filter_command': '', 'execute_command': '', 'start_time': '', 'end_time': ''}
+        command_args = convert_input(args, inp)
+        get_trigger_results_response = self.havoc_client.get_trigger_results(**command_args)
+        format_output('get_trigger_results', get_trigger_results_response)
+
+    def help_get_trigger_results(self):
+        print('\nGet results for a given trigger, filtered by filter_command, execute_command, start_time and end_time.')
+        print('\n--trigger_name=<string> - (required) retrieve results for the given trigger_name')
+        print('\n--filter_command=<string> - (optional) filter the results by the specified filter_command')
+        print('\n--execute_command=<string> - (optional) filter the results by the specified execute_command')
+        print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
+        print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
+
     def do_list_users(self, inp):
         list_users_response = self.havoc_client.list_users()
         format_output('list_users', list_users_response)
@@ -312,57 +326,64 @@ class HavocCMD(Cmd):
         print('\n--user_id=<string> - (required) the user_id of the user to be deleted')
 
     def do_list_files(self, inp):
-        list_files_response = self.havoc_client.list_files()
+        args = {'path': ''}
+        command_args = convert_input(args, inp)
+        list_files_response = self.havoc_client.list_files(**command_args)
         format_output('list_files', list_files_response)
 
     def help_list_files(self):
-        print('\nList all files in the shared workspace.')
+        print('\nList all files or files for a specific path in the workspace.')
+        print('\n--path=<string> - (optional) the remote path in the workspace; can be shared/ or upload/')
 
     def do_get_file(self, inp):
-        args = {'file_name': '', 'file_path': ''}
+        args = {'file_name': '', 'path': '', 'local_path': ''}
         command_args = convert_input(args, inp)
-        file_path = command_args['file_path']
+        local_path = command_args['local_path']
         file_name = command_args['file_name']
-        f = open(f'{file_path}/{file_name}', 'wb')
-        del command_args['file_path']
+        f = open(f'{local_path}/{file_name}', 'wb')
+        del command_args['local_path']
         get_file_response = self.havoc_client.get_file(**command_args)
         file_contents = get_file_response['file_contents']
         f.write(file_contents)
         f.close()
         del get_file_response['file_contents']
-        get_file_response['file_path'] = file_path
+        get_file_response['local_path'] = local_path
         format_output('get_file', get_file_response)
 
     def help_get_file(self):
-        print('\nDownload a file from the shared workspace.')
+        print('\nDownload a file from the workspace.')
+        print('\n--path=<string> - (required) the remote path in the workspace; can be shared/ or upload/')
         print('\n--file_name=<string> - (required) the name of the file to download.')
-        print('\n--file_path=<string> - (required) the path to the local directory to download the file to')
+        print('\n--local_path=<string> - (required) the path to the local directory to download the file to')
 
     def do_create_file(self, inp):
-        args = {'file_name': '', 'file_path': ''}
+        args = {'file_name': '', 'path': '', 'local_path': ''}
         command_args = convert_input(args, inp)
-        file_path = command_args['file_path']
+        path = command_args['path']
         file_name = command_args['file_name']
-        with open(f'{file_path}/{file_name}', 'rb') as f:
+        local_path = command_args['local_path']
+        with open(f'{local_path}/{file_name}', 'rb') as f:
             raw_file = f.read()
         command_args['raw_file'] = raw_file
-        del command_args['file_path']
+        del command_args['local_path']
         create_file_response = self.havoc_client.create_file(**command_args)
         format_output('create_file', create_file_response)
 
     def help_create_file(self):
-        print('\nUpload a file to the shared workspace.')
+        print('\nUpload a file to the workspace.')
+        print('\n--path=<string> - (required) the remote path in the workspace; can be shared/ or upload/')
         print('\n--file_name=<string> - (required) the name of the file to upload.')
-        print('\n--file_path=<string> - (required) the path to the local directory where the file resides')
+        print('\n--local_path=<string> - (required) the path to the local directory where the file resides')
 
     def do_delete_file(self, inp):
-        args = {'file_name': ''}
+        args = {'file_name': '', 'path': ''}
         command_args = convert_input(args, inp)
         delete_file_response = self.havoc_client.delete_file(**command_args)
         format_output('delete_file', delete_file_response)
 
     def help_delete_file(self):
-        print('\nDelete a file in the shared workspace.')
+        print('\nDelete a file in the workspace.')
+        print('\n--path=<string> - (required) the remote path in the workspace; can be shared/ or upload/')
         print('\n--file_name=<string> - (required) the name of the file to be deleted.')
 
     def do_list_playbooks(self, inp):
@@ -385,8 +406,7 @@ class HavocCMD(Cmd):
         print('\n--playbook_name=<string> - (required) the name of the playbook to retrieve details for')
 
     def do_create_playbook(self, inp):
-        args = {'playbook_name': '', 'playbook_type': '', 'playbook_schedule': None, 'playbook_timeout': '',
-                'playbook_config': ''}
+        args = {'playbook_name': '', 'playbook_type': '', 'playbook_timeout': '', 'playbook_config': ''}
         command_args = convert_input(args, inp)
         create_playbook_response = self.havoc_client.create_playbook(**command_args)
         format_output('create_playbook', create_playbook_response)
@@ -419,24 +439,28 @@ class HavocCMD(Cmd):
         print('\n--playbook_name=<string> - (required) the name of the running playbook to be killed')
 
     def do_run_playbook(self, inp):
-        args = {'playbook_name': ''}
+        args = {'playbook_name': '', 'playbook_type': '', 'playbook_config': '', 'playbook_timeout': ''}
         command_args = convert_input(args, inp)
         run_playbook_response = self.havoc_client.run_playbook(**command_args)
         format_output('run_playbook', run_playbook_response)
 
     def help_run_playbook(self):
-        print('\nRun a playbook.')
+        print('\nRun a pre-configured or ad-hoc playbook.')
         print('\n--playbook_name=<string> - (required) the name of the playbook to run')
+        print('\n--playbook_type=<string> - (optional) if running an ad-hoc playbook, specify the type of playbook to run')
+        print('\n--playbook_config=<dict> - (optional) if running an ad-hoc playbook, specify the config to be used by the playbook')
+        print('\n--playbook_timeout=<int> - (optional) if running an ad-hoc playbook, specify the playbook timeout')
     
     def do_get_playbook_results(self, inp):
-        args = {'playbook_name': '', 'start_time': '', 'end_time': ''}
+        args = {'playbook_name': '', 'operator_command': '', 'start_time': '', 'end_time': ''}
         command_args = convert_input(args, inp)
         get_playbook_results_response = self.havoc_client.get_playbook_results(**command_args)
-        format_output('get_task_results', get_playbook_results_response)
+        format_output('get_playbook_results', get_playbook_results_response)
 
     def help_get_playbook_results(self):
         print('\nGet all results for a given playbook.')
-        print('\n--playbook_name=<string> - (required) the name of the playbook to retrieve results from')
+        print('\n--playbook_name=<string> - (required) retrieve results for the given playbook_name')
+        print('\n--operator_command=<string> - (optional) filter the results by the specified operator_command')
         print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
         print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
     
@@ -639,6 +663,71 @@ class HavocCMD(Cmd):
         print('\n--host_name=<string> - (optional) if using an FQDN, specify the host name to be set in DNS')
         print('\n--domain_name=<string> - (optional) if using an FQDN, specify the domain name to be set in DNS')
 
+    def do_list_workspace_get_urls(self, inp):
+        args = {'filename': ''}
+        command_args = convert_input(args, inp)
+        list_workspace_get_urls_response = self.havoc_client.list_workspace_get_urls(**command_args)
+        format_output('list_workspace_get_urls', list_workspace_get_urls_response)
+
+    def help_list_workspace_get_urls(self):
+        print('\nList all existing workspace_get_urls.')
+        print('\n--filename=<string> - (optional) provide a file name to list workspace_get_urls for a specific file')
+
+    def do_get_workspace_get_url(self, inp):
+        args = {'filename': ''}
+        command_args = convert_input(args, inp)
+        get_workspace_get_url_response = self.havoc_client.get_workspace_get_url(**command_args)
+        format_output('get_workspace_get_url', get_workspace_get_url_response)
+
+    def help_get_workspace_get_url(self):
+        print('\nGet details of a given workspace_get_url.')
+        print('\n--filename=<string> - (required) the name of the file to retrieve the workspace_get_url for')
+
+    def do_create_workspace_get_url(self, inp):
+        args = {'filename': '', 'expiration': ''}
+        command_args = convert_input(args, inp)
+        create_workspace_get_url_response = self.havoc_client.create_workspace_get_url(**command_args)
+        format_output('create_workspace_get_url', create_workspace_get_url_response)
+
+    def help_create_workspace_get_url(self):
+        print('\nCreate a new workspace_get_url with the given parameters.')
+        print('\n--filename=<string> - (required) the name of the file to create the workspace_get_url for')
+        print('\n--expiration=<integer> - (optional) amount of time in seconds for the workspace_get_url to remain valid - defaults to 3600')
+
+    def do_list_workspace_put_urls(self, inp):
+        args = {'path': '', 'filename': ''}
+        command_args = convert_input(args, inp)
+        list_workspace_put_urls_response = self.havoc_client.list_workspace_put_urls(**command_args)
+        format_output('list_workspace_put_urls', list_workspace_put_urls_response)
+
+    def help_list_workspace_put_urls(self):
+        print('\nList all existing workspace_put_urls.')
+        print('\n--path=<string> - (optional) provide a path to list workspace_put_urls for a specific path - can be "shared/" or "upload/"')        
+        print('\n--filename=<string> - (optional) provide a file name to list workspace_get_urls for a specific file')
+
+    def do_get_workspace_put_url(self, inp):
+        args = {'path': '', 'filename': ''}
+        command_args = convert_input(args, inp)
+        get_workspace_put_url_response = self.havoc_client.get_workspace_put_url(**command_args)
+        format_output('get_workspace_put_url', get_workspace_put_url_response)
+
+    def help_get_workspace_put_url(self):
+        print('\nGet details of a given workspace_put_url.')
+        print('\n--path=<string> - (required) the path to the file to retrieve the workspace_put_url for - can be "shared/" or "upload/"')
+        print('\n--filename=<string> - (required) the name of the file to retrieve the workspace_put_url for')
+
+    def do_create_workspace_put_url(self, inp):
+        args = {'path': '', 'filename': '', 'expiration': ''}
+        command_args = convert_input(args, inp)
+        create_workspace_put_url_response = self.havoc_client.create_workspace_put_url(**command_args)
+        format_output('create_workspace_put_url', create_workspace_put_url_response)
+
+    def help_create_workspace_put_url(self):
+        print('\nCreate a new workspace_put_url with the given parameters.')
+        print('\n--path=<string> - (required) the path to the file to create the workspace_put_url for - can be "shared/" or "upload/"')
+        print('\n--filename=<string> - (required) the name of the file to create the workspace_put_url for')
+        print('\n--expiration=<integer> - (optional) amount of time in seconds for the workspace_put_url to remain valid - defaults to 3600')
+    
     def do_delete_listener(self, inp):
         args = {'listener_name': ''}
         command_args = convert_input(args, inp)
@@ -718,28 +807,16 @@ class HavocCMD(Cmd):
         print('\n--instruct_args=<dict> - (optional) a dictionary of arguments to pass with the command')
 
     def do_get_task_results(self, inp):
-        args = {'task_name': '', 'start_time': '', 'end_time': ''}
+        args = {'task_name': '', 'instruct_command': '', 'instruct_instance': '', 'start_time': '', 'end_time': ''}
         command_args = convert_input(args, inp)
         get_task_results_response = self.havoc_client.get_task_results(**command_args)
         format_output('get_task_results', get_task_results_response)
 
     def help_get_task_results(self):
-        print('\nGet all instruct_command results for a given task.')
+        print('\nGet results for a given task, filtered by instruct_command, instruct_instance, start_time and end_time.')
         print('\n--task_name=<string> - (required) the name of the task to retrieve results from')
-        print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
-        print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
-
-    def do_get_filtered_task_results(self, inp):
-        args = {'task_name': '', 'instruct_command': '', 'instruct_instance': '', 'start_time': '', 'end_time': ''}
-        command_args = convert_input(args, inp)
-        get_filtered_task_results_response = self.havoc_client.get_filtered_task_results(**command_args)
-        format_output('get_filtered_task_results', get_filtered_task_results_response)
-
-    def help_get_filtered_task_results(self):
-        print('\nGet results for a given task filtered by instruct_command and/or instruct_instance.')
-        print('\n--task_name=<string> - (required) the name of the task to retrieve results from')
-        print('\n--instruct_instance=<string> - (optional) the instruct_instance to retrieve results for')
-        print('\n--instruct_command=<string> - (optional) the command to retrieve results for')
+        print('\n--instruct_instance=<string> - (optional) filter the results by the specified instruct_instance')
+        print('\n--instruct_command=<string> - (optional) filter the results by the specified instruct_command')
         print('\n--start_time=<string> - (optional) retrieve results that occurred after the specified time')
         print('\n--end_time=<string> - (optional) retrieve results that occurred before the specified time')
 

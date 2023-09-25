@@ -1,4 +1,5 @@
 import os
+import ast
 import json
 import botocore
 import boto3
@@ -97,9 +98,10 @@ class Trigger:
         event_input['detail']['trigger_name'] = self.trigger_name
         event_input['detail']['execute_command'] = self.trigger_args['execute_command']
         if self.trigger_args['execute_command_args']:
-            if not isinstance(self.trigger_args['execute_command_args'], dict):
+            execute_command_args = ast.literal_eval(self.trigger_args['execute_command_args'])
+            if not isinstance(execute_command_args, dict):
                 return 'execute_command_args_invalid_format'
-            event_input['detail']['execute_command_args'] = self.trigger_args['execute_command_args']
+            event_input['detail']['execute_command_args'] = execute_command_args
         if self.trigger_args['execute_command_timeout']:
             try:
                 int(self.trigger_args['execute_command_timeout'])
@@ -109,9 +111,10 @@ class Trigger:
         if self.trigger_args['filter_command']:
             event_input['detail']['filter_command'] = self.trigger_args['filter_command']
         if self.trigger_args['filter_command_args']:
-            if not isinstance(self.trigger_args['filter_command_args'], dict):
+            filter_command_args = ast.literal_eval(self.trigger_args['filter_command_args'])
+            if not isinstance(filter_command_args, dict):
                 return 'filter_command_args_invalid_format'
-            event_input['detail']['filter_command_args'] = self.trigger_args['filter_command_args']
+            event_input['detail']['filter_command_args'] = filter_command_args
         if self.trigger_args['filter_command_timeout']:
             try:
                 int(self.trigger_args['filter_command_timeout'])
@@ -125,7 +128,7 @@ class Trigger:
                     {
                         'Arn': self.trigger_executor_arn,
                         'Id': self.trigger_name,
-                        'Input': event_input
+                        'Input': json.dumps(event_input)
                     }
                 ]
             )
@@ -149,6 +152,20 @@ class Trigger:
         except Exception as error:
             return error
         return 'rule_deleted'
+    
+    def remove_targets(self):
+        try:
+            self.aws_cloudwatch_events_client.remove_targets(
+                Rule=self.trigger_name,
+                Ids=[self.trigger_name]
+            )
+        except botocore.exceptions.ClientError as error:
+            return f'ClientError: {error}'
+        except botocore.exceptions.ParamValidationError as error:
+            return f'ParamValidationError: {error}'
+        except Exception as error:
+            return error
+        return 'targets_removed'
 
     def create_trigger_entry(self):
 
@@ -172,10 +189,8 @@ class Trigger:
         schedule_expression = self.trigger_args['schedule_expression']
         execute_command = self.trigger_args['execute_command']
         execute_command_args = self.trigger_args['execute_command_args']
-        if execute_command_args is not None and not isinstance(execute_command_args, dict):
-            return 'execute_command_args_invalid_format'
         if not execute_command_args:
-            execute_command_args = 'None'
+            execute_command_args = {'no_args': 'true'}
         execute_command_timeout = self.trigger_args['execute_command_timeout']
         if execute_command_timeout is not None:
             try:
@@ -188,10 +203,8 @@ class Trigger:
         if not filter_command:
             filter_command = 'None'
         filter_command_args = self.trigger_args['filter_command_args']
-        if filter_command_args is not None and not isinstance(filter_command_args, dict):
-            return 'filter_command_args_invalid_format'
         if not filter_command_args:
-            filter_command_args = 'None'
+            filter_command_args = {'no_args': 'true'}
         filter_command_timeout = self.trigger_args['filter_command_timeout']
         if filter_command_timeout is not None:
             try:
@@ -233,8 +246,13 @@ class Trigger:
     def delete_trigger_entry(self):
         # Verify the trigger exists
         trigger_entry = self.get_trigger_entry()
-        if not trigger_entry:
+        if 'Item' not in trigger_entry:
             return 'trigger_entry_not_found'
+
+        # Remove the rule targets
+        remove_targets_response = self.remove_targets()
+        if remove_targets_response != 'targets_removed':
+            return remove_targets_response
 
         # Delete the rule
         delete_rule_response = self.delete_rule()
@@ -277,8 +295,8 @@ class Trigger:
         for k, v in self.detail.items():
             if k != 'trigger_name':
                 if k in self.trigger_args:
-                    if k == 'filter_command' and k not in filter_commands:
-                        return format_response(400, 'failed', f'invalid detail: {k} is not a supported filter_command', self.log)
+                    if k == 'filter_command' and v not in filter_commands:
+                        return format_response(400, 'failed', f'invalid detail: {v} is not a supported filter_command', self.log)
                     self.trigger_args[k] = v
                 else:
                     return format_response(400, 'failed', f'invalid detail: unknown parameter {k}', self.log)

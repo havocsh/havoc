@@ -1,5 +1,7 @@
 import json
 import copy
+import zlib
+import base64
 import botocore
 import boto3
 from datetime import datetime, timedelta
@@ -21,10 +23,11 @@ def format_response(status_code, result, message, log, **kwargs):
 
 class Deliver:
 
-    def __init__(self, region, deployment_name, results_queue_expiration, user_id, results: dict, log):
+    def __init__(self, region, deployment_name, results_queue_expiration, enable_task_results_logging, user_id, results: dict, log):
         self.region = region
         self.deployment_name = deployment_name
         self.results_queue_expiration = results_queue_expiration
+        self.enable_task_results_logging = enable_task_results_logging
         self.user_id = user_id
         self.results = results
         self.log = log
@@ -33,6 +36,7 @@ class Deliver:
         self.task_type = None
         self.task_version = None
         self.__aws_dynamodb_client = None
+        self.__aws_logs_client = None
 
     @property
     def aws_dynamodb_client(self):
@@ -40,6 +44,13 @@ class Deliver:
         if self.__aws_dynamodb_client is None:
             self.__aws_dynamodb_client = boto3.client('dynamodb', region_name=self.region)
         return self.__aws_dynamodb_client
+    
+    @property
+    def aws_logs_client(self):
+        """Returns the boto3 logs session (establishes one automatically if one does not already exist)"""
+        if self.__aws_logs_client is None:
+            self.__aws_logs_client = boto3.client('logs', region_name=self.region)
+        return self.__aws_logs_client
 
     def add_queue_attribute(self, stime, expire_time, task_instruct_id, task_instruct_instance, task_instruct_command,
                             task_instruct_args, task_public_ip, task_local_ip, json_payload):
@@ -128,6 +139,33 @@ class Deliver:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'task_entry_updated'
+    
+    def put_log_event(self, payload, stime):
+        log_stream_time = datetime.strftime(datetime.now(), '%Y/%m/%d')
+        log_stream_name = f'{log_stream_time}/{self.task_name}'
+        try:
+            self.aws_logs_client.create_log_stream(
+                logGroupName=f'{self.deployment_name}/task_results_logging',
+                logStreamName=log_stream_name
+            )
+        except self.aws_logs_client.exceptions.ResourceAlreadyExistsException:
+            pass
+        try:
+            self.aws_logs_client.put_log_events(
+                logGroupName=f'{self.deployment_name}/task_results_logging',
+                logStreamName=log_stream_name,
+                logEvents=[
+                    {
+                        'timestamp': int(stime) * 1000,
+                        'message': payload
+                    }
+                ]
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'log_event_written'
 
     def deliver_result(self):
         # Set vars
@@ -150,6 +188,7 @@ class Deliver:
         task_instruct_args = self.results['instruct_args']
         task_public_ip = self.results['public_ip']
         task_local_ip = self.results['local_ip']
+        task_forward_log = self.results['forward_log']
         stime = self.results['timestamp']
         from_timestamp = datetime.utcfromtimestamp(int(stime))
         expiration_time = from_timestamp + timedelta(days=self.results_queue_expiration)
@@ -176,6 +215,25 @@ class Deliver:
         del self.results['instruct_user_id']
         del self.results['end_time']
         del self.results['forward_log']
+
+        # Log task result to CloudWatch Logs if enable_task_results_logging is set to true
+        if self.enable_task_results_logging == 'true' and task_forward_log == 'True':
+            cwlogs_payload = copy.deepcopy(self.results)
+            if task_instruct_command == 'terminate':
+                del cwlogs_payload['instruct_args']
+            if 'status' in cwlogs_payload['instruct_command_output']:
+                if cwlogs_payload['instruct_command_output']['status'] == 'ready':
+                    del cwlogs_payload['instruct_args']
+            if 'get_shell_command_results' in cwlogs_payload['instruct_command_output']:
+                get_shell_command_results = cwlogs_payload['instruct_command_output']['get_shell_command_results']
+                tmp_results = json.loads(zlib.decompress(base64.b64decode(get_shell_command_results.encode())).decode())
+                cwlogs_payload['instruct_command_output']['get_shell_command_results'] = tmp_results
+
+            # Send result to CloudWatch Logs
+            cwlogs_payload_json = json.dumps(cwlogs_payload)
+            put_log_event_response = self.put_log_event(cwlogs_payload_json, stime)
+            if put_log_event_response != 'log_event_written':
+                print(f'Error writing task result log entry to CloudWatch Logs: {put_log_event_response}')
 
         # Add job to results queue
         db_payload = copy.deepcopy(self.results)

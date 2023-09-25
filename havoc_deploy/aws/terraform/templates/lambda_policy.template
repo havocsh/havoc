@@ -25,7 +25,8 @@
                 "${playbook_queue_table}",
                 "${listeners_table}",
                 "${triggers_table}",
-                "${trigger_queue_table}"
+                "${trigger_queue_table}",
+                "${webhook_service_table}"
             ]
         },
         {
@@ -90,8 +91,14 @@
             "Action": [
                 "logs:CreateLogGroup",
                 "logs:CreateLogStream",
+                "logs:DescribeLogStreams",
                 "logs:PutLogEvents"
             ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "events:*",
             "Resource": "*"
         },
         {
@@ -140,7 +147,8 @@
                 "${task_role}",
                 "${task_exec_role}",
                 "${playbook_operator_role}",
-                "${playbook_operator_exec_role}"
+                "${playbook_operator_exec_role}",
+                "${trigger_executor_role}"
             ]
         },
         {

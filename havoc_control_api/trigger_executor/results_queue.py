@@ -92,27 +92,29 @@ class Queue:
             for item in queue_data['Items']:
                 run_time = item['run_time']['N']
                 trigger_name = item['trigger_name']['S']
+                scheduled_trigger = item['scheduled_trigger']['S']
                 filter_command = item['filter_command']['S']
                 filter_command_args = item['filter_command_args']['S']
-                filter_command_timeout = item['filter_command_timeout']['S']
-                filter_command_response = item['filter_command_response']['S']
+                filter_command_timeout = item['filter_command_timeout']['N']
+                filter_command_result = item['filter_command_result']['S']
                 execute_command = item['execute_command']['S']
                 execute_command_args = item['execute_command_args']['S']
-                execute_command_timeout = item['execute_command_timeout']['S']
-                execute_command_response = item['execute_command_response']['S']
+                execute_command_timeout = item['execute_command_timeout']['N']
+                execute_command_result = item['execute_command_result']['S']
                 user_id = item['user_id']['S']
 
                 # Add queue entry to results
                 queue_list.append({
                     'trigger_name': trigger_name,
+                    'scheduled_triger': scheduled_trigger,
                     'filter_command': filter_command,
                     'filter_command_args': filter_command_args,
                     'filter_command_timeout': filter_command_timeout,
-                    'filter_command_response': filter_command_response,
+                    'filter_command_result': filter_command_result,
                     'execute_command': execute_command,
                     'execute_command_args': execute_command_args,
                     'execute_command_timeout': execute_command_timeout,
-                    'execute_command_response': execute_command_response,
+                    'execute_command_result': execute_command_result,
                     'user_id': user_id,
                     'run_time': run_time
                     })

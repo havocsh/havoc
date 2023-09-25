@@ -231,7 +231,7 @@ class Task:
                         'value': self.task_name
                     }
                 ],
-                taskDefinition=self.task_type
+                taskDefinition=f'{self.deployment_name}-{self.task_type}'
             )
         except botocore.exceptions.ClientError as error:
             return error

@@ -18,13 +18,33 @@ data "template_file" "lambda_policy" {
   tasks_table                 = aws_dynamodb_table.tasks.arn,
   triggers_table              = aws_dynamodb_table.triggers.arn,
   trigger_queue_table         = aws_dynamodb_table.trigger_queue.arn,
+  webhook_service_table       = aws_dynamodb_table.webhook_service.arn,
   playbooks_bucket            = "${var.deployment_name}-playbooks",
   playbook_types_bucket       = "${var.deployment_name}-playbook-types",
   workspace_bucket            = "${var.deployment_name}-workspace",
   task_role                   = aws_iam_role.ecs_task_role.arn,
   task_exec_role              = aws_iam_role.ecs_task_execution_role.arn,
   playbook_operator_role      = aws_iam_role.ecs_playbook_operator_role.arn,
-  playbook_operator_exec_role = aws_iam_role.ecs_playbook_operator_execution_role.arn
+  playbook_operator_exec_role = aws_iam_role.ecs_playbook_operator_execution_role.arn,
+  trigger_executor_role       = aws_iam_role.trigger_executor_role.arn
+  }
+}
+
+data "template_file" "workspace_access_get_lambda_policy" {
+  template = file("templates/workspace_access_get_lambda_policy.template")
+
+  vars = {
+    workspace_access_table = aws_dynamodb_table.workspace_access.arn,
+    workspace_bucket       = "${var.deployment_name}-workspace",
+  }
+}
+
+data "template_file" "workspace_access_put_lambda_policy" {
+  template = file("templates/workspace_access_put_lambda_policy.template")
+
+  vars = {
+    workspace_access_table = aws_dynamodb_table.workspace_access.arn,
+    workspace_bucket       = "${var.deployment_name}-workspace",
   }
 }
 
@@ -59,6 +79,72 @@ resource "aws_iam_policy" "lambda_policy" {
 resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
   role = aws_iam_role.lambda_role.name
   policy_arn = aws_iam_policy.lambda_policy.arn
+}
+
+resource "aws_iam_role" "workspace_access_get_lambda_role" {
+  name = "${var.deployment_name}-workspace-access-get-lambda-role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "workspace_access_get_lambda_policy" {
+  name        = "${var.deployment_name}-workspace-access-get-lambda-policy"
+  path        = "/"
+  description = "Policy for ./HAVOC workspace access GET Lambda functions"
+  policy = data.template_file.workspace_access_get_lambda_policy.rendered
+}
+
+resource "aws_iam_role_policy_attachment" "workspace_access_get_lambda_policy_attachment" {
+  role = aws_iam_role.workspace_access_get_lambda_role.name
+  policy_arn = aws_iam_policy.workspace_access_get_lambda_policy.arn
+}
+
+resource "aws_iam_role" "workspace_access_put_lambda_role" {
+  name = "${var.deployment_name}-workspace-access-put-lambda-role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+              "Service": "lambda.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "workspace_access_put_lambda_policy" {
+  name        = "${var.deployment_name}-workspace-access-put-lambda-policy"
+  path        = "/"
+  description = "Policy for ./HAVOC workspace access POST Lambda functions"
+  policy = data.template_file.workspace_access_put_lambda_policy.rendered
+}
+
+resource "aws_iam_role_policy_attachment" "workspace_access_put_lambda_policy_attachment" {
+  role = aws_iam_role.workspace_access_put_lambda_role.name
+  policy_arn = aws_iam_policy.workspace_access_put_lambda_policy.arn
 }
 
 data "template_file" "ecs_task_policy" {
@@ -207,7 +293,11 @@ data "template_file" "trigger_executor_policy" {
   template = file("templates/trigger_executor_policy.template")
 
   vars = {
-  trigger_executor_role = aws_iam_role.trigger_executor_role.arn
+    authorizer_table      = aws_dynamodb_table.authorizer.arn,
+    authorizer_index      = "${aws_dynamodb_table.authorizer.arn}/index/${var.deployment_name}-ApiKeyIndex"
+    deployment_table      = aws_dynamodb_table.deployment.arn,
+    trigger_queue_table   = aws_dynamodb_table.trigger_queue.arn
+    trigger_executor_role = aws_iam_role.trigger_executor_role.arn
   }
 }
 

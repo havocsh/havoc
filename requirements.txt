@@ -1,6 +1,7 @@
 cmd2
 boto3
 botocore
-requests==2.25.0
+requests
 python-hcl2
 gnureadline
+wheel

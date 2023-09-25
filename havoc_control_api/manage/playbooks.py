@@ -1,3 +1,4 @@
+import ast
 import json
 import botocore
 import boto3
@@ -30,20 +31,10 @@ class Playbook:
         self.log = log
         self.playbook_name = None
         self.playbook_type = None
-        self.playbook_schedule = None
         self.playbook_timeout = None
         self.playbook_config = None
-        self.config_pointer = None
-        self.__aws_s3_client = None
         self.__aws_dynamodb_client = None
         self.__aws_ecs_client = None
-
-    @property
-    def aws_s3_client(self):
-        """Returns the boto3 S3 session (establishes one automatically if one does not already exist)"""
-        if self.__aws_s3_client is None:
-            self.__aws_s3_client = boto3.client('s3', region_name=self.region)
-        return self.__aws_s3_client
     
     @property
     def aws_dynamodb_client(self):
@@ -103,18 +94,16 @@ class Playbook:
                 UpdateExpression='set '
                                 'playbook_type=:playbook_type, '
                                 'playbook_status=:playbook_status, '
-                                'playbook_schedule=:playbook_schedule, '
                                 'playbook_timeout=:playbook_timeout, '
-                                'config_pointer=:config_pointer, '
+                                'playbook_config=:playbook_config, '
                                 'created_by=:created_by, '
                                 'last_executed_by=:last_executed_by, '
                                 'last_execution_time=:last_execution_time',
                 ExpressionAttributeValues={
                     ':playbook_type': {'S': self.playbook_type},
                     ':playbook_status': {'S': 'not_running'}, 
-                    ':playbook_schedule': {'S': self.playbook_schedule},
                     ':playbook_timeout': {'N': self.playbook_timeout},
-                    ':config_pointer': {'S': self.config_pointer},
+                    ':playbook_config': {'S': self.playbook_config},
                     ':created_by': {'S': self.user_id},
                     ':last_executed_by': {'S': 'None'},
                     ':last_execution_time': {'S': 'None'}
@@ -140,43 +129,6 @@ class Playbook:
             return error
         return 'playbook_entry_removed'
     
-    def get_object(self):
-        try:
-            get_object_response = self.aws_s3_client.get_object(
-                Bucket=f'{self.deployment_name}-playbooks',
-                Key=self.config_pointer
-            )
-        except botocore.exceptions.ClientError as error:
-            return error
-        except botocore.exceptions.ParamValidationError as error:
-            return error
-        return get_object_response
-    
-    def upload_object(self):
-        try:
-            self.aws_s3_client.put_object(
-                Body=self.playbook_config,
-                Bucket=f'{self.deployment_name}-playbooks',
-                Key=self.config_pointer
-            )
-        except botocore.exceptions.ClientError as error:
-            return error
-        except botocore.exceptions.ParamValidationError as error:
-            return error
-        return 'object_uploaded'
-    
-    def delete_object(self):
-        try:
-            self.aws_s3_client.delete_object(
-                Bucket=f'{self.deployment_name}-playbooks',
-                Key=self.config_pointer
-            )
-        except botocore.exceptions.ClientError as error:
-            return error
-        except botocore.exceptions.ParamValidationError as error:
-            return error
-        return 'object_deleted'
-    
     def add_playbook_configuration(self):
         existing_playbook = self.get_playbook_entry()
         if 'Item' in existing_playbook:
@@ -184,9 +136,6 @@ class Playbook:
         add_playbook_entry_response = self.add_playbook_entry()
         if add_playbook_entry_response != 'playbook_entry_created':
             return add_playbook_entry_response
-        upload_object_response = self.upload_object()
-        if upload_object_response != 'object_uploaded':
-            return upload_object_response
         return 'playbook_configuration_created'
     
     def delete_playbook_configuration(self):
@@ -196,13 +145,9 @@ class Playbook:
         playbook_status = existing_playbook['Item']['playbook_status']['S']
         if playbook_status == 'running':
             return 'playbook_running'
-        self.config_pointer = existing_playbook['Item']['config_pointer']['S']
         remove_playbook_entry_response = self.remove_playbook_entry()
         if remove_playbook_entry_response != 'playbook_entry_removed':
             return remove_playbook_entry_response
-        delete_object_response = self.delete_object()
-        if delete_object_response != 'object_deleted':
-            return delete_object_response
         return 'playbook_configuration_deleted'
     
     def update_playbook_entry(self):
@@ -249,16 +194,21 @@ class Playbook:
         return 'playbook_operator_terminated'
     
     def create(self):
-        playbook_details = ['playbook_name', 'playbook_type', 'playbook_schedule', 'playbook_timeout', 'playbook_config']
+        playbook_details = ['playbook_name', 'playbook_type', 'playbook_timeout', 'playbook_config']
         for i in playbook_details:
             if i not in self.detail:
-                return format_response(400, 'failed', 'invalid detail', self.log)
+                return format_response(400, 'failed', f'invalid detail: missing required parameter {i}', self.log)
         self.playbook_name = self.detail['playbook_name']
         self.playbook_type = self.detail['playbook_type']
-        self.playbook_schedule = self.detail['playbook_schedule']
-        self.playbook_timeout = self.detail['playbook_timeout']
-        self.playbook_config = self.detail['playbook_config']
-        self.config_pointer = f'{self.playbook_name}.config'
+        self.playbook_timeout = str(self.detail['playbook_timeout'])
+        try:
+            int(self.playbook_timeout)
+        except Exception as error:
+            return format_response(400, 'failed', f'invalid detail: playbook_timeout assignment failed with error {error}', self.log)
+        self.playbook_config = ast.literal_eval(self.detail['playbook_config'])
+        if not isinstance(self.playbook_config, dict):
+                return format_response(400, 'failed', f'invalid detail: playbook_config must be type dict', self.log)
+        self.playbook_config = json.dumps(self.playbook_config)
 
         # Attempt playbook configuration creation and return result
         add_playbook_configuration_response = self.add_playbook_configuration()
@@ -296,21 +246,15 @@ class Playbook:
             return format_response(404, 'failed', f'playbook_name {self.playbook_name} does not exist', self.log)
         playbook_type = playbook_entry['Item']['playbook_type']['S']
         playbook_status = playbook_entry['Item']['playbook_status']['S']
-        playbook_schedule = playbook_entry['Item']['playbook_schedule']['S']
         playbook_timeout = playbook_entry['Item']['playbook_timeout']['N']
-        self.config_pointer = playbook_entry['Item']['config_pointer']['S']
-        get_object_results = self.get_object()
-        playbook_config = None
-        if 'Body' in get_object_results:
-                body = get_object_results['Body'].read()
-                playbook_config = body.decode()
+        playbook_config = json.loads(playbook_entry['Item']['playbook_config']['S'])
         created_by = playbook_entry['Item']['created_by']['S']
         last_executed_by = playbook_entry['Item']['last_executed_by']['S']
         last_execution_time = playbook_entry['Item']['last_execution_time']['S']
         return format_response(
             200, 'success', 'get playbook succeeded', None, playbook_name=self.playbook_name, playbook_type=playbook_type,
-            playbook_status=playbook_status, playbook_schedule=playbook_schedule, playbook_timeout=playbook_timeout,
-            playbook_config=playbook_config, created_by=created_by, last_executed_by=last_executed_by, last_execution_time=last_execution_time
+            playbook_status=playbook_status, playbook_timeout=playbook_timeout, playbook_config=playbook_config, created_by=created_by,
+            last_executed_by=last_executed_by, last_execution_time=last_execution_time
         )
     
     def kill(self):

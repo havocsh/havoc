@@ -24,6 +24,7 @@ def lambda_handler(event, context):
     region = re.search('arn:aws:lambda:([^:]+):.*', context.invoked_function_arn).group(1)
     deployment_name = os.environ['DEPLOYMENT_NAME']
     results_queue_expiration = int(os.environ['RESULTS_QUEUE_EXPIRATION'])
+    enable_task_results_logging = os.environ['ENABLE_TASK_RESULTS_LOGGING']
     log = {'event': event}
     results = None
     detail = None
@@ -64,6 +65,6 @@ def lambda_handler(event, context):
         if not results:
             return format_response(400, 'failed', 'missing results', log)
         else:
-            d = Deliver(region, deployment_name, results_queue_expiration, user_id, results, log)
+            d = Deliver(region, deployment_name, results_queue_expiration, enable_task_results_logging, user_id, results, log)
             response = d.deliver_result()
             return response

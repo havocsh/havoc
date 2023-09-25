@@ -52,6 +52,3 @@ havoc_deploy/aws/terraform/terraform.tfstate.backup
 havoc_deploy/aws/terraform/terraform.tfvars
 havoc_deploy/aws/terraform/terraform_backend.tf
 
-# Local binary files #
-######################
-terraform
