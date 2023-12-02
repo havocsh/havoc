@@ -192,6 +192,32 @@ class Playbook:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'playbook_entry_updated'
+    
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
 
     def launch(self):
         if 'playbook_type' in self.detail:
@@ -293,10 +319,23 @@ class Playbook:
         if upload_object_response != 'object_uploaded':
             return format_response(500, 'failed', f'execute_playbook failed with error {upload_object_response}', self.log)
 
-        # Add task entry to tasks table in DynamoDB
+        # Add playbook entry to playbooks table in DynamoDB
         update_playbook_entry_response = self.update_playbook_entry(ecs_task_id, timestamp, end_time)
         if update_playbook_entry_response != 'playbook_entry_updated':
             return format_response(500, 'failed', f'launch playbook failed with error {update_playbook_entry_response}', self.log)
+        
+        # Add playbook to active_resources in deployment table
+        deployment_details = self.get_deployment_entry
+        active_resources = deployment_details['active_resources']['M']
+        active_playbooks = active_resources['playbooks']['L']
+        if active_playbooks == ['None']:
+            active_playbooks = [self.playbook_name]
+        else:
+            active_playbooks.append(self.playbook_name)
+        active_resources['playbooks']['L'] = active_playbooks
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
 
         # Send response
         return format_response(200, 'success', 'launch playbook succeeded', None)

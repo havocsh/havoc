@@ -172,11 +172,40 @@ class Tasks:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'task_entry_updated'
+    
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
 
     def terminate_task(self):
         task_entry = self.get_task_entry()
         if 'Item' not in task_entry:
             return 'task_not_found'
+        # Verify that the task is not associated with active listeners
+        if 'None' not in task_entry['Item']['listeners']['SS']:
+            return 'task_associated_with_listener'
         ecs_task_id = task_entry['Item']['ecs_task_id']['S']
         if ecs_task_id == 'remote_task':
             update_task_entry_response = self.update_task_entry('terminated')
@@ -228,6 +257,18 @@ class Tasks:
         update_task_entry_response = self.update_task_entry('terminated')
         if update_task_entry_response != 'task_entry_updated':
             return update_task_entry_response
+        
+        # Remove task from active_resources in deployment table
+        deployment_details = self.get_deployment_entry
+        active_resources = deployment_details['active_resources']['M']
+        active_tasks = active_resources['tasks']['L']
+        active_tasks.remove(self.task_name)
+        if len(active_tasks) == 0:
+            active_tasks = ['None']
+        active_resources['tasks']['L'] = active_tasks
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'task_terminated'
 
     def get(self):
@@ -247,8 +288,8 @@ class Tasks:
         task_status = task_item['task_status']['S']
         public_ip = task_item['public_ip']['S']
         local_ip = task_item['local_ip']['SS']
-        portgroups = task_item['portgroups']['SS']
-        listeners = task_item['listeners']['SS']
+        associated_portgroups = task_item['portgroups']['SS']
+        associated_listeners = task_item['listeners']['SS']
         instruct_ids = task_item['instruct_ids']['SS']
         instruct_instances = task_item['instruct_instances']['SS']
         last_instruct_user_id = task_item['last_instruct_user_id']['S']
@@ -276,8 +317,8 @@ class Tasks:
         return format_response(
             200, 'success', 'get task succeeded', None, task_name=task_name, task_type=task_type, task_version=task_version,
             task_context=task_context, task_status=task_status, public_ip=public_ip, local_ip=local_ip,
-            portgroups=portgroups, listeners=listeners, instruct_ids=instruct_ids, instruct_instances=instruct_instances,
-            last_instruct_user_id=last_instruct_user_id, last_instruct_id=last_instruct_id,
+            associated_portgroups=associated_portgroups, associated_listeners=associated_listeners, instruct_ids=instruct_ids,
+            instruct_instances=instruct_instances, last_instruct_user_id=last_instruct_user_id, last_instruct_id=last_instruct_id,
             last_instruct_instance=last_instruct_instance, last_instruct_command=last_instruct_command,
             last_instruct_args=last_instruct_args_fixup, last_instruct_time=last_instruct_time,
             task_creator_user_id=task_creator_user_id, create_time=create_time, scheduled_end_time=scheduled_end_time, 
@@ -292,6 +333,8 @@ class Tasks:
         terminate_task_response = self.terminate_task()
         if terminate_task_response == 'task_not_found':
             return format_response(404, 'failed', f'task {self.task_name} does not exist', self.log)
+        elif terminate_task_response == 'task_associated_with_listener':
+            return format_response(409, 'failed', 'cannot kill a task that is associated with an active listener', self.log)
         elif terminate_task_response == 'task_terminated':
             return format_response(200, 'success', 'kill task succeeded', None)
         else:

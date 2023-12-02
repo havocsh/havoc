@@ -29,8 +29,8 @@ class WorkspaceAccess:
         self.detail = detail
         self.log = log
         self.access_type = 'GET'
-        self.path = 'shared/'
-        self.filename = None
+        self.path = None
+        self.file_name = None
         self.presigned_url = None
         self.__aws_s3_client = None
         self.__aws_dynamodb_client = None
@@ -68,7 +68,7 @@ class WorkspaceAccess:
         return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-workspace-access',
             Key={
-                'object_access': {'S': f'{self.access_type} {self.path}{self.filename}'}
+                'object_access': {'S': f'{self.access_type} {self.path}{self.file_name}'}
             }
         )
     
@@ -78,7 +78,7 @@ class WorkspaceAccess:
                 'get_object',
                 Params={
                     'Bucket': f'{self.deployment_name}-workspace',
-                    'Key': self.path + self.filename
+                    'Key': self.path + self.file_name
                 },
                 ExpiresIn=expiration
             )
@@ -93,7 +93,7 @@ class WorkspaceAccess:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-workspace-access',
                 Key={
-                    'object_access': {'S': f'{self.access_type} {self.path}{self.filename}'},
+                    'object_access': {'S': f'{self.access_type} {self.path}{self.file_name}'},
                     'create_time': {'N': stime}
                 },
                 UpdateExpression='set '
@@ -114,9 +114,14 @@ class WorkspaceAccess:
 
     def create(self):
         # Validate request details and assign parameters
-        if 'filename' not in self.detail:
-            return format_response(400, 'failed', f'invalid detail: missing filename', self.log)
-        self.filename = self.detail['filename']
+        object_access_details = ['path', 'file_name']
+        for i in object_access_details:
+            if i not in self.detail:
+                return format_response(400, 'failed', f'invalid detail: missing {i}', self.log)
+        self.path = self.detail['path'].lower()
+        if self.path not in ['shared/', 'upload/']:
+            return format_response(400, 'failed', f'invalid path', self.log)
+        self.file_name = self.detail['file_name']
         if 'expiration' in self.detail:
             try:
                 expiration = int(self.detail['expiration'])
@@ -146,9 +151,14 @@ class WorkspaceAccess:
     
     def get(self):
         # Validate request details and assign parameters
-        if 'filename' not in self.detail:
-            return format_response(400, 'failed', f'invalid detail: missing filename', self.log)
-        self.filename = self.detail['filename']
+        object_access_details = ['path', 'file_name']
+        for i in object_access_details:
+            if i not in self.detail:
+                return format_response(400, 'failed', f'invalid detail: missing {i}', self.log)
+        self.path = self.detail['path'].lower()
+        if self.path not in ['shared/', 'upload/']:
+            return format_response(400, 'failed', f'invalid path', self.log)
+        self.file_name = self.detail['file_name']
 
         # Get the object access url details
         get_workspace_get_url_response = self.get_workspace_get_url()
@@ -175,11 +185,15 @@ class WorkspaceAccess:
         return format_response(405, 'failed', 'command not accepted for this resource', self.log)
     
     def list(self):
-        if 'filename' in self.detail:
-            self.filename = self.detail['filename']
+        if 'path' in self.detail:
+            self.path = self.detail['path'].lower()
         else:
-            self.filename = '.*'
-        requested_object = re.compile(f'{self.access_type} {self.path}{self.filename}')
+            self.path = '.*'
+        if 'file_name' in self.detail:
+            self.file_name = self.detail['file_name']
+        else:
+            self.file_name = '.*'
+        requested_object = re.compile(f'{self.access_type} {self.path}{self.file_name}')
         objects_list = []
         workspace_get_urls_response = self.query_workspace_get_urls()
         if 'Items' in workspace_get_urls_response:

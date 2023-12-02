@@ -119,6 +119,32 @@ class Registration:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'task_type_entry_removed'
+    
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
 
     def add_ecs_task_definition(self):
         existing_task_type = self.get_task_type_entry()
@@ -175,10 +201,22 @@ class Registration:
             return error
         task_definition_arn = task_registration['taskDefinition']['taskDefinitionArn']
         add_task_type_entry_response = self.add_task_type_entry(task_definition_arn)
-        if add_task_type_entry_response == 'task_type_entry_created':
-            return 'task_type_created'
-        else:
+        if add_task_type_entry_response != 'task_type_entry_created':
             return add_task_type_entry_response
+        
+        # Add task_type to active_resources in deployment table
+        deployment_details = self.get_deployment_entry
+        active_resources = deployment_details['active_resources']['M']
+        active_task_types = active_resources['task_types']['L']
+        if active_task_types == ['None']:
+            active_task_types = [self.task_type]
+        else:
+            active_task_types.append(self.task_type)
+        active_resources['task_types']['L'] = active_task_types
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
+        return 'task_type_created'
 
     def remove_ecs_task_definition(self):
         task_type = self.get_task_type_entry()
@@ -194,10 +232,21 @@ class Registration:
         except botocore.exceptions.ParamValidationError as error:
             return error
         remove_task_type_entry_response = self.remove_task_type_entry()
-        if remove_task_type_entry_response == 'task_type_entry_removed':
-            return 'task_definition_removed'
-        else:
+        if remove_task_type_entry_response != 'task_type_entry_removed':
             return remove_task_type_entry_response
+        
+        # Remove task_type from active_resources in deployment table
+        deployment_details = self.get_deployment_entry
+        active_resources = deployment_details['active_resources']['M']
+        active_task_types = active_resources['task_types']['L']
+        active_task_types.remove(self.task_type)
+        if len(active_task_types) == 0:
+            active_task_types = ['None']
+        active_resources['task_types']['L'] = active_task_types
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
+        return 'task_definition_removed'
 
     def create(self):
         task_details = ['task_type', 'task_version', 'source_image', 'capabilities', 'cpu', 'memory']

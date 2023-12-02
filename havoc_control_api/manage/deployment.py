@@ -63,6 +63,9 @@ class Deployment:
             tfstate_s3_key = self.detail['tfstate_s3_key']
             tfstate_s3_region = self.detail['tfstate_s3_region']
             tfstate_dynamodb_table = self.detail['tfstate_dynamodb_table']
+            active_resources = {'domains': {'L': ['None']}, 'listeners': {'L': ['None']}, 'playbook_types': {'L': ['None']}, 
+                                'playbooks': {'L': ['None']}, 'portgroups': {'L': ['None']}, 'task_types': {'L': ['None']},
+                                'tasks': {'L': ['None']}, 'triggers': {'L': ['None']}, 'workspace': {'L': ['None']}}
             try:
                 self.aws_dynamodb_client.update_item(
                     TableName=f'{self.deployment_name}-deployment',
@@ -81,7 +84,8 @@ class Deployment:
                                     'tfstate_s3_bucket=:tfstate_s3_bucket, '
                                     'tfstate_s3_key=:tfstate_s3_key, '
                                     'tfstate_s3_region=:tfstate_s3_region, '
-                                    'tfstate_dynamodb_table=:tfstate_dynamodb_table',
+                                    'tfstate_dynamodb_table=:tfstate_dynamodb_table, '
+                                    'active_resources=:active_resources',
                     ExpressionAttributeValues={
                         ':deployment_version': {'S': deployment_version},
                         ':deployment_admin_email': {'S': deployment_admin_email},
@@ -95,7 +99,8 @@ class Deployment:
                         ':tfstate_s3_bucket': {'S': tfstate_s3_bucket},
                         ':tfstate_s3_key': {'S': tfstate_s3_key},
                         ':tfstate_s3_region': {'S': tfstate_s3_region},
-                        ':tfstate_dynamodb_table': {'S': tfstate_dynamodb_table}
+                        ':tfstate_dynamodb_table': {'S': tfstate_dynamodb_table},
+                        ':active_resources': {'M': active_resources}
                     }
                 )
             except botocore.exceptions.ClientError as error:
@@ -198,6 +203,10 @@ class Deployment:
         tfstate_s3_key = deployment_entry['Item']['tfstate_s3_key']['S']
         tfstate_s3_region = deployment_entry['Item']['tfstate_s3_region']['S']
         tfstate_dynamodb_table = deployment_entry['Item']['tfstate_dynamodb_table']['S']
+        active_resources = deployment_entry['Item']['active_resources']['M']
+        active_resources_fixup = {}
+        for key, value in active_resources.items():
+            active_resources_fixup[key] = value['L']
         return format_response(
             200,
             'success',
@@ -216,7 +225,8 @@ class Deployment:
             tfstate_s3_bucket=tfstate_s3_bucket,
             tfstate_s3_key=tfstate_s3_key,
             tfstate_s3_region=tfstate_s3_region,
-            tfstate_dynamodb_table=tfstate_dynamodb_table
+            tfstate_dynamodb_table=tfstate_dynamodb_table,
+            active_resources=active_resources_fixup
         )
 
     def list(self):

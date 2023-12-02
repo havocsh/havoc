@@ -315,6 +315,32 @@ class Task:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'task_entry_added'
+    
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
 
     def run_task(self):
         if 'task_type' not in self.detail:
@@ -469,6 +495,19 @@ class Task:
                                                       ecs_task_id, timestamp, end_time)
         if add_task_entry_response != 'task_entry_added':
             return format_response(500, 'failed', f'run_task failed with error {add_task_entry_response}', self.log)
+        
+        # Add task to active_resources in deployment table
+        deployment_details = self.get_deployment_entry
+        active_resources = deployment_details['active_resources']['M']
+        active_tasks = active_resources['tasks']['L']
+        if active_tasks == ['None']:
+            active_tasks = [self.task_name]
+        else:
+            active_tasks.append(self.task_name)
+        active_resources['tasks']['L'] = active_tasks
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
 
         # Send response
         return format_response(200, 'success', 'execute task succeeded', None, public_ip=public_ip, instruct_id=instruct_id)

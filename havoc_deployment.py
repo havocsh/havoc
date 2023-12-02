@@ -117,7 +117,7 @@ class ManageDeployment:
         # Get the Terraform backend details
         print('Starting configuration for Terraform backend connection.')
         if not self.aws_profile:
-            self.aws_profile = input_collector('Specify the AWS credentials profile to use (or you can leave it blank for default): ')
+            self.aws_profile = input_collector('Specify the AWS credentials profile to use: ')
 
         print('Getting backend connection settings from ./HAVOC deployment details.')
         try:
@@ -223,10 +223,21 @@ class ManageDeployment:
         # Write out terraform.tfvars file
         print('\nSetting up Terraform variables. Please provide the requested details.')
         aws_region = input_collector('\nAWS region: ')
-        self.aws_profile = input_collector('AWS profile: ')
+        while not self.aws_profile:
+            aws_profile_input = input_collector('AWS profile: ')
+            verify_aws_profile = subprocess.run(f'aws configure --profile {aws_profile_input} list', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if verify_aws_profile.returncode != 0:
+                print(f'Could not find the AWS profile {aws_profile_input} in the current user\'s AWS config.')
+                print('If you have not yet created an AWS profile, exit this installer and run "aws configure --profile <profile-name>" to create one.')
+                return_or_exit = input_collector('Type "exit" to exit this installer or press return to specify a different AWS profile (exit|return): ')
+                if return_or_exit.lower() == 'exit':
+                    print('Exiting.')
+                    return 'failed'
+            else:
+                self.aws_profile = aws_profile_input
         deployment_name = None
         while not deployment_name:
-            deployment_name_input = input('./HAVOC deployment name: ')
+            deployment_name_input = input_collector('./HAVOC deployment name: ')
             test_bucket_1 = self.validate_deployment_name(f'{deployment_name_input}-workspace')
             test_bucket_2 = self.validate_deployment_name(f'{deployment_name_input}-terraform-state')
             if test_bucket_1 and test_bucket_2:
@@ -466,6 +477,19 @@ class ManageDeployment:
             print('\nNo existing deployment found.\n')
             print('Perform the remove operation from the system that created the ./HAVOC deployment.\n')
             print('Alternatively, you can connect this system to the Terraform deployment with the "./havoc --deployment connect_tf_backend" command.\n')
+            return 'failed'
+        
+        # Check for active resources
+        deployment_details = self.havoc_client.get_deployment()
+        active_resources = {k: v for k, v in deployment_details['active_resources'].items() if v != ['None']}
+        if active_resources:
+            print('\nYour ./HAVOC deployment currently has active resources. You cannot remove the deployment until all of the resources have been shutdown/deleted.')
+            print('Remove the following resources and then run the "./havoc --deployment remove" command again.')
+            for k, v in active_resources.items():
+                print(f'\n{k}: ')
+                for res in v:
+                    print(f'\t{res}')
+            print('Go to https://havoc.readme.io for more information about shutting down tasks and deleting resources.')
             return 'failed'
         
         # Disconnect Terraform from S3 backend if present and delete terraform state from S3

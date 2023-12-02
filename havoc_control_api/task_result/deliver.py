@@ -231,6 +231,32 @@ class Deliver:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'log_event_written'
+    
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
 
     def deliver_result(self):
         # Set vars
@@ -356,6 +382,17 @@ class Deliver:
             completed_instruction = self.update_task_entry(stime, 'terminated', task_end_time)
             if completed_instruction != 'task_entry_updated':
                 print(f'Error updating task entry: {completed_instruction}')
+            # Remove task from active_resources in deployment table
+            deployment_details = self.get_deployment_entry
+            active_resources = deployment_details['active_resources']['M']
+            active_tasks = active_resources['tasks']['L']
+            active_tasks.remove(self.task_name)
+            if len(active_tasks) == 0:
+                active_tasks = ['None']
+            active_resources['tasks']['L'] = active_tasks
+            update_deployment_entry_response = self.update_deployment_entry(active_resources)
+            if update_deployment_entry_response != 'deployment_updated':
+                print(f'Error updating deployment entry: {update_deployment_entry_response}')
             t.sleep(20)
         else:
             completed_instruction = self.update_task_entry(stime, 'idle', task_end_time)
