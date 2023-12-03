@@ -93,11 +93,11 @@ if [[ ${@} =~ "--deployment update" ]]; then
     echo " - Applying updates for version ${deployment_version}."
     echo " - Updating local files."
     havoc_orig_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
-    ${git_bin} pull > /dev/null 2>&1
-    current_git_branch=$(${git_bin} status | awk 'FNR == 1 { print $3 }')
-    target_git_branch=$(${git_bin} branch --contains tags/${deployment_version} | awk '{ print $NF }')
+    git pull > /dev/null 2>&1
+    current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
+    target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
     if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
-        ${git_bin} checkout ${target_git_branch}
+        git checkout ${target_git_branch}
     fi
     havoc_new_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
     if [[ ! ${havoc_orig_hash} == ${havoc_new_hash} ]]; then
