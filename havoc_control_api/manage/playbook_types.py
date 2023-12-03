@@ -184,8 +184,8 @@ class Registration:
             return upload_object_response
         
         # Add playbook_type to active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_playbook_types = active_resources['playbook_types']['SS']
         if active_playbook_types == ['None']:
             active_playbook_types = [self.playbook_type]
@@ -210,8 +210,8 @@ class Registration:
             return delete_object_response
         
         # Remove playbook_type from active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_playbook_types = active_resources['playbook_types']['SS']
         active_playbook_types.remove(self.playbook_type)
         if len(active_playbook_types) == 0:

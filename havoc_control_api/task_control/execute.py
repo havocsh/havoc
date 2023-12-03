@@ -497,8 +497,8 @@ class Task:
             return format_response(500, 'failed', f'run_task failed with error {add_task_entry_response}', self.log)
         
         # Add task to active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_tasks = active_resources['tasks']['SS']
         if active_tasks == ['None']:
             active_tasks = [self.task_name]

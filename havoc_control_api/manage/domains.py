@@ -288,8 +288,8 @@ class Domain:
             return error
         
         # Add domain to active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_domains = active_resources['domains']['SS']
         if active_domains == ['None']:
             active_domains = [self.domain_name]
@@ -343,8 +343,8 @@ class Domain:
             return error
         
         # Remove domain from active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_domains = active_resources['domains']['SS']
         active_domains.remove(self.domain_name)
         if len(active_domains) == 0:

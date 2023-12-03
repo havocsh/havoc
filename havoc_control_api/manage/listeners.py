@@ -580,8 +580,8 @@ class Listener:
             return create_listener_entry_response
         
         # Add listener to active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_listeners = active_resources['listeners']['SS']
         if active_listeners == ['None']:
             active_listeners = [self.listener_name]
@@ -672,8 +672,8 @@ class Listener:
             return delete_listener_entry_response
         
         # Remove listener from active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_listeners = active_resources['listeners']['SS']
         active_listeners.remove(self.listener_name)
         if len(active_listeners) == 0:

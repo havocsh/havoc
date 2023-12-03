@@ -144,8 +144,8 @@ class Portgroup:
             return error
         
         # Add portgroup to active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_portgroups = active_resources['portgroups']['SS']
         if active_portgroups == ['None']:
             active_portgroups = [self.portgroup_name]
@@ -180,8 +180,8 @@ class Portgroup:
             return error
         
         # Remove portgroup from active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_portgroups = active_resources['portgroups']['SS']
         active_portgroups.remove(self.portgroup_name)
         if len(active_portgroups) == 0:

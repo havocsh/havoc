@@ -213,8 +213,8 @@ class Deliver:
             if completed_instruction != 'playbook_entry_updated':
                 print(f'Error updating playbook entry: {completed_instruction}')
             # Remove playbook from active_resources in deployment table
-            deployment_details = self.get_deployment_entry
-            active_resources = deployment_details['active_resources']['M']
+            deployment_details = self.get_deployment_entry()
+            active_resources = deployment_details['Item']['active_resources']['M']
             active_playbooks = active_resources['playbooks']['SS']
             active_playbooks.remove(self.playbook_name)
             if len(active_playbooks) == 0:

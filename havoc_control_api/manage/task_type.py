@@ -205,8 +205,8 @@ class Registration:
             return add_task_type_entry_response
         
         # Add task_type to active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_task_types = active_resources['task_types']['SS']
         if active_task_types == ['None']:
             active_task_types = [self.task_type]
@@ -236,8 +236,8 @@ class Registration:
             return remove_task_type_entry_response
         
         # Remove task_type from active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_task_types = active_resources['task_types']['SS']
         active_task_types.remove(self.task_type)
         if len(active_task_types) == 0:

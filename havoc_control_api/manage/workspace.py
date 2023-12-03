@@ -203,8 +203,8 @@ class Workspace:
         upload_object_response = self.upload_object()
         if upload_object_response == 'object_uploaded':
             # Add file to active_resources in deployment table
-            deployment_details = self.get_deployment_entry
-            active_resources = deployment_details['active_resources']['M']
+            deployment_details = self.get_deployment_entry()
+            active_resources = deployment_details['Item']['active_resources']['M']
             active_files = active_resources['files']['SS']
             if active_files == ['None']:
                 active_files = [self.file_name]
@@ -237,8 +237,8 @@ class Workspace:
         delete_object_response = self.delete_object()
         if delete_object_response == 'object_deleted':
             # Remove file from active_resources in deployment table
-            deployment_details = self.get_deployment_entry
-            active_resources = deployment_details['active_resources']['M']
+            deployment_details = self.get_deployment_entry()
+            active_resources = deployment_details['Item']['active_resources']['M']
             active_files = active_resources['files']['SS']
             active_files.remove(self.file_name)
             if len(active_files) == 0:

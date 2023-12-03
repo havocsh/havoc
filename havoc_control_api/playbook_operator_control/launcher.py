@@ -325,8 +325,8 @@ class Playbook:
             return format_response(500, 'failed', f'launch playbook failed with error {update_playbook_entry_response}', self.log)
         
         # Add playbook to active_resources in deployment table
-        deployment_details = self.get_deployment_entry
-        active_resources = deployment_details['active_resources']['M']
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
         active_playbooks = active_resources['playbooks']['SS']
         if active_playbooks == ['None']:
             active_playbooks = [self.playbook_name]
