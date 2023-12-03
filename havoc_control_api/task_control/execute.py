@@ -499,12 +499,12 @@ class Task:
         # Add task to active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_tasks = active_resources['tasks']['L']
+        active_tasks = active_resources['tasks']['SS']
         if active_tasks == ['None']:
             active_tasks = [self.task_name]
         else:
             active_tasks.append(self.task_name)
-        active_resources['tasks']['L'] = active_tasks
+        active_resources['tasks']['SS'] = active_tasks
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response

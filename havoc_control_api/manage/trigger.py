@@ -271,12 +271,12 @@ class Trigger:
         # Add trigger to active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_triggers = active_resources['triggers']['L']
+        active_triggers = active_resources['triggers']['SS']
         if active_triggers == ['None']:
             active_triggers = [self.trigger_name]
         else:
             active_triggers.append(self.trigger_name)
-        active_resources['triggers']['L'] = active_triggers
+        active_resources['triggers']['SS'] = active_triggers
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response
@@ -316,11 +316,11 @@ class Trigger:
         # Remove trigger from active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_triggers = active_resources['triggers']['L']
+        active_triggers = active_resources['triggers']['SS']
         active_triggers.remove(self.trigger_name)
         if len(active_triggers) == 0:
             active_triggers = ['None']
-        active_resources['triggers']['L'] = active_triggers
+        active_resources['triggers']['SS'] = active_triggers
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response

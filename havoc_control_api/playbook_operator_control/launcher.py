@@ -327,12 +327,12 @@ class Playbook:
         # Add playbook to active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_playbooks = active_resources['playbooks']['L']
+        active_playbooks = active_resources['playbooks']['SS']
         if active_playbooks == ['None']:
             active_playbooks = [self.playbook_name]
         else:
             active_playbooks.append(self.playbook_name)
-        active_resources['playbooks']['L'] = active_playbooks
+        active_resources['playbooks']['SS'] = active_playbooks
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response

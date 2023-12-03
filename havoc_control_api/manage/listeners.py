@@ -582,12 +582,12 @@ class Listener:
         # Add listener to active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_listeners = active_resources['listeners']['L']
+        active_listeners = active_resources['listeners']['SS']
         if active_listeners == ['None']:
             active_listeners = [self.listener_name]
         else:
             active_listeners.append(self.listener_name)
-        active_resources['listeners']['L'] = active_listeners
+        active_resources['listeners']['SS'] = active_listeners
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response
@@ -674,11 +674,11 @@ class Listener:
         # Remove listener from active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_listeners = active_resources['listeners']['L']
+        active_listeners = active_resources['listeners']['SS']
         active_listeners.remove(self.listener_name)
         if len(active_listeners) == 0:
             active_listeners = ['None']
-        active_resources['listeners']['L'] = active_listeners
+        active_resources['listeners']['SS'] = active_listeners
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response

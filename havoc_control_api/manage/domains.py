@@ -270,13 +270,12 @@ class Domain:
                     'domain_name': {'S': self.domain_name}
                 },
                 UpdateExpression='set hosted_zone=:hosted_zone, api_domain=:api_domain, '
-                                 'certificate_arn=:certificate_arn, validation_record=:validation_record, '
-                                 'tasks=:tasks, listeners=:listeners, host_names=:host_names, user_id=:user_id',
+                                 'certificate_arn=:certificate_arn, tasks=:tasks, '
+                                 'listeners=:listeners, host_names=:host_names, user_id=:user_id',
                 ExpressionAttributeValues={
                     ':hosted_zone': {'S': self.hosted_zone},
                     ':api_domain': {'S': api_domain},
                     ':certificate_arn': {'S': self.certificate_arn},
-                    ':validation_record': {'L': self.validation_record},
                     ':tasks': {'SS': [tasks]},
                     ':listeners': {'SS': [listeners]},
                     ':host_names': {'SS': [host_names]},
@@ -291,12 +290,12 @@ class Domain:
         # Add domain to active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_domains = active_resources['domains']['L']
+        active_domains = active_resources['domains']['SS']
         if active_domains == ['None']:
             active_domains = [self.domain_name]
         else:
             active_domains.append(self.domain_name)
-        active_resources['domains']['L'] = active_domains
+        active_resources['domains']['SS'] = active_domains
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response
@@ -323,7 +322,9 @@ class Domain:
             return delete_domain_cert_response
 
         # Delete the certificate validation resource record
-        self.validation_record = domain_entry['Item']['validation_record']['L']
+        get_domain_validation_records_response = self.get_domain_validation_records()
+        if get_domain_validation_records_response != 'domain_validation_records_requested':
+            return get_domain_validation_records_response
         delete_validate_cert_response = self.delete_validate_cert()
         if delete_validate_cert_response != 'cert_validation_record_deleted':
             return delete_validate_cert_response
@@ -344,11 +345,11 @@ class Domain:
         # Remove domain from active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_domains = active_resources['domains']['L']
+        active_domains = active_resources['domains']['SS']
         active_domains.remove(self.domain_name)
         if len(active_domains) == 0:
             active_domains = ['None']
-        active_resources['domains']['L'] = active_domains
+        active_resources['domains']['SS'] = active_domains
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response

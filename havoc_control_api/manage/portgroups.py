@@ -146,12 +146,12 @@ class Portgroup:
         # Add portgroup to active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_portgroups = active_resources['portgroups']['L']
+        active_portgroups = active_resources['portgroups']['SS']
         if active_portgroups == ['None']:
             active_portgroups = [self.portgroup_name]
         else:
             active_portgroups.append(self.portgroup_name)
-        active_resources['portgroups']['L'] = active_portgroups
+        active_resources['portgroups']['SS'] = active_portgroups
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response
@@ -182,11 +182,11 @@ class Portgroup:
         # Remove portgroup from active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_portgroups = active_resources['portgroups']['L']
+        active_portgroups = active_resources['portgroups']['SS']
         active_portgroups.remove(self.portgroup_name)
         if len(active_portgroups) == 0:
             active_portgroups = ['None']
-        active_resources['portgroups']['L'] = active_portgroups
+        active_resources['portgroups']['SS'] = active_portgroups
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response

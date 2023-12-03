@@ -385,11 +385,11 @@ class Deliver:
             # Remove task from active_resources in deployment table
             deployment_details = self.get_deployment_entry
             active_resources = deployment_details['active_resources']['M']
-            active_tasks = active_resources['tasks']['L']
+            active_tasks = active_resources['tasks']['SS']
             active_tasks.remove(self.task_name)
             if len(active_tasks) == 0:
                 active_tasks = ['None']
-            active_resources['tasks']['L'] = active_tasks
+            active_resources['tasks']['SS'] = active_tasks
             update_deployment_entry_response = self.update_deployment_entry(active_resources)
             if update_deployment_entry_response != 'deployment_updated':
                 print(f'Error updating deployment entry: {update_deployment_entry_response}')

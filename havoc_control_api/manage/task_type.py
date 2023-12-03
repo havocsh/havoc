@@ -207,12 +207,12 @@ class Registration:
         # Add task_type to active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_task_types = active_resources['task_types']['L']
+        active_task_types = active_resources['task_types']['SS']
         if active_task_types == ['None']:
             active_task_types = [self.task_type]
         else:
             active_task_types.append(self.task_type)
-        active_resources['task_types']['L'] = active_task_types
+        active_resources['task_types']['SS'] = active_task_types
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response
@@ -238,11 +238,11 @@ class Registration:
         # Remove task_type from active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_task_types = active_resources['task_types']['L']
+        active_task_types = active_resources['task_types']['SS']
         active_task_types.remove(self.task_type)
         if len(active_task_types) == 0:
             active_task_types = ['None']
-        active_resources['task_types']['L'] = active_task_types
+        active_resources['task_types']['SS'] = active_task_types
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response

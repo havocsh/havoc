@@ -63,9 +63,9 @@ class Deployment:
             tfstate_s3_key = self.detail['tfstate_s3_key']
             tfstate_s3_region = self.detail['tfstate_s3_region']
             tfstate_dynamodb_table = self.detail['tfstate_dynamodb_table']
-            active_resources = {'domains': {'L': [{'S': 'None'}]}, 'listeners': {'L': [{'S': 'None'}]}, 'playbook_types': {'L': [{'S': 'None'}]}, 
-                                'playbooks': {'L': [{'S': 'None'}]}, 'portgroups': {'L': [{'S': 'None'}]}, 'task_types': {'L': [{'S': 'None'}]},
-                                'tasks': {'L': [{'S': 'None'}]}, 'triggers': {'L': [{'S': 'None'}]}, 'workspace': {'L': [{'S': 'None'}]}}
+            active_resources = {'domains': {'SS': ['None']}, 'listeners': {'SS': ['None']}, 'playbook_types': {'SS': ['None']}, 
+                                'playbooks': {'SS': ['None']}, 'portgroups': {'SS': ['None']}, 'task_types': {'SS': ['None']},
+                                'tasks': {'SS': ['None']}, 'triggers': {'SS': ['None']}, 'workspace': {'SS': ['None']}}
             try:
                 self.aws_dynamodb_client.update_item(
                     TableName=f'{self.deployment_name}-deployment',
@@ -206,7 +206,7 @@ class Deployment:
         active_resources = deployment_entry['Item']['active_resources']['M']
         active_resources_fixup = {}
         for key, value in active_resources.items():
-            active_resources_fixup[key] = value['L']
+            active_resources_fixup[key] = value['SS']
         return format_response(
             200,
             'success',

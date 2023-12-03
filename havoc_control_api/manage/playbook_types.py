@@ -186,12 +186,12 @@ class Registration:
         # Add playbook_type to active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_playbook_types = active_resources['playbook_types']['L']
+        active_playbook_types = active_resources['playbook_types']['SS']
         if active_playbook_types == ['None']:
             active_playbook_types = [self.playbook_type]
         else:
             active_playbook_types.append(self.playbook_type)
-        active_resources['playbook_types']['L'] = active_playbook_types
+        active_resources['playbook_types']['SS'] = active_playbook_types
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response
@@ -212,11 +212,11 @@ class Registration:
         # Remove playbook_type from active_resources in deployment table
         deployment_details = self.get_deployment_entry
         active_resources = deployment_details['active_resources']['M']
-        active_playbook_types = active_resources['playbook_types']['L']
+        active_playbook_types = active_resources['playbook_types']['SS']
         active_playbook_types.remove(self.playbook_type)
         if len(active_playbook_types) == 0:
             active_playbook_types = ['None']
-        active_resources['playbook_types']['L'] = active_playbook_types
+        active_resources['playbook_types']['SS'] = active_playbook_types
         update_deployment_entry_response = self.update_deployment_entry(active_resources)
         if update_deployment_entry_response != 'deployment_updated':
             return update_deployment_entry_response
