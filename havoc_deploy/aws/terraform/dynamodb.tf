@@ -55,6 +55,9 @@ resource "aws_dynamodb_table_item" "domain_name" {
   "api_domain": {
     "S": "yes"
   },
+  "certificate_arn": {
+    "S": "${aws_acm_certificate.api_gateway_cert[count.index].arn}"
+  },
   "tasks": {
     "SS": ${jsonencode(["None"])}
   },
