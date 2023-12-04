@@ -489,7 +489,7 @@ class ManageDeployment:
                 print(f'\n{k}: ')
                 for res in v:
                     print(f'\t{res}')
-            print('Go to https://havoc.readme.io for more information about shutting down tasks and deleting resources.')
+            print('\nGo to https://havoc.readme.io for more information about shutting down tasks and deleting resources.')
             return 'failed'
         
         # Disconnect Terraform from S3 backend if present and delete terraform state from S3
