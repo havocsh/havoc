@@ -207,9 +207,9 @@ class Workspace:
             active_resources = deployment_details['Item']['active_resources']['M']
             active_files = active_resources['workspace']['SS']
             if active_files == ['None']:
-                active_files = [self.file_name]
+                active_files = [f'{self.path}{self.file_name}']
             else:
-                active_files.append(self.file_name)
+                active_files.append(f'{self.path}{self.file_name}')
             active_resources['workspace']['SS'] = active_files
             update_deployment_entry_response = self.update_deployment_entry(active_resources)
             if update_deployment_entry_response != 'deployment_updated':
@@ -240,7 +240,7 @@ class Workspace:
             deployment_details = self.get_deployment_entry()
             active_resources = deployment_details['Item']['active_resources']['M']
             active_files = active_resources['workspace']['SS']
-            active_files.remove(self.file_name)
+            active_files.remove(f'{self.path}{self.file_name}')
             if len(active_files) == 0:
                 active_files = ['None']
             active_resources['workspace']['SS'] = active_files
