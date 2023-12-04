@@ -205,12 +205,12 @@ class Workspace:
             # Add file to active_resources in deployment table
             deployment_details = self.get_deployment_entry()
             active_resources = deployment_details['Item']['active_resources']['M']
-            active_files = active_resources['files']['SS']
+            active_files = active_resources['workspace']['SS']
             if active_files == ['None']:
                 active_files = [self.file_name]
             else:
                 active_files.append(self.file_name)
-            active_resources['files']['SS'] = active_files
+            active_resources['workspace']['SS'] = active_files
             update_deployment_entry_response = self.update_deployment_entry(active_resources)
             if update_deployment_entry_response != 'deployment_updated':
                 return format_response(500, 'failed', f'create_file failed with error {update_deployment_entry_response}', self.log)
@@ -239,11 +239,11 @@ class Workspace:
             # Remove file from active_resources in deployment table
             deployment_details = self.get_deployment_entry()
             active_resources = deployment_details['Item']['active_resources']['M']
-            active_files = active_resources['files']['SS']
+            active_files = active_resources['workspace']['SS']
             active_files.remove(self.file_name)
             if len(active_files) == 0:
                 active_files = ['None']
-            active_resources['files']['SS'] = active_files
+            active_resources['workspace']['SS'] = active_files
             update_deployment_entry_response = self.update_deployment_entry(active_resources)
             if update_deployment_entry_response != 'deployment_updated':
                 return format_response(500, 'failed', f'delete_file failed with error {update_deployment_entry_response}', self.log)
