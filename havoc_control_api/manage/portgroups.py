@@ -77,6 +77,32 @@ class Portgroup:
         return self.aws_ec2_client.describe_security_groups(
             GroupIds=[securitygroup_id]
         )
+    
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
 
     def create_portgroup_entry(self, description, timestamp):
         get_portgroup_entry_response = self.get_portgroup_entry()
@@ -116,6 +142,19 @@ class Portgroup:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
+        
+        # Add portgroup to active_resources in deployment table
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
+        active_portgroups = active_resources['portgroups']['SS']
+        if active_portgroups == ['None']:
+            active_portgroups = [self.portgroup_name]
+        else:
+            active_portgroups.append(self.portgroup_name)
+        active_resources['portgroups']['SS'] = active_portgroups
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'portgroup_created'
 
     def delete_portgroup_entry(self, securitygroup_id):
@@ -139,6 +178,18 @@ class Portgroup:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
+        
+        # Remove portgroup from active_resources in deployment table
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
+        active_portgroups = active_resources['portgroups']['SS']
+        active_portgroups.remove(self.portgroup_name)
+        if len(active_portgroups) == 0:
+            active_portgroups = ['None']
+        active_resources['portgroups']['SS'] = active_portgroups
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'portgroup_deleted'
 
     def update_portgroup_entry(self, securitygroup_id, ip_ranges, port, ip_protocol, portgroup_action):

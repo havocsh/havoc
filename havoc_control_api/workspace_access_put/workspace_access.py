@@ -30,7 +30,7 @@ class WorkspaceAccess:
         self.log = log
         self.access_type = 'POST'
         self.path = None
-        self.filename = None
+        self.file_name = None
         self.presigned_url = None
         self.__aws_s3_client = None
         self.__aws_dynamodb_client = None
@@ -68,13 +68,13 @@ class WorkspaceAccess:
         return self.aws_dynamodb_client.get_item(
             TableName=f'{self.deployment_name}-workspace-access',
             Key={
-                'object_access': {'S': f'{self.access_type} {self.path}{self.filename}'}
+                'object_access': {'S': f'{self.access_type} {self.path}{self.file_name}'}
             }
         )
     
     def create_workspace_put_url(self, expiration):
         bucket_name = f'{self.deployment_name}-workspace'
-        object_name = self.path + self.filename
+        object_name = self.path + self.file_name
         try:
             self.presigned_url = self.aws_s3_client.generate_presigned_url(
                 'put_object',
@@ -96,7 +96,7 @@ class WorkspaceAccess:
             self.aws_dynamodb_client.update_item(
                 TableName=f'{self.deployment_name}-workspace-access',
                 Key={
-                    'object_access': {'S': f'{self.access_type} {self.path}{self.filename}'},
+                    'object_access': {'S': f'{self.access_type} {self.path}{self.file_name}'},
                     'create_time': {'N': stime}
                 },
                 UpdateExpression='set '
@@ -117,14 +117,14 @@ class WorkspaceAccess:
 
     def create(self):
         # Validate request details and assign parameters
-        object_access_details = ['path', 'filename']
+        object_access_details = ['path', 'file_name']
         for i in object_access_details:
             if i not in self.detail:
                 return format_response(400, 'failed', f'invalid detail: missing {i}', self.log)
         self.path = self.detail['path'].lower()
         if self.path not in ['shared/', 'upload/']:
             return format_response(400, 'failed', f'invalid path', self.log)
-        self.filename = self.detail['filename']
+        self.file_name = self.detail['file_name']
         if 'expiration' in self.detail:
             try:
                 expiration = int(self.detail['expiration'])
@@ -154,12 +154,12 @@ class WorkspaceAccess:
     
     def get(self):
         # Validate request details and assign parameters
-        object_access_details = ['path', 'filename']
+        object_access_details = ['path', 'file_name']
         for i in object_access_details:
             if i not in self.detail:
                 return format_response(400, 'failed', f'invalid detail: missing {i}', self.log)
         self.path = self.detail['path'].lower()
-        self.filename = self.detail['filename']
+        self.file_name = self.detail['file_name']
 
         # Get the object access url details
         get_workspace_put_url_response = self.get_workspace_put_url()
@@ -190,11 +190,11 @@ class WorkspaceAccess:
             self.path = self.detail['path'].lower()
         else:
             self.path = '.*'
-        if 'filename' in self.detail:
-            self.filename = self.detail['filename']
+        if 'file_name' in self.detail:
+            self.file_name = self.detail['file_name']
         else:
-            self.filename = '.*'
-        requested_object = re.compile(f'{self.access_type} {self.path}{self.filename}')
+            self.file_name = '.*'
+        requested_object = re.compile(f'{self.access_type} {self.path}{self.file_name}')
         objects_list = []
         workspace_put_urls_response = self.query_workspace_put_urls()
         if 'Items' in workspace_put_urls_response:

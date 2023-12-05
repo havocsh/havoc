@@ -205,6 +205,32 @@ class Domain:
             return error
         return 'cert_validation_record_deleted'
 
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
+
     def create_domain_entry(self):
         # Check for domain conflict
         existing_domain = self.get_domain_entry()
@@ -244,13 +270,12 @@ class Domain:
                     'domain_name': {'S': self.domain_name}
                 },
                 UpdateExpression='set hosted_zone=:hosted_zone, api_domain=:api_domain, '
-                                 'certificate_arn=:certificate_arn, validation_record=:validation_record, '
-                                 'tasks=:tasks, listeners=:listeners, host_names=:host_names, user_id=:user_id',
+                                 'certificate_arn=:certificate_arn, tasks=:tasks, '
+                                 'listeners=:listeners, host_names=:host_names, user_id=:user_id',
                 ExpressionAttributeValues={
                     ':hosted_zone': {'S': self.hosted_zone},
                     ':api_domain': {'S': api_domain},
                     ':certificate_arn': {'S': self.certificate_arn},
-                    ':validation_record': {'SS': self.validation_record},
                     ':tasks': {'SS': [tasks]},
                     ':listeners': {'SS': [listeners]},
                     ':host_names': {'SS': [host_names]},
@@ -261,6 +286,19 @@ class Domain:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
+        
+        # Add domain to active_resources in deployment table
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
+        active_domains = active_resources['domains']['SS']
+        if active_domains == ['None']:
+            active_domains = [self.domain_name]
+        else:
+            active_domains.append(self.domain_name)
+        active_resources['domains']['SS'] = active_domains
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'domain_created'
 
     def delete_domain_entry(self):
@@ -277,14 +315,14 @@ class Domain:
         if 'None' not in tasks:
             return 'has_associated_tasks'
         
-        # Delete the wildcard certificate for the domain
+        # Delete the wildcard certificate and certificate validation resource record for the domain
         self.certificate_arn = domain_entry['Item']['certificate_arn']['S']
+        get_domain_validation_records_response = self.get_domain_validation_records()
+        if get_domain_validation_records_response != 'domain_validation_records_requested':
+            return get_domain_validation_records_response
         delete_domain_cert_response = self.delete_domain_cert()
         if delete_domain_cert_response != 'domain_cert_deleted':
             return delete_domain_cert_response
-
-        # Delete the certificate validation resource record
-        self.validation_record = domain_entry['Item']['validation_record']['SS']
         delete_validate_cert_response = self.delete_validate_cert()
         if delete_validate_cert_response != 'cert_validation_record_deleted':
             return delete_validate_cert_response
@@ -301,6 +339,18 @@ class Domain:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
+        
+        # Remove domain from active_resources in deployment table
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
+        active_domains = active_resources['domains']['SS']
+        active_domains.remove(self.domain_name)
+        if len(active_domains) == 0:
+            active_domains = ['None']
+        active_resources['domains']['SS'] = active_domains
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'domain_deleted'
 
     def create(self):

@@ -97,25 +97,45 @@ if playbooks:
         if 'queue' in playbook_results:
             for entry in playbook_results['queue']:
                 run_time = datetime.datetime.fromtimestamp(int(entry['run_time']))
+                configure_command = False
                 operator_command = entry['operator_command']
-                command_args = entry['command_args']
+                print(f'\nOperator command: {operator_command}')
                 command_output = json.loads(entry['command_output'])
-                print(f'\nOperator command run time: {run_time}')
-                print(f'Operator command: {operator_command}')
-                print('Operator command args:')
-                pp.pprint(command_args)
+                if 'configure' in operator_command:
+                    configure_command = True
+                    command_args = entry['command_args']
+                    print(f'\nOperator command run time: {run_time}')
+                    print('Operator command args:')
+                    pp.pprint(command_args)
                 if command_output:
-                    if 'outcome' in command_output:
-                        operator_command_outcome = command_output['outcome']
-                        print(f'Operator command outcome: {operator_command_outcome}')
-                    if 'details' in command_output and command_output['details'] is not None:
-                        try:
-                            details = json.loads(command_output['details'])
-                            print('Operator command output details:')
-                            pp.pprint(details)
-                        except:
-                            print('Operator command output details:')
-                            if isinstance(command_output['details'], str):
-                                print(command_output['details'])
+                    try:
+                        if 'outcome' in command_output:
+                            operator_command_outcome = command_output['outcome']
+                            print(f'Operator command outcome: {operator_command_outcome}')
+                        if 'details' in command_output and command_output['details'] is not None:
+                            if isinstance(command_output['details'], dict):
+                                details = command_output['details']
                             else:
-                                pp.pprint(command_output['details'])
+                                details = json.loads(command_output['details'])
+                            if not configure_command:
+                                print('Operator command output details:')
+                            else:
+                                print('Operator command configuration:')
+                            if 'execute_agent_shell_command' in details:
+                                if isinstance(details['execute_agent_shell_command'], dict):
+                                    print(details['execute_agent_shell_command']['command'])
+                                else:
+                                    print(details['execute_agent_shell_command'])
+                            elif 'execute_agent_module' in details:
+                                if isinstance(details['execute_agent_module'], dict):
+                                    pp.pprint(details['execute_agent_module'])
+                                else:
+                                    print(details['execute_agent_module'])
+                            else:
+                                pp.pprint(details)
+                    except:
+                        print('Operator command output details:')
+                        if isinstance(command_output['details'], str):
+                            print(command_output['details'])
+                        else:
+                            pp.pprint(command_output['details'])

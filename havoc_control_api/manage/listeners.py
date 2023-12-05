@@ -319,7 +319,7 @@ class Listener:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
-        return 'listener_deleted'
+        return 'listener_entry_deleted'
 
     def get_portgroup_entry(self, portgroup_name):
         return self.aws_dynamodb_client.get_item(
@@ -346,6 +346,24 @@ class Listener:
         except botocore.exceptions.ParamValidationError as error:
             return error
         return 'portgroup_updated'
+    
+    def update_task_entry(self, listeners):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-tasks',
+                Key={
+                    'task_name': {'S': self.task_name}
+                },
+                UpdateExpression='set listeners=:listeners',
+                ExpressionAttributeValues={
+                    ':listeners': {'SS': listeners}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'task_updated'
     
     def get_domain_entry(self):
         return self.aws_dynamodb_client.get_item(
@@ -430,6 +448,32 @@ class Listener:
             return error
         return 'domain_entry_updated'
     
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
+    
     def create_listener(self, listener_config):
         # Validate inputs
         https_listener = None
@@ -453,10 +497,10 @@ class Listener:
                 return 'failed_host_name_exists_for_domain'
             self.hosted_zone = get_domain_entry_response['Item']['hosted_zone']['S']
             if 'None' in get_domain_entry_response['Item']['listeners']['SS']:
-                associated_listeners = []
+                domain_listeners = []
             else:
-                associated_listeners = get_domain_entry_response['Item']['listeners']['SS']
-            associated_listeners.append(self.listener_name)
+                domain_listeners = get_domain_entry_response['Item']['listeners']['SS']
+            domain_listeners.append(self.listener_name)
             if 'None' in get_domain_entry_response['Item']['host_names']['SS']:
                 associated_host_names = []
             else:
@@ -484,13 +528,23 @@ class Listener:
                 return 'failed_portgroup_not_found'
             self.security_groups.append(portgroup_entry['Item']['securitygroup_id']['S'])
             if 'None' in portgroup_entry['Item']['listeners']['SS']:
-                listeners = []
+                portgroup_listeners = []
             else:
-                listeners = portgroup_entry['Item']['listeners']['SS']
-            listeners.append(self.listener_name)
-            update_portgroup_entry_response = self.update_portgroup_entry(portgroup, listeners)
+                portgroup_listeners = portgroup_entry['Item']['listeners']['SS']
+            portgroup_listeners.append(self.listener_name)
+            update_portgroup_entry_response = self.update_portgroup_entry(portgroup, portgroup_listeners)
             if update_portgroup_entry_response != 'portgroup_updated':
                 return update_portgroup_entry_response
+        
+        # Update associated listeners for the task
+        if 'None' in task_entry['Item']['listeners']['SS']:
+            task_listeners = []
+        else:
+            task_listeners = task_entry['Item']['listeners']['SS']
+        task_listeners.append(self.listener_name)
+        update_task_entry_response = self.update_task_entry(task_listeners)
+        if update_task_entry_response != 'task_updated':
+            return update_task_entry_response
         
         # Create a new load balancer
         create_load_balancer_response = self.create_load_balancer()
@@ -516,7 +570,7 @@ class Listener:
             create_resource_record_set_response = self.create_resource_record_set()
             if create_resource_record_set_response != 'resource_record_set_created':
                 return create_resource_record_set_response
-            update_domain_entry_response = self.update_domain_entry(associated_listeners, associated_host_names)
+            update_domain_entry_response = self.update_domain_entry(domain_listeners, associated_host_names)
             if update_domain_entry_response != 'domain_entry_updated':
                 return update_domain_entry_response
 
@@ -524,6 +578,19 @@ class Listener:
         create_listener_entry_response = self.create_listener_entry()
         if create_listener_entry_response != 'listener_entry_created':
             return create_listener_entry_response
+        
+        # Add listener to active_resources in deployment table
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
+        active_listeners = active_resources['listeners']['SS']
+        if active_listeners == ['None']:
+            active_listeners = [self.listener_name]
+        else:
+            active_listeners.append(self.listener_name)
+        active_resources['listeners']['SS'] = active_listeners
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'listener_created'
     
     def delete_listener(self):
@@ -534,6 +601,7 @@ class Listener:
         self.load_balancer_arn = listener_entry['Item']['load_balancer_arn']['S']
         self.load_balancer_dns_name = listener_entry['Item']['load_balancer_dns_name']['S']
         self.certificate_arn = listener_entry['Item']['certificate_arn']['S']
+        self.task_name = listener_entry['Item']['task_name']['S']
         self.target_ip = listener_entry['Item']['target_ip']['S']
         self.host_name = listener_entry['Item']['host_name']['S']
         self.domain_name = listener_entry['Item']['domain_name']['S']
@@ -547,10 +615,10 @@ class Listener:
             if 'Item' not in get_domain_entry_response:
                 return 'domain_name_not_found'
             self.hosted_zone = get_domain_entry_response['Item']['hosted_zone']['S']
-            associated_listeners = get_domain_entry_response['Item']['listeners']['SS']
-            associated_listeners.remove(self.listener_name)
-            if not associated_listeners:
-                associated_listeners = ['None']
+            domain_listeners = get_domain_entry_response['Item']['listeners']['SS']
+            domain_listeners.remove(self.listener_name)
+            if not domain_listeners:
+                domain_listeners = ['None']
             associated_host_names = get_domain_entry_response['Item']['host_names']['SS']
             associated_host_names.remove(self.host_name)
             if not associated_host_names:
@@ -558,7 +626,7 @@ class Listener:
             delete_resource_record_set_response = self.delete_resource_record_set()
             if delete_resource_record_set_response != 'resource_record_set_deleted':
                 return delete_resource_record_set_response
-            update_domain_entry_response = self.update_domain_entry(associated_listeners, associated_host_names)
+            update_domain_entry_response = self.update_domain_entry(domain_listeners, associated_host_names)
             if update_domain_entry_response != 'domain_entry_updated':
                 return update_domain_entry_response
         
@@ -580,18 +648,40 @@ class Listener:
         # Update portgroup listener reference
         for portgroup in self.portgroups:
             portgroup_entry = self.get_portgroup_entry(portgroup)
-            listeners = portgroup_entry['Item']['listeners']['SS']
-            listeners.remove(self.listener_name)
-            if not listeners:
-                listeners = ['None']
-            update_portgroup_entry_response = self.update_portgroup_entry(portgroup, listeners)
+            portgroup_listeners = portgroup_entry['Item']['listeners']['SS']
+            portgroup_listeners.remove(self.listener_name)
+            if not portgroup_listeners:
+                portgroup_listeners = ['None']
+            update_portgroup_entry_response = self.update_portgroup_entry(portgroup, portgroup_listeners)
             if update_portgroup_entry_response != 'portgroup_updated':
                 return update_portgroup_entry_response
+        
+        # Update task listener reference
+        task_entry = self.get_task_entry()
+        task_listeners = task_entry['Item']['listeners']['SS']
+        task_listeners.remove(self.listener_name)
+        if not task_listeners:
+            task_listeners = ['None']
+        update_task_entry_response = self.update_task_entry(task_listeners)
+        if update_task_entry_response != 'task_updated':
+            return update_task_entry_response
 
         # Delete the listener entry in DynamoDB
         delete_listener_entry_response = self.delete_listener_entry()
         if delete_listener_entry_response != 'listener_entry_deleted':
             return delete_listener_entry_response
+        
+        # Remove listener from active_resources in deployment table
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
+        active_listeners = active_resources['listeners']['SS']
+        active_listeners.remove(self.listener_name)
+        if len(active_listeners) == 0:
+            active_listeners = ['None']
+        active_resources['listeners']['SS'] = active_listeners
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'listener_deleted'
 
     def create(self):

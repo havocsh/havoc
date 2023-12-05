@@ -11,10 +11,34 @@ if [ ${SUDO_USER} ]; then
     exit 1
 fi
 
-git_bin=$(which git)
-if [ ! "${git_bin}" ]; then
+if [ ! "$(which git)" ]; then
     echo "Could not find git. Please install git before continuing."
     exit
+fi
+
+if [ ! "$(which zip)" ]; then
+    echo "Could not find zip. Please install zip before continuing."
+    exit
+fi
+
+if [ ! "$(which aws)" ]; then
+    echo "Could not find aws CLI. Please install version 2 of the aws CLI before continuing."
+    exit
+fi
+
+if [ ! ~/.aws/credentials ]; then
+    echo "Could not find aws CLI credentials file for your current user. Please run 'aws configure --profile <profile-name>' to setup an AWS profile and credentials file before continuing."
+    exit
+fi
+
+if [ ! "$(which python3)" ]; then
+    echo "Could not find python3. Please install python3 before continuing."
+    exit
+fi
+
+if [ ! .havoc/profiles ]; then
+    echo "Creating .havoc/profiles file"
+    touch .havoc/profiles
 fi
 
 if [ ! -d ./venv ]; then
@@ -37,10 +61,10 @@ if [ ! -d ./venv ]; then
     fi
     echo " - Installing the ./HAVOC module."
     ./venv/bin/pip3 --disable-pip-version-check install -q "havoc @ git+https://github.com/havocsh/havoc-pkg.git@${deployment_version}"
-    current_git_branch=$(${git_bin} status | awk 'FNR == 1 { print $3 }')
-    target_git_branch=$(${git_bin} branch --contains tags/${deployment_version} | awk '{ print $NF }')
+    current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
+    target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
     if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
-        ${git_bin} checkout ${target_git_branch}
+        git checkout ${target_git_branch}
     fi  
 fi
 python3_bin=./venv/bin/python3
@@ -69,11 +93,11 @@ if [[ ${@} =~ "--deployment update" ]]; then
     echo " - Applying updates for version ${deployment_version}."
     echo " - Updating local files."
     havoc_orig_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
-    ${git_bin} pull > /dev/null 2>&1
-    current_git_branch=$(${git_bin} status | awk 'FNR == 1 { print $3 }')
-    target_git_branch=$(${git_bin} branch --contains tags/${deployment_version} | awk '{ print $NF }')
+    git pull > /dev/null 2>&1
+    current_git_branch=$(git status | awk 'FNR == 1 { print $3 }')
+    target_git_branch=$(git branch --contains tags/${deployment_version} | awk '{ print $NF }')
     if [[ ! ${current_git_branch} == ${target_git_branch} ]]; then
-        ${git_bin} checkout ${target_git_branch}
+        git checkout ${target_git_branch}
     fi
     havoc_new_hash=$(shasum -a 256 havoc | awk '{ print $1 }')
     if [[ ! ${havoc_orig_hash} == ${havoc_new_hash} ]]; then

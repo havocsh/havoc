@@ -146,6 +146,32 @@ class Registration:
             return error
         return 'object_deleted'
     
+    def get_deployment_entry(self):
+        return self.aws_dynamodb_client.get_item(
+            TableName=f'{self.deployment_name}-deployment',
+            Key={
+                'deployment_name': {'S': self.deployment_name}
+            }
+        )
+    
+    def update_deployment_entry(self, active_resources):
+        try:
+            self.aws_dynamodb_client.update_item(
+                TableName=f'{self.deployment_name}-deployment',
+                Key={
+                    'deployment_name': {'S': self.deployment_name}
+                },
+                UpdateExpression='set active_resources=:active_resources',
+                ExpressionAttributeValues={
+                    ':active_resources': {'M': active_resources}
+                }
+            )
+        except botocore.exceptions.ClientError as error:
+            return error
+        except botocore.exceptions.ParamValidationError as error:
+            return error
+        return 'deployment_updated'
+    
     def add_playbook_type(self):
         existing_playbook_type = self.get_playbook_type_entry()
         if 'Item' in existing_playbook_type:
@@ -156,6 +182,19 @@ class Registration:
         upload_object_response = self.upload_object()
         if upload_object_response != 'object_uploaded':
             return upload_object_response
+        
+        # Add playbook_type to active_resources in deployment table
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
+        active_playbook_types = active_resources['playbook_types']['SS']
+        if active_playbook_types == ['None']:
+            active_playbook_types = [self.playbook_type]
+        else:
+            active_playbook_types.append(self.playbook_type)
+        active_resources['playbook_types']['SS'] = active_playbook_types
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'playbook_type_created'
     
     def delete_playbook_type(self):
@@ -169,6 +208,18 @@ class Registration:
         delete_object_response = self.delete_object()
         if delete_object_response != 'object_deleted':
             return delete_object_response
+        
+        # Remove playbook_type from active_resources in deployment table
+        deployment_details = self.get_deployment_entry()
+        active_resources = deployment_details['Item']['active_resources']['M']
+        active_playbook_types = active_resources['playbook_types']['SS']
+        active_playbook_types.remove(self.playbook_type)
+        if len(active_playbook_types) == 0:
+            active_playbook_types = ['None']
+        active_resources['playbook_types']['SS'] = active_playbook_types
+        update_deployment_entry_response = self.update_deployment_entry(active_resources)
+        if update_deployment_entry_response != 'deployment_updated':
+            return update_deployment_entry_response
         return 'playbook_type_deleted'
     
     def create(self):
