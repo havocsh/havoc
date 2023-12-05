@@ -315,16 +315,14 @@ class Domain:
         if 'None' not in tasks:
             return 'has_associated_tasks'
         
-        # Delete the wildcard certificate for the domain
+        # Delete the wildcard certificate and certificate validation resource record for the domain
         self.certificate_arn = domain_entry['Item']['certificate_arn']['S']
-        delete_domain_cert_response = self.delete_domain_cert()
-        if delete_domain_cert_response != 'domain_cert_deleted':
-            return delete_domain_cert_response
-
-        # Delete the certificate validation resource record
         get_domain_validation_records_response = self.get_domain_validation_records()
         if get_domain_validation_records_response != 'domain_validation_records_requested':
             return get_domain_validation_records_response
+        delete_domain_cert_response = self.delete_domain_cert()
+        if delete_domain_cert_response != 'domain_cert_deleted':
+            return delete_domain_cert_response
         delete_validate_cert_response = self.delete_validate_cert()
         if delete_validate_cert_response != 'cert_validation_record_deleted':
             return delete_validate_cert_response
