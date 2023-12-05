@@ -319,7 +319,7 @@ class Listener:
             return error
         except botocore.exceptions.ParamValidationError as error:
             return error
-        return 'listener_deleted'
+        return 'listener_entry_deleted'
 
     def get_portgroup_entry(self, portgroup_name):
         return self.aws_dynamodb_client.get_item(
