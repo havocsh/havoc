@@ -343,10 +343,20 @@ class Tasks:
     def list(self):
         if 'task_name_contains' in self.detail:
             tnf = self.detail['task_name_contains']
+            if tnf is None:
+                tnf = ''
         else:
             tnf = ''
+        if 'task_type' in self.detail:
+            ttf = self.detail['task_type']
+            if ttf is None:
+                ttf = ''
+        else:
+            ttf = ''
         if 'task_status' in self.detail:
             tsf = self.detail['task_status'].lower()
+            if tsf is None:
+                tsf = 'running'
         else:
             tsf = 'running'
         tasks_list = []
@@ -355,11 +365,13 @@ class Tasks:
         if 'Items' in tasks:
             for item in tasks['Items']:
                 task_name = item['task_name']['S']
+                task_type = item['task_type']['S']
                 task_status = item['task_status']['S']
-                task_dict = {'task_name': task_name, 'task_status': task_status}
+                task_dict = {'task_name': task_name, 'task_type': task_type, 'task_status': task_status}
                 tasks_list.append(task_dict)
             tn_filtered = [x for x in tasks_list if tnf in x['task_name']]
-            tasks_list_final = [x for x in tn_filtered if tsf == x['task_status'] or tsf == 'all' or (tsf == 'running' and (x['task_status'] == 'starting' or x['task_status'] == 'idle' or x['task_status'] == 'busy'))]
+            tt_filtered = [x for x in tn_filtered if ttf in x['task_type']]
+            tasks_list_final = [x for x in tt_filtered if tsf == x['task_status'] or tsf == 'all' or (tsf == 'running' and (x['task_status'] == 'starting' or x['task_status'] == 'idle' or x['task_status'] == 'busy'))]
         return format_response(200, 'success', 'list tasks succeeded', None, tasks=tasks_list_final)
 
     def create(self):
